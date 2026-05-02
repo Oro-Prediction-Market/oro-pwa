@@ -68,13 +68,10 @@ export default defineConfig(async (): Promise<UserConfig> => {
       rollupOptions: {
         treeshake: { propertyReadSideEffects: false },
         output: {
-          manualChunks(id) {
-            if (id.includes("node_modules/react-dom")) return "vendor-react-dom";
-            if (id.includes("node_modules/react/") || id.includes("node_modules/react-router")) return "vendor-react";
-            if (id.includes("node_modules/lucide-react")) return "vendor-lucide";
-            if (id.includes("node_modules/socket.io-client") || id.includes("node_modules/engine.io")) return "vendor-socket";
-            if (id.includes("node_modules/")) return "vendor-misc";
-          },
+          // No manualChunks — letting Vite's default splitting handle vendor
+          // chunks. The previous manual split caused vendor-misc to evaluate
+          // React.createContext before vendor-react was loaded → blank screen
+          // (Uncaught TypeError: Cannot read properties of undefined).
           entryFileNames: "assets/[name]-[hash].js",
           chunkFileNames: "assets/[name]-[hash].js",
           assetFileNames: "assets/[name]-[hash][extname]",
