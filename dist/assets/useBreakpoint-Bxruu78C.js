@@ -1,1 +1,0 @@
-import{r as e}from"./vendor-react-CX8IVUr-.js";function n(e){return e<640?"mobile":e<1024?"tablet":"desktop"}function t(){const[t,r]=e.useState(()=>n("undefined"!=typeof window?window.innerWidth:1200));return e.useEffect(()=>{const e=()=>r(n(window.innerWidth));return window.addEventListener("resize",e),()=>window.removeEventListener("resize",e)},[]),t}export{t as u};
