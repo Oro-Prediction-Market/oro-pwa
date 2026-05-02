@@ -1,0 +1,1 @@
+import{j as o}from"./vendor-react-CX8IVUr-.js";function t({market:t,outcomeId:e,betAmount:r}){return!t.outcomes.find(o=>o.id===e)||r<=0?null:o.jsx("div",{style:{marginTop:6},children:!1})}export{t as P};

@@ -1,0 +1,651 @@
+import { useState, useEffect, lazy, Suspense } from "react";
+import {
+  getMarkets,
+  getMe,
+  getRecentActivity,
+  type Market,
+  type ActivityEvent,
+  type AuthUser,
+} from "@shared/api/client";
+import { ProtectedRoute } from "../components/ProtectedRoute";
+// Lazy-load TmaBetModal — it pulls in heavy TMA SDK deps and is only shown on interaction
+const TmaBetModal = lazy(() =>
+  import("@/components/TmaBetModal").then((m) => ({
+    default: m.TmaBetModal,
+  })),
+);
+import { PwaMarketCard } from "../components/PwaMarketCard";
+import { PwaMarketGrid } from "../components/PwaMarketGrid";
+import { Flame } from "lucide-react";
+import { useFilter } from "@shared/contexts/FilterContext";
+
+// ── Live Activity Ticker ──────────────────────────────────────────────────────
+
+interface FormattedEvent {
+  userName: string;
+  initials: string;
+  action: string;
+  outcome: string;
+  amount: string;
+  marketTitle: string;
+  type: "bet" | "win";
+}
+
+function parseActivityEvent(e: ActivityEvent): FormattedEvent {
+  const amount = `Nu ${Number(e.amount).toLocaleString()}`;
+  const rawUserName = e.userName || "";
+  const userName = rawUserName.startsWith("@")
+    ? rawUserName.substring(1)
+    : rawUserName;
+  const initials = rawUserName
+    ? rawUserName.substring(0, 1).toUpperCase()
+    : "?";
+  return {
+    userName,
+    initials,
+    action: e.type === "win" ? "won" : "just bet",
+    outcome: e.outomeLabel,
+    amount,
+    marketTitle: e.marketTitle,
+    type: e.type,
+  };
+}
+
+function LiveTicker() {
+  const [events, setEvents] = useState<FormattedEvent[]>([]);
+  const [idx, setIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    getRecentActivity()
+      .then((data) => {
+        if (data.length > 0) {
+          setEvents(data.map(parseActivityEvent));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (events.length < 2) return;
+    const cycle = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIdx((i) => (i + 1) % events.length);
+        setVisible(true);
+      }, 400);
+    }, 4500);
+    return () => clearInterval(cycle);
+  }, [events.length]);
+
+  if (!events.length) return null;
+  const current = events[idx];
+
+  return (
+    <>
+      <style>{`
+        @keyframes tickerSlideUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      <div
+        style={{
+          width: 1,
+          height: 16,
+          background: "var(--glass-border)",
+          flexShrink: 0,
+          margin: "0 8px",
+        }}
+      />
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          animation: visible
+            ? "tickerSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards"
+            : "none",
+          opacity: visible ? 1 : 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          overflow: "hidden",
+        }}
+      >
+        <Flame
+          size={14}
+          style={{
+            flexShrink: 0,
+            color: "var(--color-warning)",
+            fill: "#f59e0b40",
+          }}
+        />
+        <span
+          style={{
+            fontSize: "0.8rem",
+            fontWeight: 800,
+            color: "var(--text-main)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {current.userName}
+        </span>
+        <span
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            color: "var(--text-muted)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {current.action}
+        </span>
+        <span
+          style={{
+            fontSize: "0.8rem",
+            fontWeight: 900,
+            color:
+              current.type === "win"
+                ? "var(--color-success)"
+                : "var(--color-primary)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {current.amount}
+        </span>
+        <span
+          style={{
+            fontSize: "0.75rem",
+            color: "var(--text-subtle)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            fontWeight: 600,
+          }}
+        >
+          · {current.outcome}
+        </span>
+      </div>
+    </>
+  );
+}
+
+interface ActiveBet {
+  marketId: string;
+  outcomeId: string;
+}
+
+export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boolean; onAuthRequired?: () => void }) {
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingBet, setPendingBet] = useState<ActiveBet | null>(null);
+  const [me, setMe] = useState<AuthUser | null>(null);
+
+  const handleBetClick = (marketId: string, outcomeId: string) => {
+    if (!authed) {
+      setPendingBet({ marketId, outcomeId });
+      setShowAuthModal(true);
+    } else {
+      setActiveBet({ marketId, outcomeId });
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    if (pendingBet) {
+      setActiveBet(pendingBet);
+      setPendingBet(null);
+    }
+    onAuthRequired?.();
+  };
+
+  useEffect(() => {
+    getMe()
+      .then(setMe)
+      .catch(() => {});
+  }, [authed]);
+  const {
+    searchQuery,
+    selectedCategory,
+    setAvailableCategories,
+    setHasTrendingMarkets,
+  } = useFilter();
+
+  useEffect(() => {
+    getMarkets()
+      .then((d) => {
+        const now = Date.now();
+        const cutoff48h = 48 * 60 * 60 * 1000;
+
+        // Only show live/upcoming + resolving within last 48h
+        const active = d.filter((m) => {
+          if (m.status === "open" || m.status === "upcoming") return true;
+          if (m.status === "resolving") {
+            // Use closesAt to determine age; hide if closed more than 48h ago
+            const closedAt = m.closesAt ? new Date(m.closesAt).getTime() : null;
+            return closedAt ? now - closedAt < cutoff48h : true;
+          }
+          return false;
+        });
+
+        setMarkets(active);
+        setHasTrendingMarkets(
+          active.filter((m) => m.status === "open").length > 0,
+        );
+
+        // Update global categories
+        const cats = [
+          "All",
+          ...(Array.from(
+            new Set(active.map((m) => m.category).filter(Boolean)),
+          ) as string[]),
+        ];
+        setAvailableCategories(cats);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleBetSuccess = () => {
+    setActiveBet(null);
+    getMarkets()
+      .then((d) => {
+        const now = Date.now();
+        const cutoff48h = 48 * 60 * 60 * 1000;
+        setMarkets(
+          d.filter((m) => {
+            if (m.status === "open" || m.status === "upcoming") return true;
+            if (m.status === "resolving") {
+              const closedAt = m.closesAt
+                ? new Date(m.closesAt).getTime()
+                : null;
+              return closedAt ? now - closedAt < cutoff48h : true;
+            }
+            return false;
+          }),
+        );
+      })
+      .catch(console.error);
+  };
+
+  if (loading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "100px 0",
+        }}
+      >
+        <div style={{ textAlign: "center", color: "var(--text-subtle)" }}>
+          <div
+            style={{
+              fontSize: 48,
+              marginBottom: 16,
+              animation: "bounce 2s infinite",
+            }}
+          >
+            🔮
+          </div>
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 900,
+              color: "var(--text-main)",
+              letterSpacing: "-0.01em",
+            }}
+          >
+            Reading the Oracles…
+          </div>
+        </div>
+      </div>
+    );
+
+  if (!markets.length)
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "120px 32px",
+          textAlign: "center",
+          gap: 16,
+        }}
+      >
+        <div className="mesh-bg" />
+        <div
+          style={{
+            fontSize: 64,
+            filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.2))",
+          }}
+        >
+          🔮
+        </div>
+        <div
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: 900,
+            color: "var(--text-main)",
+            fontFamily: "var(--font-display)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          The Oracles are Quiet
+        </div>
+        <div
+          style={{
+            fontSize: "1rem",
+            color: "var(--text-muted)",
+            maxWidth: 350,
+            lineHeight: 1.6,
+            fontWeight: 500,
+          }}
+        >
+          Check back soon for new prophecy opportunities and community
+          predictions.
+        </div>
+      </div>
+    );
+
+  const filteredMarkets = markets.filter((m) => {
+    const matchesSearch = m.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" ||
+      (m.category &&
+        m.category.toLowerCase() === selectedCategory.toLowerCase());
+    return matchesSearch && matchesCategory;
+  });
+
+  const openMarkets = filteredMarkets.filter((m) => m.status === "open");
+  const resolvingMarkets = filteredMarkets.filter(
+    (m) => m.status === "resolving",
+  );
+  const upcomingMarkets = filteredMarkets.filter(
+    (m) => m.status === "upcoming",
+  );
+  const activeMarket = activeBet
+    ? markets.find((m) => m.id === activeBet.marketId)
+    : null;
+
+  const renderGrid = (items: Market[]) => (
+    <PwaMarketGrid>
+      {items.map((market) => (
+        <PwaMarketCard
+          key={market.id}
+          market={market}
+          onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
+        />
+      ))}
+    </PwaMarketGrid>
+  );
+
+  return (
+    <div
+      style={{
+        padding: "var(--space-xl) var(--space-md) 100px",
+        maxWidth: 1240,
+        margin: "0 auto",
+        position: "relative",
+      }}
+    >
+      <style>{`
+        @keyframes livePing {
+          0%   { transform: scale(1);   opacity: 0.8; }
+          70%  { transform: scale(2.2); opacity: 0; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        @keyframes liveTextGlow {
+          0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(34,197,94,0.6); }
+          50%       { opacity: 0.7; text-shadow: 0 0 14px rgba(34,197,94,1); }
+        }
+        @media (max-width: 767px) { .section-title { display: none; } }
+      `}</style>
+      <div className="mesh-bg" />
+
+      {/* ── Personalized greeting ── */}
+      {me && (
+        <div style={{ marginBottom: 24 }}>
+          <div
+            style={{
+              fontSize: "0.75rem",
+              color: "var(--text-subtle)",
+              fontWeight: 600,
+              marginBottom: 2,
+            }}
+          >
+            {(() => {
+              const h = new Date().getHours();
+              if (h < 12) return "Good morning";
+              if (h < 17) return "Good afternoon";
+              return "Good evening";
+            })()}
+          </div>
+          <div
+            style={{
+              fontSize: "1.6rem",
+              fontWeight: 900,
+              color: "var(--text-main)",
+              letterSpacing: "-0.03em",
+              fontFamily: "var(--font-display)",
+            }}
+          >
+            {me.firstName ?? (me.username ? `@${me.username}` : "Oracle")} 👋
+          </div>
+        </div>
+      )}
+
+      {openMarkets.length > 0 && (
+        <section style={{ marginBottom: "var(--space-xl)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: "var(--space-md)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: "var(--radius-sm)",
+                background: "rgba(34, 197, 94, 0.1)",
+                color: "var(--color-success)",
+                fontSize: "0.65rem",
+                fontWeight: 900,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                boxShadow: "0 4px 12px rgba(34, 197, 94, 0.1)",
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  width: 8,
+                  height: 8,
+                  flexShrink: 0,
+                }}
+              >
+                {/* Ping ring */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "50%",
+                    background: "var(--color-success)",
+                    animation: "livePing 1.5s ease-out infinite",
+                  }}
+                />
+                {/* Solid dot */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "50%",
+                    background: "var(--color-success)",
+                  }}
+                />
+              </div>
+              <span
+                style={{ animation: "liveTextGlow 1.8s ease-in-out infinite" }}
+              >
+                Live
+              </span>
+            </div>
+            {/* <h2
+              className="section-title"
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 900,
+                color: "var(--text-main)",
+                margin: 0,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              Active Markets
+            </h2> */}
+            <LiveTicker />
+          </div>
+          {renderGrid(openMarkets)}
+        </section>
+      )}
+
+      {resolvingMarkets.length > 0 && (
+        <section style={{ marginBottom: "var(--space-xl)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: "var(--space-md)",
+            }}
+          >
+            <div
+              style={{
+                padding: "6px 12px",
+                borderRadius: "var(--radius-sm)",
+                background: "rgba(245, 158, 11, 0.1)",
+                color: "var(--color-warning)",
+                fontSize: "0.65rem",
+                fontWeight: 900,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              Resolving
+            </div>
+            <h2
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 900,
+                color: "var(--text-main)",
+                margin: 0,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              Oracle Verification
+            </h2>
+          </div>
+          {renderGrid(resolvingMarkets)}
+        </section>
+      )}
+
+      {upcomingMarkets.length > 0 && (
+        <section style={{ marginBottom: "var(--space-xl)" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: "var(--space-md)",
+            }}
+          >
+            <div
+              style={{
+                padding: "6px 12px",
+                borderRadius: "var(--radius-sm)",
+                background: "rgba(59, 130, 246, 0.1)",
+                color: "var(--color-info)",
+                fontSize: "0.65rem",
+                fontWeight: 900,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              SOON
+            </div>
+            <h2
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 900,
+                color: "var(--text-main)",
+                margin: 0,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.03em",
+              }}
+            >
+              Coming Up
+            </h2>
+          </div>
+          {renderGrid(upcomingMarkets)}
+        </section>
+      )}
+
+      {activeMarket && activeBet && (
+        <Suspense fallback={null}>
+          <TmaBetModal
+            isOpen={true}
+            onClose={() => setActiveBet(null)}
+            market={activeMarket}
+            outcomeId={activeBet.outcomeId}
+            onSuccess={handleBetSuccess}
+            onFailure={(e) => console.error(e)}
+          />
+        </Suspense>
+      )}
+
+      {/* Auth modal — shown when unauthenticated user tries to bet */}
+      {showAuthModal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAuthModal(false); }}
+        >
+          <div
+            style={{
+              width: "100%", maxWidth: 440,
+              background: "var(--bg-main)",
+              borderRadius: 20,
+              padding: "24px 4px",
+              maxHeight: "90vh", overflowY: "auto",
+              animation: "fadeScaleIn 0.2s ease-out",
+            }}
+          >
+            <style>{`@keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }`}</style>
+            <ProtectedRoute onLogin={handleAuthSuccess} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
