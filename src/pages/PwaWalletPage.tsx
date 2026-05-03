@@ -21,6 +21,8 @@ import {
   UserPlus,
   Swords,
   ChevronDown,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const INITIAL_LIMIT = 5;
@@ -140,6 +142,7 @@ export function PwaWalletPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(INITIAL_LIMIT);
+  const [balanceHidden, setBalanceHidden] = useState(true);
 
   useEffect(() => {
     Promise.all([getMe(), getMyTransactions()])
@@ -241,96 +244,136 @@ export function PwaWalletPage() {
           {/* Balance card */}
           <div
             style={{
-              background: "var(--balance-card-bg)",
+              background: "var(--surface)",
               borderRadius: "var(--radius-xl)",
-              padding: "24px",
+              padding: "20px 20px 0",
               position: "relative",
-              overflow: "hidden",
-              boxShadow: "var(--balance-card-shadow)",
+              border: "1px solid var(--border)",
               marginBottom: 24,
             }}
           >
+            {/* Label row */}
             <div
               style={{
-                position: "absolute",
-                top: -20,
-                right: -20,
-                width: 120,
-                height: 120,
-                background: "rgba(255,255,255,0.1)",
-                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                marginBottom: 6,
               }}
-            />
-
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <div
+            >
+              <span
                 style={{
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  color: "rgba(255,255,255,0.8)",
-                  marginBottom: 8,
+                  fontSize: 13,
+                  color: "var(--text-secondary)",
+                  fontWeight: 500,
                 }}
               >
-                Available Balance
-              </div>
-              <div
+                Est. total balance
+              </span>
+              <button
+                onClick={() => setBalanceHidden((h) => !h)}
                 style={{
+                  background: "none",
+                  border: "none",
+                  padding: "0 0 0 4px",
+                  cursor: "pointer",
+                  color: "var(--text-secondary)",
                   display: "flex",
-                  alignItems: "baseline",
-                  gap: 8,
-                  marginBottom: 24,
+                  alignItems: "center",
+                  marginLeft: "auto",
+                }}
+                aria-label={balanceHidden ? "Show balance" : "Hide balance"}
+              >
+                {balanceHidden ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            {/* Balance amount */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 8,
+                marginBottom: 20,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 36,
+                  fontWeight: 800,
+                  color: "var(--text-primary)",
+                  letterSpacing: "-1px",
                 }}
               >
-                <span
-                  style={{ fontSize: "2.4rem", fontWeight: 900, color: "#fff" }}
-                >
-                  {Number(profile.creditsBalance).toLocaleString()}
-                </span>
-                <span
+                {balanceHidden
+                  ? "••••"
+                  : Number(profile.creditsBalance).toLocaleString()}
+              </span>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                }}
+              >
+                BTN
+              </span>
+            </div>
+
+            {/* Stats row */}
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                borderTop: "1px solid var(--border)",
+                paddingTop: 12,
+                paddingBottom: 14,
+              }}
+            >
+              <div>
+                <div
                   style={{
-                    fontSize: "1rem",
-                    fontWeight: 800,
-                    color: "rgba(255,255,255,0.6)",
+                    fontSize: 10,
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    marginBottom: 3,
                   }}
                 >
-                  BTN
-                </span>
-              </div>
-
-              <div style={{ display: "flex", gap: 24 }}>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.6)",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Total In
-                  </div>
-                  <div
-                    style={{ fontSize: "1rem", fontWeight: 800, color: "#fff" }}
-                  >
-                    +{totalIn.toLocaleString()}
-                  </div>
+                  Total In
                 </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.6)",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Total Out
-                  </div>
-                  <div
-                    style={{ fontSize: "1rem", fontWeight: 800, color: "#fff" }}
-                  >
-                    {Math.abs(totalOut).toLocaleString()}
-                  </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "var(--success)",
+                  }}
+                >
+                  +{totalIn.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    marginBottom: 3,
+                  }}
+                >
+                  Total Out
+                </div>
+                <div
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "var(--text-primary)",
+                  }}
+                >
+                  {Math.abs(totalOut).toLocaleString()}
                 </div>
               </div>
             </div>
