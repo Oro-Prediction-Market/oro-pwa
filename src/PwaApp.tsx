@@ -11,6 +11,7 @@ import { useEffect, useState, lazy, Suspense } from "react";
 
 // Eagerly-loaded shell components
 import { PwaBottomNav } from "./components/PwaBottomNav";
+import { useSSE } from "@shared/hooks/useSSE";
 
 // All pages are lazy — only the active route's chunk is downloaded
 const PwaFeedPage = lazy(() =>
@@ -1586,6 +1587,9 @@ function FooterLink({
 
 export function PwaApp() {
   const [authed, setAuthed] = useState(() => isTokenValid());
+
+  // Connect to SSE for real-time server push (balance updates, market changes)
+  useSSE();
 
   // Listen for 401s from the API client — force back to login
   useEffect(() => {

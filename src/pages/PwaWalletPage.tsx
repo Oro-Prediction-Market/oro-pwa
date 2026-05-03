@@ -151,6 +151,17 @@ export function PwaWalletPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Re-fetch when server pushes a balance update via SSE
+  useEffect(() => {
+    const handler = () => {
+      Promise.all([getMe(), getMyTransactions()])
+        .then(([p, t]) => { setProfile(p); setTxs(t); })
+        .catch(() => {});
+    };
+    window.addEventListener("oro:balance-changed", handler);
+    return () => window.removeEventListener("oro:balance-changed", handler);
+  }, []);
+
   const totalIn = txs
     .filter((t) => Number(t.amount) > 0)
     .reduce((s, t) => s + Number(t.amount), 0);
