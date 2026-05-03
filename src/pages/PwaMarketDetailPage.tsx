@@ -32,10 +32,13 @@ export function PwaMarketDetailPage() {
         return;
       }
       if (!id) return;
-      bustCache(`/markets/${id}`);
-      getMarket(id)
-        .then(setMarket)
-        .catch((e) => setError(e.message));
+      // Small delay to ensure backend cache is busted after bet placement
+      setTimeout(() => {
+        bustCache(`/markets/${id}`);
+        getMarket(id)
+          .then(setMarket)
+          .catch((e) => setError(e.message));
+      }, 300);
     },
     [id],
   );

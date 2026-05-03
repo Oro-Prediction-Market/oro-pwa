@@ -1,5 +1,5 @@
 import { FC, useState } from "react";
-import { Market, placeBet, getMarket } from "@shared/api/client";
+import { Market, placeBet, getMarket, bustCache } from "@shared/api/client";
 import { PwaPaymentModal } from "./PwaPaymentModal";
 import type { PaymentResponse } from "@shared/types/payment";
 
@@ -42,13 +42,16 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const handlePaymentSuccess = async (payment: PaymentResponse) => {
     if (!selectedOutcomeId) return;
     try {
-      const freshMarket = await getMarket(market.id);
       await placeBet(market.id, {
         outcomeId: selectedOutcomeId,
         amount: payment.amount,
       });
       setBetSuccess(true);
-      if (onBetPlaced) onBetPlaced(freshMarket);
+      if (onBetPlaced) {
+        bustCache(`/markets/${market.id}`);
+        const freshMarket = await getMarket(market.id);
+        onBetPlaced(freshMarket);
+      }
     } catch (e: any) {
       console.error("Bet placement failed:", e.message);
       setBetSuccess(true);
