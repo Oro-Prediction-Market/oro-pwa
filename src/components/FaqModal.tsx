@@ -30,7 +30,7 @@ const FAQ_DATA: FAQSection[] = [
           <>
             <p style={{ margin: 0 }}>
               DK Bank is the payment gateway for moving real money in and out of
-              the platform. Go to Profile &gt; Link DK Bank, enter your 11-digit
+              the platform. Go to Wallet Page &gt; Link DK Bank, enter your 11-digit
               CID, and verify with your registered phone in DK Bank.
             </p>
             <div
@@ -87,7 +87,7 @@ const FAQ_DATA: FAQSection[] = [
         id: "05",
         question: "How does parimutuel betting work?",
         answer:
-          "In a parimutuel market, all stakes go into a single shared pool. When the market resolves, the total pool (minus the house edge) is distributed proportionally among everyone who bet on the winning outcome.",
+          "In a parimutuel market, all stakes go into a single shared pool. When the market resolves, the total pool (minus the platform fee) is distributed proportionally among everyone who bet on the winning outcome.",
       },
       {
         id: "06",

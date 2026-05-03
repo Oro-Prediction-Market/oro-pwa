@@ -44,7 +44,7 @@ const STEPS: Step[] = [
   {
     icon: <Target size={32} />,
     title: "Pick a market & predict",
-    desc: 'Browse the Feed, choose an outcome (e.g. "Real Madrid wins"), and enter your amount. Your prediction is locked in immediately.',
+    desc: 'Browse the Feed, choose an outcome (e.g. "X Team wins"), and enter your amount. Your prediction is locked in immediately.',
   },
   {
     icon: <BarChart2 size={32} />,

@@ -76,7 +76,7 @@ const SECTIONS = [
       },
       {
         heading: "4.3 Platform Fee",
-        text: "A platform fee is deducted from the total pool before distributing payouts. The default platform fee is 10% of the total pool. Individual markets may carry a different fee, which will always be disclosed.",
+        text: "A platform fee is deducted from the total pool before distributing payouts. Individual markets may carry a different fee, which will always be disclosed.",
       },
       {
         heading: "4.4 Dynamic Odds",
