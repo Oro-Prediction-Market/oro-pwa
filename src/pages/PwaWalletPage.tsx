@@ -155,7 +155,10 @@ export function PwaWalletPage() {
   useEffect(() => {
     const handler = () => {
       Promise.all([getMe(), getMyTransactions()])
-        .then(([p, t]) => { setProfile(p); setTxs(t); })
+        .then(([p, t]) => {
+          setProfile(p);
+          setTxs(t);
+        })
         .catch(() => {});
     };
     window.addEventListener("oro:balance-changed", handler);
