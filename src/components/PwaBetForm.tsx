@@ -90,7 +90,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             letterSpacing: "-0.04em",
           }}
         >
-          Prophecy Cast!
+          Bet Placed!
         </div>
         <div
           style={{
@@ -100,9 +100,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             lineHeight: 1.5,
           }}
         >
-          Your position is now active in the pool.
+          Your prediction is live in the pool.
           <br />
-          The oracles are tracking your fate.
+          Results update when the market closes.
         </div>
       </div>
     );

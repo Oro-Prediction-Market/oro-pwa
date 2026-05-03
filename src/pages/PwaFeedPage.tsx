@@ -339,7 +339,7 @@ export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boole
             letterSpacing: "-0.02em",
           }}
         >
-          The Oracles are Quiet
+          No Open Markets
         </div>
         <div
           style={{
@@ -350,8 +350,7 @@ export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boole
             fontWeight: 500,
           }}
         >
-          Check back soon for new prophecy opportunities and community
-          predictions.
+          No markets are open right now. Check back soon for new predictions.
         </div>
       </div>
     );
