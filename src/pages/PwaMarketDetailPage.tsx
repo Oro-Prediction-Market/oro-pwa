@@ -4,6 +4,7 @@ import {
   getMarket,
   getDisputes,
   submitDispute,
+  bustCache,
   Market,
   Dispute,
 } from "@shared/api/client";
@@ -31,6 +32,7 @@ export function PwaMarketDetailPage() {
         return;
       }
       if (!id) return;
+      bustCache(`/markets/${id}`);
       getMarket(id)
         .then(setMarket)
         .catch((e) => setError(e.message));
@@ -50,10 +52,12 @@ export function PwaMarketDetailPage() {
   // Refetch when page becomes visible + poll every 15s as WS fallback
   useEffect(() => {
     if (!id) return;
-    const refetch = () =>
-      getMarket(id)
+    const refetch = () => {
+      bustCache(`/markets/${id}`);
+      return getMarket(id)
         .then(setMarket)
         .catch(() => {});
+    };
 
     const onVisibility = () => {
       if (!document.hidden) refetch();
