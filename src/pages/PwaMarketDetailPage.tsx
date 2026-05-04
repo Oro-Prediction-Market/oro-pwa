@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   getMarket,
@@ -11,6 +11,7 @@ import {
 import { PwaBetForm } from "../components/PwaBetForm";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { useMarketSocket } from "../hooks/useMarketSocket";
 
 export function PwaMarketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,27 @@ export function PwaMarketDetailPage() {
   const [disputeError, setDisputeError] = useState<string | null>(null);
   const [disputeSuccess, setDisputeSuccess] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  const liveData = useMarketSocket(id);
+
+  const liveMarket = useMemo<Market | null>(() => {
+    if (!market) return null;
+    if (!liveData) return market;
+    return {
+      ...market,
+      totalPool: String(liveData.totalPool),
+      outcomes: market.outcomes.map((o) => {
+        const live = liveData.outcomes.find((lo) => lo.id === o.id);
+        if (!live) return o;
+        return {
+          ...o,
+          totalBetAmount: String(live.totalBetAmount),
+          lmsrProbability: live.lmsrProbability ?? o.lmsrProbability,
+          currentOdds: String(live.currentOdds),
+        } as typeof o;
+      }),
+    };
+  }, [market, liveData]);
 
   const refreshMarket = useCallback(
     (updatedMarket?: Market) => {
@@ -139,7 +161,10 @@ export function PwaMarketDetailPage() {
     );
   }
 
-  const totalBets = market.outcomes.reduce(
+  // Use live-merged market for rendering so odds/pool update in real time
+  const displayMarket = liveMarket!;
+
+  const totalBets = displayMarket.outcomes.reduce(
     (sum, o) => sum + parseFloat(o.totalBetAmount),
     0,
   );
@@ -416,7 +441,7 @@ export function PwaMarketDetailPage() {
                     fontSize: "1rem",
                   }}
                 >
-                  Nu {Number(market.totalPool).toLocaleString()}
+                  Nu {Number(displayMarket.totalPool).toLocaleString()}
                 </div>
               </div>
               <div
@@ -555,11 +580,11 @@ export function PwaMarketDetailPage() {
                 gap: "var(--space-md)",
               }}
             >
-              {market.outcomes.map((outcome, idx) => {
+              {displayMarket.outcomes.map((outcome, idx) => {
                 const pct =
                   totalBets > 0
                     ? (parseFloat(outcome.totalBetAmount) / totalBets) * 100
-                    : 100 / market.outcomes.length;
+                    : 100 / displayMarket.outcomes.length;
 
                 const colors = [
                   "#22c55e",
@@ -723,7 +748,7 @@ export function PwaMarketDetailPage() {
                 backdropFilter: "var(--glass-blur)",
               }}
             >
-              <PwaBetForm market={market} onBetPlaced={refreshMarket} />
+              <PwaBetForm market={displayMarket} onBetPlaced={refreshMarket} />
             </div>
           ) : isResolving ? (
             <div
