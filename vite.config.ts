@@ -24,7 +24,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
       ...extraPlugins,
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ["favicon.ico", "apple-touch-icon.png", "icons/*.png"],
+        includeAssets: ["oro_favicon.ico", "apple-touch-icon.png", "icons/*.png"],
         manifest: {
           name: "Oro",
           short_name: "Oro",
