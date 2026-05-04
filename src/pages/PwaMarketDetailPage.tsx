@@ -947,7 +947,7 @@ export function PwaMarketDetailPage() {
                           color: "var(--color-warning)",
                         }}
                       >
-                        Nu 5,000
+                        Nu 10
                       </span>
                     </div>
                     <div

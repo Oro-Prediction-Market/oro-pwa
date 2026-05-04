@@ -154,7 +154,7 @@ const SECTIONS = [
       },
       {
         heading: "7.2 Objection Bond",
-        text: "Filing an objection requires a Nu 5,000 dispute bond to be locked from your wallet balance. This bond is held while the objection is under review.",
+        text: "Filing an objection requires a Nu 10 dispute bond to be locked from your wallet balance. This bond is held while the objection is under review.",
       },
       {
         heading: "7.3 Objection Outcomes",
