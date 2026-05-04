@@ -683,20 +683,21 @@ export const TmaWalletPage: FC = () => {
                 fontWeight: 900,
                 color: "#fff",
                 letterSpacing: "-1px",
-                filter: balanceHidden ? "blur(10px)" : "none",
-                userSelect: balanceHidden ? "none" : "auto",
-                transition: "filter 0.2s ease",
                 textShadow: balanceFlash
                   ? "0 0 24px rgba(34,197,94,0.9)"
                   : "none",
                 animation: balanceFlash ? "balanceWin 1.4s ease-out" : "none",
               }}
             >
-              <AnimatedCounter
-                value={Number(
-                  freshUser?.creditsBalance ?? user?.creditsBalance ?? 0,
-                )}
-              />
+              {balanceHidden ? (
+                "****"
+              ) : (
+                <AnimatedCounter
+                  value={Number(
+                    freshUser?.creditsBalance ?? user?.creditsBalance ?? 0,
+                  )}
+                />
+              )}
             </span>
           </div>
 

@@ -306,7 +306,7 @@ export function PwaWalletPage() {
                 }}
               >
                 {balanceHidden
-                  ? "••••"
+                  ? "****"
                   : Number(profile.creditsBalance).toLocaleString()}
               </span>
               <span
