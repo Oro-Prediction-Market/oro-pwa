@@ -26,6 +26,7 @@ export function PwaMarketDetailPage() {
   const [disputeSuccess, setDisputeSuccess] = useState(false);
   const [imgError, setImgError] = useState(false);
 
+  const bp = useBreakpoint();
   const liveData = useMarketSocket(id);
 
   const liveMarket = useMemo<Market | null>(() => {
@@ -171,7 +172,6 @@ export function PwaMarketDetailPage() {
 
   const isOpen = market.status === "open";
   const isResolving = market.status === "resolving";
-  const bp = useBreakpoint();
 
   const proposedOutcome =
     isResolving && market.proposedOutcomeId
