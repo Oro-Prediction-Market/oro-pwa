@@ -23,8 +23,10 @@ import {
   type ResolvedMarket,
   type AuthUser,
 } from "@shared/api/client";
+import { useAuth } from "@shared/hooks/useAuth";
 
 export function PwaResultsPage() {
+  const { loading: authLoading } = useAuth();
   const [bets, setBets] = useState<Bet[]>([]);
   const [betsLoading, setBetsLoading] = useState(true);
   const [betsError, setBetsError] = useState<string | null>(null);
@@ -34,18 +36,24 @@ export function PwaResultsPage() {
   const [me, setMe] = useState<AuthUser | null>(null);
   const [repOpen, setRepOpen] = useState(true);
 
+  // Wait for auth to finish before fetching user-specific data
   useEffect(() => {
+    if (authLoading) return;
     getMyResults()
       .then(setBets)
       .catch((e) => setBetsError(e.message ?? "Sign in to view your results"))
       .finally(() => setBetsLoading(false));
+    getMe()
+      .then(setMe)
+      .catch(() => {});
+  }, [authLoading]);
+
+  // Resolved markets are public — fetch immediately
+  useEffect(() => {
     getResolvedMarkets()
       .then(setResolved)
       .catch(() => {})
       .finally(() => setResolvedLoading(false));
-    getMe()
-      .then(setMe)
-      .catch(() => {});
   }, []);
 
   const stats = useMemo(() => {
@@ -520,8 +528,7 @@ export function PwaResultsPage() {
                                 textTransform: "uppercase",
                               }}
                             >
-                              Next Rank:{" "}
-                              <span style={{ color }}>{label}</span>
+                              Next Rank: <span style={{ color }}>{label}</span>
                             </span>
                             <span
                               style={{ fontSize: 12, fontWeight: 900, color }}
@@ -602,7 +609,9 @@ export function PwaResultsPage() {
                   {bets.length} bet{bets.length !== 1 ? "s" : ""}
                 </span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
                 {bets.map((bet) => {
                   const isWon = bet.status === "won";
                   const isLost = bet.status === "lost";
@@ -824,7 +833,9 @@ export function PwaResultsPage() {
               fontWeight: 600,
             }}
           >
-            {resolvedLoading ? "…" : `${resolved.length} market${resolved.length !== 1 ? "s" : ""}`}
+            {resolvedLoading
+              ? "…"
+              : `${resolved.length} market${resolved.length !== 1 ? "s" : ""}`}
           </span>
         </div>
 
@@ -933,9 +944,7 @@ export function PwaResultsPage() {
                       }}
                     >
                       <Trophy size={16} stroke="#22c55e" />
-                      <div
-                        style={{ display: "flex", flexDirection: "column" }}
-                      >
+                      <div style={{ display: "flex", flexDirection: "column" }}>
                         <span
                           style={{
                             fontSize: 10,
