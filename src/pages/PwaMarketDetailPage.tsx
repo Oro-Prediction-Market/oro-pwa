@@ -330,7 +330,7 @@ export function PwaMarketDetailPage() {
           <div>
             <h1
               style={{
-                fontSize: bp === "mobile" ? "1.35rem" : "1.85rem",
+                fontSize: bp === "mobile" ? "1.4rem" : "1.85rem",
                 fontWeight: 900,
                 color: "var(--text-main)",
                 marginBottom: "var(--space-sm)",
@@ -381,7 +381,7 @@ export function PwaMarketDetailPage() {
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.6rem" : "0.68rem",
+                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -398,7 +398,7 @@ export function PwaMarketDetailPage() {
                         ? "var(--color-warning)"
                         : "var(--text-muted)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.8rem" : "1rem",
+                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
@@ -427,7 +427,7 @@ export function PwaMarketDetailPage() {
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.6rem" : "0.68rem",
+                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -440,7 +440,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.8rem" : "1rem",
+                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
                   }}
                 >
                   Nu {Number(displayMarket.totalPool).toLocaleString()}
@@ -458,7 +458,7 @@ export function PwaMarketDetailPage() {
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.6rem" : "0.68rem",
+                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -471,7 +471,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.8rem" : "1rem",
+                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
                   }}
                 >
                   {market.closesAt
