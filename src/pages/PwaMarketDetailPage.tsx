@@ -268,7 +268,7 @@ export function PwaMarketDetailPage() {
             background: "var(--bg-card)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-sm)",
-            padding: "8px 16px",
+            padding: bp === "mobile" ? "8px" : "8px 16px",
             fontSize: "0.85rem",
             fontWeight: 800,
             color: "var(--text-main)",
@@ -278,6 +278,9 @@ export function PwaMarketDetailPage() {
             gap: 8,
             boxShadow: "var(--shadow-sm)",
             transition: "all 0.2s",
+            width: bp === "mobile" ? 36 : "auto",
+            height: bp === "mobile" ? 36 : "auto",
+            justifyContent: "center",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.borderColor = "var(--text-subtle)";
@@ -302,7 +305,7 @@ export function PwaMarketDetailPage() {
             <polyline points="16 6 12 2 8 6" />
             <line x1="12" y1="2" x2="12" y2="15" />
           </svg>
-          Share
+          {bp !== "mobile" && "Share"}
         </button>
       </div>
 
@@ -355,16 +358,15 @@ export function PwaMarketDetailPage() {
 
           <div
             style={{
-              overflowX: bp === "mobile" ? "auto" : "visible",
-              WebkitOverflowScrolling: "touch" as any,
+              overflowX: "visible",
             }}
           >
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "var(--space-md)",
-                minWidth: bp === "mobile" ? 480 : "auto",
+                gridTemplateColumns:
+                  bp === "mobile" ? "1fr 1fr 1fr" : "repeat(3, 1fr)",
+                gap: bp === "mobile" ? "var(--space-sm)" : "var(--space-md)",
               }}
             >
               <div
@@ -372,14 +374,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: "var(--space-md)",
+                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: "0.68rem",
+                    fontSize: bp === "mobile" ? "0.6rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -396,7 +398,7 @@ export function PwaMarketDetailPage() {
                         ? "var(--color-warning)"
                         : "var(--text-muted)",
                     fontWeight: 900,
-                    fontSize: "1rem",
+                    fontSize: bp === "mobile" ? "0.8rem" : "1rem",
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
@@ -418,14 +420,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: "var(--space-md)",
+                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: "0.68rem",
+                    fontSize: bp === "mobile" ? "0.6rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -438,7 +440,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: "1rem",
+                    fontSize: bp === "mobile" ? "0.8rem" : "1rem",
                   }}
                 >
                   Nu {Number(displayMarket.totalPool).toLocaleString()}
@@ -449,14 +451,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: "var(--space-md)",
+                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: "0.68rem",
+                    fontSize: bp === "mobile" ? "0.6rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -469,14 +471,13 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: "1rem",
+                    fontSize: bp === "mobile" ? "0.8rem" : "1rem",
                   }}
                 >
                   {market.closesAt
                     ? new Date(market.closesAt).toLocaleDateString(undefined, {
-                        month: "long",
+                        month: bp === "mobile" ? "short" : "long",
                         day: "numeric",
-                        year: "numeric",
                       })
                     : "N/A"}
                 </div>
