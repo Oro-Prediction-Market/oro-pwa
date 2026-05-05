@@ -327,13 +327,13 @@ export function PwaMarketDetailPage() {
           <div>
             <h1
               style={{
-                fontSize: bp === "mobile" ? "1.75rem" : "2.5rem",
+                fontSize: bp === "mobile" ? "1.35rem" : "1.85rem",
                 fontWeight: 900,
                 color: "var(--text-main)",
                 marginBottom: "var(--space-sm)",
-                lineHeight: 1.15,
+                lineHeight: 1.2,
                 fontFamily: "var(--font-display)",
-                letterSpacing: "-0.03em",
+                letterSpacing: "-0.02em",
               }}
             >
               {market.title}
@@ -1145,59 +1145,145 @@ export function PwaMarketDetailPage() {
                 background: "var(--bg-card)",
                 border: "1px solid var(--border)",
                 borderRadius: "var(--radius-lg)",
-                padding: "48px 24px",
+                padding: "32px 24px",
                 textAlign: "center",
                 boxShadow: "var(--shadow-lg)",
+                marginTop: "var(--space-lg)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
               }}
             >
+              {/* Winning outcome display */}
+              {market.resolvedOutcomeId &&
+                (() => {
+                  const winnerOutcome = market.outcomes.find(
+                    (o) => o.id === market.resolvedOutcomeId,
+                  );
+                  if (!winnerOutcome) return null;
+                  return (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "14px 18px",
+                        background: "rgba(34, 197, 94, 0.08)",
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid rgba(34, 197, 94, 0.2)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: "50%",
+                          background: "rgba(34, 197, 94, 0.15)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#22c55e"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 8 12 8s5-4 7.5-4a2.5 2.5 0 0 1 0 5H18" />
+                          <path d="M18 9v8a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9" />
+                          <path d="M12 8v13" />
+                        </svg>
+                      </div>
+                      <div style={{ textAlign: "left" }}>
+                        <div
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: 800,
+                            color: "#22c55e",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.06em",
+                          }}
+                        >
+                          Winning Outcome
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "1.05rem",
+                            fontWeight: 900,
+                            color: "#22c55e",
+                            marginTop: 2,
+                          }}
+                        >
+                          {winnerOutcome.label}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
               <div
                 style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: "50%",
-                  background: "var(--bg-secondary)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  margin: "0 auto 24px",
+                  gap: 10,
                 }}
               >
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--text-subtle)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "var(--bg-secondary)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--text-subtle)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      color: "var(--text-muted)",
+                      fontSize: "0.95rem",
+                      fontFamily: "var(--font-display)",
+                    }}
+                  >
+                    Market Resolved
+                  </div>
+                  <p
+                    style={{
+                      color: "var(--text-subtle)",
+                      fontSize: "0.8rem",
+                      lineHeight: 1.4,
+                      fontWeight: 500,
+                      margin: "2px 0 0",
+                    }}
+                  >
+                    No longer accepting bets.
+                  </p>
+                </div>
               </div>
-              <div
-                style={{
-                  fontWeight: 900,
-                  color: "var(--text-muted)",
-                  fontSize: "1.25rem",
-                  marginBottom: "8px",
-                  fontFamily: "var(--font-display)",
-                }}
-              >
-                Portal Sealed
-              </div>
-              <p
-                style={{
-                  color: "var(--text-subtle)",
-                  fontSize: "0.95rem",
-                  lineHeight: 1.5,
-                  fontWeight: 500,
-                }}
-              >
-                This prediction market has concluded and is no longer accepting
-                bets.
-              </p>
             </div>
           )}
         </div>
