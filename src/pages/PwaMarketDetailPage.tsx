@@ -1155,77 +1155,77 @@ export function PwaMarketDetailPage() {
               }}
             >
               {/* Winning outcome display */}
-              {market.resolvedOutcomeId &&
-                (() => {
-                  const winnerOutcome = market.outcomes.find(
-                    (o) => o.id === market.resolvedOutcomeId,
-                  );
-                  if (!winnerOutcome) return null;
-                  return (
+              {(() => {
+                if (!market.resolvedOutcomeId) return null;
+                const winnerOutcome = market.outcomes.find(
+                  (o) => o.id === market.resolvedOutcomeId,
+                );
+                if (!winnerOutcome) return null;
+                return (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "14px 18px",
+                      background: "rgba(34, 197, 94, 0.08)",
+                      borderRadius: "var(--radius-md)",
+                      border: "1px solid rgba(34, 197, 94, 0.2)",
+                    }}
+                  >
                     <div
                       style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        background: "rgba(34, 197, 94, 0.15)",
                         display: "flex",
                         alignItems: "center",
-                        gap: 12,
-                        padding: "14px 18px",
-                        background: "rgba(34, 197, 94, 0.08)",
-                        borderRadius: "var(--radius-md)",
-                        border: "1px solid rgba(34, 197, 94, 0.2)",
+                        justifyContent: "center",
+                        flexShrink: 0,
                       }}
                     >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#22c55e"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 8 12 8s5-4 7.5-4a2.5 2.5 0 0 1 0 5H18" />
+                        <path d="M18 9v8a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9" />
+                        <path d="M12 8v13" />
+                      </svg>
+                    </div>
+                    <div style={{ textAlign: "left" }}>
                       <div
                         style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          background: "rgba(34, 197, 94, 0.15)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
+                          fontSize: "0.65rem",
+                          fontWeight: 800,
+                          color: "#22c55e",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
                         }}
                       >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="#22c55e"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 9 8 12 8s5-4 7.5-4a2.5 2.5 0 0 1 0 5H18" />
-                          <path d="M18 9v8a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V9" />
-                          <path d="M12 8v13" />
-                        </svg>
+                        Winning Outcome
                       </div>
-                      <div style={{ textAlign: "left" }}>
-                        <div
-                          style={{
-                            fontSize: "0.65rem",
-                            fontWeight: 800,
-                            color: "#22c55e",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.06em",
-                          }}
-                        >
-                          Winning Outcome
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "1.05rem",
-                            fontWeight: 900,
-                            color: "#22c55e",
-                            marginTop: 2,
-                          }}
-                        >
-                          {winnerOutcome.label}
-                        </div>
+                      <div
+                        style={{
+                          fontSize: "1.05rem",
+                          fontWeight: 900,
+                          color: "#22c55e",
+                          marginTop: 2,
+                        }}
+                      >
+                        {winnerOutcome.label}
                       </div>
                     </div>
-                  );
-                })()}
+                  </div>
+                );
+              })()}
 
               <div
                 style={{
