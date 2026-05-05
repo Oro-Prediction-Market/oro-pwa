@@ -19,14 +19,13 @@ import {
   getMyResults,
   getResolvedMarkets,
   getMe,
+  getToken,
   type Bet,
   type ResolvedMarket,
   type AuthUser,
 } from "@shared/api/client";
-import { useAuth } from "@shared/hooks/useAuth";
 
 export function PwaResultsPage() {
-  const { loading: authLoading } = useAuth();
   const [bets, setBets] = useState<Bet[]>([]);
   const [betsLoading, setBetsLoading] = useState(true);
   const [betsError, setBetsError] = useState<string | null>(null);
@@ -36,9 +35,13 @@ export function PwaResultsPage() {
   const [me, setMe] = useState<AuthUser | null>(null);
   const [repOpen, setRepOpen] = useState(true);
 
-  // Wait for auth to finish before fetching user-specific data
+  // Fetch user-specific data if authenticated
   useEffect(() => {
-    if (authLoading) return;
+    if (!getToken()) {
+      setBetsLoading(false);
+      setBetsError("Sign in to view your results");
+      return;
+    }
     getMyResults()
       .then(setBets)
       .catch((e) => setBetsError(e.message ?? "Sign in to view your results"))
@@ -46,7 +49,7 @@ export function PwaResultsPage() {
     getMe()
       .then(setMe)
       .catch(() => {});
-  }, [authLoading]);
+  }, []);
 
   // Resolved markets are public — fetch immediately
   useEffect(() => {
