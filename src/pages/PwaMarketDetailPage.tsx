@@ -330,7 +330,7 @@ export function PwaMarketDetailPage() {
           <div>
             <h1
               style={{
-                fontSize: bp === "mobile" ? "1.4rem" : "1.85rem",
+                fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
                 fontWeight: 900,
                 color: "var(--text-main)",
                 marginBottom: "var(--space-sm)",
