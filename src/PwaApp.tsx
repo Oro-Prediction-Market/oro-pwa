@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { useEffect, useState, lazy, Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
 
 // Eagerly-loaded shell components
 import { PwaBottomNav } from "./components/PwaBottomNav";
@@ -1663,12 +1664,14 @@ export function PwaApp() {
   }, [authed]);
 
   return (
-    <ThemeProvider>
-      <FilterProvider>
-        <BrowserRouter>
-          <PwaLayout authed={authed} onAuthSuccess={() => setAuthed(true)} />
-        </BrowserRouter>
-      </FilterProvider>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <FilterProvider>
+          <BrowserRouter>
+            <PwaLayout authed={authed} onAuthSuccess={() => setAuthed(true)} />
+          </BrowserRouter>
+        </FilterProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
