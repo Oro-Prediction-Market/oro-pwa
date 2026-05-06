@@ -1,5 +1,5 @@
 import {
-  HashRouter,
+  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -1665,9 +1665,9 @@ export function PwaApp() {
   return (
     <ThemeProvider>
       <FilterProvider>
-        <HashRouter>
+        <BrowserRouter>
           <PwaLayout authed={authed} onAuthSuccess={() => setAuthed(true)} />
-        </HashRouter>
+        </BrowserRouter>
       </FilterProvider>
     </ThemeProvider>
   );
