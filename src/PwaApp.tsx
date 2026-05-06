@@ -1510,6 +1510,55 @@ function PwaFooter({ setShowFaq }: { setShowFaq: (v: boolean) => void }) {
                 </span>
               </div>
             </a>
+            <a
+              href="mailto:oro@romtech.bt"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                color: "rgba(255,255,255,0.6)",
+                textDecoration: "none",
+                padding: "12px 16px",
+                background: "rgba(255,255,255,0.03)",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,0.05)",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+                e.currentTarget.style.color = "#fff";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.05)";
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontSize: "0.9rem", fontWeight: 800 }}>
+                  Email
+                </span>
+                <span
+                  style={{ fontSize: "0.75rem", opacity: 0.6, fontWeight: 500 }}
+                >
+                  oro@romtech.bt
+                </span>
+              </div>
+            </a>
           </div>
         </div>
 
