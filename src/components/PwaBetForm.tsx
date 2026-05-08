@@ -1,5 +1,11 @@
 import { FC, useState } from "react";
-import { Market, placeBet, getMarket, bustCache } from "@shared/api/client";
+import {
+  Market,
+  placeBet,
+  getMarket,
+  bustCache,
+  trackEvent,
+} from "@shared/api/client";
 import { PwaPaymentModal } from "./PwaPaymentModal";
 import type { PaymentResponse } from "@shared/types/payment";
 
@@ -158,9 +164,17 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             return (
               <button
                 key={outcome.id}
-                onClick={() =>
-                  setSelectedOutcomeId(isSelected ? null : outcome.id)
-                }
+                onClick={() => {
+                  const newId = isSelected ? null : outcome.id;
+                  setSelectedOutcomeId(newId);
+                  if (newId) {
+                    trackEvent({
+                      eventType: "bet.modal.open",
+                      platform: "pwa",
+                      meta: { marketId: market.id, marketTitle: market.title },
+                    });
+                  }
+                }}
                 style={{
                   padding: "var(--space-md)",
                   borderRadius: "var(--radius-md)",
