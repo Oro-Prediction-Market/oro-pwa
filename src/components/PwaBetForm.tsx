@@ -9,8 +9,12 @@ interface PwaBetFormProps {
 }
 
 const DEFAULT_AMOUNT = 100;
-const MIN_BET = 50;
-const QUICK_AMOUNTS = [50, 100, 200, 500];
+const QUICK_AMOUNTS_DEFAULT = [50, 100, 200, 500];
+const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
+
+function getMinBet(market: Market): number {
+  return market.externalSource === "ter" ? 10 : 50;
+}
 
 function calcWin(market: Market, outcomeId: string, bet: number): number {
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
@@ -33,6 +37,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const [betSuccess, setBetSuccess] = useState(false);
 
   const betAmount = parseFloat(amount) || 0;
+  const MIN_BET = getMinBet(market);
+  const QUICK_AMOUNTS =
+    market.externalSource === "ter" ? QUICK_AMOUNTS_TER : QUICK_AMOUNTS_DEFAULT;
   const winAmount = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount)
     : 0;

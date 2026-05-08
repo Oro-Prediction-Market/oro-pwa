@@ -5,13 +5,240 @@ import {
   getDisputes,
   submitDispute,
   bustCache,
+  getTerPrice,
   Market,
   Dispute,
+  TerPrice,
 } from "@shared/api/client";
 import { PwaBetForm } from "../components/PwaBetForm";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { useMarketSocket } from "../hooks/useMarketSocket";
+
+// ── TER Price Panel (for market detail) ──────────────────────────────────────
+function TerPricePanel({ market }: { market: Market }) {
+  const meta = market.metadata || {};
+  const refPrice = meta.referenceBuyPrice ?? meta.referenceTerPrice ?? 0;
+  const settlementPrice = meta.settlementBuyPrice ?? meta.settlementTerPrice;
+  const isSettled = market.status === "settled" || market.status === "resolved";
+  const isClosed = market.status === "closed" || market.status === "resolving";
+
+  const [live, setLive] = useState<TerPrice | null>(null);
+
+  useEffect(() => {
+    if (isSettled || isClosed) return;
+    const fetch_ = () =>
+      getTerPrice()
+        .then(setLive)
+        .catch(() => {});
+    fetch_();
+    const id = setInterval(fetch_, 10_000);
+    return () => clearInterval(id);
+  }, [isSettled, isClosed]);
+
+  const displayPrice = isSettled
+    ? settlementPrice
+    : (live?.buyPrice ?? live?.midPrice);
+  const diff = displayPrice != null ? displayPrice - refPrice : null;
+  const pct =
+    diff != null && refPrice ? ((diff / refPrice) * 100).toFixed(2) : null;
+  const refMid = meta.referenceTerPrice ?? 0;
+  const liveMid = isSettled ? meta.settlementTerPrice : live?.midPrice;
+  const dir =
+    liveMid == null
+      ? null
+      : liveMid > refMid
+        ? "up"
+        : liveMid < refMid
+          ? "down"
+          : "flat";
+  const winLabel = isSettled
+    ? market.outcomes.find((o) => o.id === market.resolvedOutcomeId)?.label
+    : null;
+
+  const upColor = "#22c55e";
+  const downColor = "#ef4444";
+
+  return (
+    <div
+      style={{
+        background: "var(--bg-card)",
+        border: `1px solid ${dir === "up" ? "rgba(34,197,94,0.3)" : dir === "down" ? "rgba(239,68,68,0.3)" : "var(--border)"}`,
+        borderRadius: "var(--radius-lg)",
+        padding: 20,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "0.65rem",
+          fontWeight: 800,
+          color: "var(--accent, #a78bfa)",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+        }}
+      >
+        TER · 5 Minute Price Prediction
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              color: "var(--text-subtle)",
+              marginBottom: 2,
+            }}
+          >
+            Open price
+          </div>
+          <div
+            style={{
+              fontSize: "1.3rem",
+              fontWeight: 800,
+              color: "var(--text-main)",
+            }}
+          >
+            Nu {refPrice.toFixed(4)}
+          </div>
+        </div>
+        <div style={{ fontSize: 22, color: "var(--text-subtle)" }}>→</div>
+        <div style={{ flex: 1, textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              color: "var(--text-subtle)",
+              marginBottom: 2,
+            }}
+          >
+            {isSettled ? "Close price" : "Live price"}
+          </div>
+          <div
+            style={{
+              fontSize: "1.3rem",
+              fontWeight: 800,
+              color:
+                dir === "up"
+                  ? upColor
+                  : dir === "down"
+                    ? downColor
+                    : "var(--text-main)",
+            }}
+          >
+            {displayPrice != null ? `Nu ${displayPrice.toFixed(4)}` : "—"}
+          </div>
+        </div>
+      </div>
+      {diff != null && dir !== "flat" && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "8px 12px",
+            borderRadius: 10,
+            background:
+              dir === "up" ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+            color: dir === "up" ? upColor : downColor,
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
+          <span>{dir === "up" ? "▲" : "▼"}</span>
+          <span>
+            {dir === "up" ? "+" : ""}
+            {diff.toFixed(4)} BTN ({dir === "up" ? "+" : ""}
+            {pct}%)
+          </span>
+          {isSettled && winLabel && (
+            <span style={{ marginLeft: "auto", fontSize: 12, opacity: 0.9 }}>
+              {winLabel === "UP" ? "▲ UP won" : "▼ DOWN won"}
+            </span>
+          )}
+        </div>
+      )}
+      {/* Resolution data — styled like api.ter.bt/prices */}
+      {isSettled && meta && (
+        <div
+          style={{
+            background: "rgba(0,0,0,0.4)",
+            borderRadius: 12,
+            padding: "14px 16px",
+            fontFamily: "monospace",
+            fontSize: "0.72rem",
+            lineHeight: 1.7,
+            color: "#e2e8f0",
+            overflowX: "auto",
+          }}
+        >
+          <div
+            style={{
+              color: "#94a3b8",
+              marginBottom: 4,
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
+          >
+            Resolution · ter.bt/prices
+          </div>
+          <div>
+            <span style={{ color: "#94a3b8" }}>{"{"}</span>
+          </div>
+          <div style={{ paddingLeft: 14 }}>
+            <span style={{ color: "#7dd3fc" }}>"product_symbol"</span>:{" "}
+            <span style={{ color: "#fbbf24" }}>"TERBTN"</span>,
+          </div>
+          <div style={{ paddingLeft: 14 }}>
+            <span style={{ color: "#7dd3fc" }}>"ask_price"</span>:{" "}
+            <span style={{ color: "#86efac" }}>
+              {(
+                (meta.settlementBuyPrice ?? meta.settlementTerPrice ?? 0) *
+                10000
+              ).toFixed(0)}
+            </span>
+            ,
+          </div>
+          <div style={{ paddingLeft: 14 }}>
+            <span style={{ color: "#7dd3fc" }}>"bid_price"</span>:{" "}
+            <span style={{ color: "#86efac" }}>
+              {(
+                (meta.settlementSellPrice ?? meta.settlementTerPrice ?? 0) *
+                10000
+              ).toFixed(0)}
+            </span>
+            ,
+          </div>
+          <div style={{ paddingLeft: 14 }}>
+            <span style={{ color: "#7dd3fc" }}>"spread"</span>:{" "}
+            <span style={{ color: "#86efac" }}>
+              {(
+                ((meta.settlementBuyPrice ?? 0) -
+                  (meta.settlementSellPrice ?? 0)) *
+                10000
+              ).toFixed(0)}
+            </span>
+            ,
+          </div>
+          <div style={{ paddingLeft: 14 }}>
+            <span style={{ color: "#7dd3fc" }}>"tradeable"</span>:{" "}
+            <span style={{ color: "#c4b5fd" }}>true</span>,
+          </div>
+          <div style={{ paddingLeft: 14 }}>
+            <span style={{ color: "#7dd3fc" }}>"effective_at"</span>:{" "}
+            <span style={{ color: "#fbbf24" }}>"{market.closesAt ?? ""}"</span>
+          </div>
+          <div>
+            <span style={{ color: "#94a3b8" }}>{"}"}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PwaMarketDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -341,7 +568,7 @@ export function PwaMarketDetailPage() {
             >
               {market.title}
             </h1>
-            {market.description && (
+            {market.description && market.externalSource !== "ter" && (
               <p
                 style={{
                   color: "var(--text-muted)",
@@ -355,6 +582,11 @@ export function PwaMarketDetailPage() {
               </p>
             )}
           </div>
+
+          {/* TER Price Panel */}
+          {market.externalSource === "ter" && market.metadata?.isTer && (
+            <TerPricePanel market={market} />
+          )}
 
           <div
             style={{

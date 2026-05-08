@@ -7,11 +7,18 @@ import {
 } from "@shared/api/dkbank";
 import { loginWithDKBank } from "@shared/api/client";
 import type { Market } from "@shared/api/client";
-import type { DKBankPaymentRequest, PaymentResponse } from "@shared/types/payment";
+import type {
+  DKBankPaymentRequest,
+  PaymentResponse,
+} from "@shared/types/payment";
 import { PayoutBreakdown } from "@shared/components/PayoutBreakdown";
 
-const QUICK_AMOUNTS = [50, 100, 200, 500];
-const MIN_BET = 50;
+const QUICK_AMOUNTS_DEFAULT = [50, 100, 200, 500];
+const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
+
+function getMinBet(market: Market): number {
+  return market.externalSource === "ter" ? 10 : 50;
+}
 
 interface PwaPaymentModalProps {
   isOpen: boolean;
@@ -41,6 +48,9 @@ export function PwaPaymentModal({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
+  const MIN_BET = getMinBet(market);
+  const QUICK_AMOUNTS =
+    market.externalSource === "ter" ? QUICK_AMOUNTS_TER : QUICK_AMOUNTS_DEFAULT;
   const betAmount = parseFloat(amountStr) || 0;
   const isValidAmount = betAmount >= MIN_BET;
   const canPay =

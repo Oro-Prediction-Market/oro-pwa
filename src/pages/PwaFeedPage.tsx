@@ -15,6 +15,7 @@ const TmaBetModal = lazy(() =>
   })),
 );
 import { PwaMarketCard } from "../components/PwaMarketCard";
+import { TerMarketCard } from "../components/TerMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { Flame } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
@@ -179,7 +180,13 @@ interface ActiveBet {
   outcomeId: string;
 }
 
-export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boolean; onAuthRequired?: () => void }) {
+export function PwaFeedPage({
+  authed = false,
+  onAuthRequired,
+}: {
+  authed?: boolean;
+  onAuthRequired?: () => void;
+}) {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
@@ -218,38 +225,54 @@ export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boole
   } = useFilter();
 
   useEffect(() => {
-    getMarkets()
-      .then((d) => {
-        const now = Date.now();
-        const cutoff48h = 48 * 60 * 60 * 1000;
+    const loadMarkets = () => {
+      getMarkets()
+        .then((d) => {
+          const now = Date.now();
+          const cutoff48h = 48 * 60 * 60 * 1000;
 
-        // Only show live/upcoming + resolving within last 48h
-        const active = d.filter((m) => {
-          if (m.status === "open" || m.status === "upcoming") return true;
-          if (m.status === "resolving") {
-            // Use closesAt to determine age; hide if closed more than 48h ago
-            const closedAt = m.closesAt ? new Date(m.closesAt).getTime() : null;
-            return closedAt ? now - closedAt < cutoff48h : true;
-          }
-          return false;
-        });
+          // Only show live/upcoming + resolving within last 48h
+          const active = d.filter((m) => {
+            if (m.status === "open" || m.status === "upcoming") return true;
+            if (m.status === "resolving") {
+              // Use closesAt to determine age; hide if closed more than 48h ago
+              const closedAt = m.closesAt
+                ? new Date(m.closesAt).getTime()
+                : null;
+              return closedAt ? now - closedAt < cutoff48h : true;
+            }
+            return false;
+          });
 
-        setMarkets(active);
-        setHasTrendingMarkets(
-          active.filter((m) => m.status === "open").length > 0,
-        );
+          setMarkets(active);
+          setHasTrendingMarkets(
+            active.filter((m) => m.status === "open").length > 0,
+          );
 
-        // Update global categories
-        const cats = [
-          "All",
-          ...(Array.from(
-            new Set(active.map((m) => m.category).filter(Boolean)),
-          ) as string[]),
-        ];
-        setAvailableCategories(cats);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+          // Update global categories
+          const cats = [
+            "All",
+            ...(Array.from(
+              new Set(active.map((m) => m.category).filter(Boolean)),
+            ) as string[]),
+          ];
+          setAvailableCategories(cats);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    };
+
+    loadMarkets();
+
+    // Re-fetch when a market changes (SSE push) or every 10s for fast TER transitions
+    const onMarketChanged = () => loadMarkets();
+    window.addEventListener("oro:market-changed", onMarketChanged);
+    const poll = setInterval(loadMarkets, 10_000);
+
+    return () => {
+      window.removeEventListener("oro:market-changed", onMarketChanged);
+      clearInterval(poll);
+    };
   }, []);
 
   const handleBetSuccess = () => {
@@ -356,6 +379,8 @@ export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boole
     );
 
   const filteredMarkets = markets.filter((m) => {
+    // Hide TER markets from "All" — only show under Economy
+    if (selectedCategory === "All" && m.externalSource === "ter") return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -379,13 +404,29 @@ export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boole
 
   const renderGrid = (items: Market[]) => (
     <PwaMarketGrid>
-      {items.map((market) => (
-        <PwaMarketCard
-          key={market.id}
-          market={market}
-          onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
-        />
-      ))}
+      {items.map((market) => {
+        // Use TerMarketCard for TER markets
+        if (market.externalSource === "ter") {
+          return (
+            <TerMarketCard
+              key={market.id}
+              market={market}
+              onBet={async (marketId, outcomeId) => {
+                handleBetClick(marketId, outcomeId);
+                // The actual bet placement will happen in the modal
+              }}
+            />
+          );
+        }
+        // Use normal PwaMarketCard for all other markets
+        return (
+          <PwaMarketCard
+            key={market.id}
+            market={market}
+            onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
+          />
+        );
+      })}
     </PwaMarketGrid>
   );
 
@@ -622,21 +663,29 @@ export function PwaFeedPage({ authed = false, onAuthRequired }: { authed?: boole
       {showAuthModal && (
         <div
           style={{
-            position: "fixed", inset: 0, zIndex: 9999,
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
             background: "rgba(0,0,0,0.6)",
             backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             padding: "20px",
           }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowAuthModal(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAuthModal(false);
+          }}
         >
           <div
             style={{
-              width: "100%", maxWidth: 440,
+              width: "100%",
+              maxWidth: 440,
               background: "var(--bg-main)",
               borderRadius: 20,
               padding: "24px 4px",
-              maxHeight: "90vh", overflowY: "auto",
+              maxHeight: "90vh",
+              overflowY: "auto",
               animation: "fadeScaleIn 0.2s ease-out",
             }}
           >
