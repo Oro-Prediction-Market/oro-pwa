@@ -391,7 +391,14 @@ export function PwaFeedPage({
     return matchesSearch && matchesCategory;
   });
 
-  const openMarkets = filteredMarkets.filter((m) => m.status === "open");
+  const openMarkets = filteredMarkets
+    .filter((m) => m.status === "open")
+    .sort((a, b) => {
+      // TER markets always appear first
+      if (a.externalSource === "ter" && b.externalSource !== "ter") return -1;
+      if (b.externalSource === "ter" && a.externalSource !== "ter") return 1;
+      return 0;
+    });
   const resolvingMarkets = filteredMarkets.filter(
     (m) => m.status === "resolving",
   );
