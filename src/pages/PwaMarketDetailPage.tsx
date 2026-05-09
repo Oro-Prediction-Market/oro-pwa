@@ -814,10 +814,17 @@ export function PwaMarketDetailPage() {
               }}
             >
               {displayMarket.outcomes.map((outcome, idx) => {
+                // Laplace-smoothed probability — avoids misleading 100%/0% at thin liquidity
+                const prior = 1000; // virtual BTN spread evenly across outcomes
+                const n = displayMarket.outcomes.length || 1;
+                const smoothedAmount =
+                  parseFloat(outcome.totalBetAmount) + prior / n;
+                const smoothedTotal = totalBets + prior;
                 const pct =
-                  totalBets > 0
-                    ? (parseFloat(outcome.totalBetAmount) / totalBets) * 100
-                    : 100 / displayMarket.outcomes.length;
+                  (outcome as any).lmsrProbability != null &&
+                  (outcome as any).lmsrProbability > 0
+                    ? (outcome as any).lmsrProbability * 100
+                    : (smoothedAmount / smoothedTotal) * 100;
 
                 const colors = [
                   "#22c55e",
