@@ -1,6 +1,7 @@
 import { useState, useEffect, memo, type FC } from "react";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { UnderdogBanner, getUnderdogLabel } from "@shared/components/UnderdogBanner";
 
 function outcomeColor(rank: number, total: number): string {
   if (rank === 0) return "#22c55e";
@@ -246,6 +247,10 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               </div>
             ) : (
               <>
+                {(() => {
+                  const ul = market.status === "open" ? getUnderdogLabel(market.outcomes, totalPool) : null;
+                  return ul ? <UnderdogBanner underdogLabel={ul} /> : null;
+                })()}
                 <div
                   style={{
                     display: "flex",

@@ -14,6 +14,7 @@ import { PwaBetForm } from "../components/PwaBetForm";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { useMarketSocket } from "../hooks/useMarketSocket";
+import { UnderdogBanner, getUnderdogLabel } from "../../shared/components/UnderdogBanner";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -813,6 +814,7 @@ export function PwaMarketDetailPage() {
                 gap: "var(--space-md)",
               }}
             >
+              {isOpen && (() => { const ul = getUnderdogLabel(displayMarket.outcomes, Number(displayMarket.totalPool)); return ul ? <UnderdogBanner underdogLabel={ul} /> : null; })()}
               {displayMarket.outcomes.map((outcome, idx) => {
                 // Laplace-smoothed probability — avoids misleading 100%/0% at thin liquidity
                 const prior = 1000; // virtual BTN spread evenly across outcomes

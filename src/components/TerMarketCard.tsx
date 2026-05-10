@@ -1,6 +1,7 @@
 import { useState, useEffect, memo, type FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { Market, getTerPrice, TerPrice } from "../../shared/api/client";
+import { UnderdogBanner } from "../../shared/components/UnderdogBanner";
 
 function useCountdown(targetAt: string | null): string {
   const [label, setLabel] = useState("");
@@ -382,6 +383,15 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
             </span>
           </div>
         </div>
+
+        {/* Underdog banner */}
+        {!isSettled && totalPool > 0 && (
+          upPct > 85
+            ? <UnderdogBanner underdogLabel="Lower" />
+            : downPct > 85
+            ? <UnderdogBanner underdogLabel="Higher" />
+            : null
+        )}
 
         {/* Action area */}
         {isSettled ? (
