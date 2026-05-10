@@ -149,7 +149,7 @@ function TerPricePanel({ market }: { market: Market }) {
           <span>{dir === "up" ? "▲" : "▼"}</span>
           <span>
             {dir === "up" ? "+" : ""}
-            {diff.toFixed(4)} BTN ({dir === "up" ? "+" : ""}
+            Nu {diff.toFixed(4)} ({dir === "up" ? "+" : ""}
             {pct}%)
           </span>
           {isSettled && winLabel && (

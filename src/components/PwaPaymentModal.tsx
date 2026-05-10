@@ -3,7 +3,7 @@ import dkBankLogo from "@shared/assets/dk blue.png";
 import {
   initiateDKBankPayment,
   checkDKBankPaymentStatus,
-  formatBTN,
+  formatNu,
 } from "@shared/api/dkbank";
 import { loginWithDKBank } from "@shared/api/client";
 import type { Market } from "@shared/api/client";
@@ -504,7 +504,7 @@ export function PwaPaymentModal({
                           : "var(--text-subtle)",
                     }}
                   >
-                    BTN · Nu
+                    Nu
                   </div>
                 </div>
               </button>
@@ -836,7 +836,7 @@ export function PwaPaymentModal({
                     gap: 7,
                   }}
                 >
-                  Pay {formatBTN(betAmount)} with
+                  Pay {formatNu(betAmount)} with
                   <span
                     style={{
                       background: "#fff",

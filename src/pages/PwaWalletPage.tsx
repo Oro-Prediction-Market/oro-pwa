@@ -319,7 +319,7 @@ export function PwaWalletPage() {
                   color: "var(--text-secondary)",
                 }}
               >
-                BTN
+                Nu
               </span>
             </div>
 
