@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, type FC } from "react";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
-import { UnderdogBanner, getUnderdogLabel } from "@shared/components/UnderdogBanner";
+import { getUnderdogLabel } from "@shared/components/UnderdogBanner";
 
 function outcomeColor(rank: number, total: number): string {
   if (rank === 0) return "#22c55e";
@@ -247,10 +247,6 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               </div>
             ) : (
               <>
-                {(() => {
-                  const ul = market.status === "open" ? getUnderdogLabel(market.outcomes, totalPool) : null;
-                  return ul ? <UnderdogBanner underdogLabel={ul} /> : null;
-                })()}
                 <div
                   style={{
                     display: "flex",
@@ -258,7 +254,9 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                     gap: "var(--space-sm)",
                   }}
                 >
-                  {displayOutcomes.map((s, idx) => {
+                  {(() => {
+                    const underdogLabel = market.status === "open" ? getUnderdogLabel(market.outcomes, totalPool) : null;
+                    return displayOutcomes.map((s, idx) => {
                     const barWidth = Math.max(4, Math.min(100, s.pct));
                     const avatarUrl = !imgError
                       ? (s as any).imageUrl ||
@@ -397,20 +395,27 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                             )}
                           </div>
 
-                          <span
-                            style={{
-                              fontSize: "0.82rem",
-                              fontWeight: 700,
-                              color: "var(--text-main)",
-                              letterSpacing: "-0.01em",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              flex: 1,
-                            }}
-                          >
-                            {s.label}
-                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span
+                              style={{
+                                fontSize: "0.82rem",
+                                fontWeight: 700,
+                                color: "var(--text-main)",
+                                letterSpacing: "-0.01em",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                display: "block",
+                              }}
+                            >
+                              {s.label}
+                            </span>
+                            {underdogLabel === s.label && (
+                              <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "#f59e0b", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", padding: "1px 5px", borderRadius: 3, display: "inline-block", marginTop: 2 }}>
+                                ⚡ Better odds
+                              </span>
+                            )}
+                          </div>
 
                           <div
                             style={{
@@ -430,7 +435,8 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                         </div>
                       </button>
                     );
-                  })}
+                  });
+                  })()}
                 </div>
 
                 {market.outcomes.length > 2 && (
