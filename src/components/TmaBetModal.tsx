@@ -390,7 +390,7 @@ export function TmaBetModal({
               }}
             >
               <ShareCTA
-                type="bet"
+                type="predict"
                 amount={betAmount}
                 marketTitle={market.title}
               />
