@@ -379,8 +379,8 @@ export function PwaFeedPage({
     );
 
   const filteredMarkets = markets.filter((m) => {
-    // Hide TER markets from "All" — only show under Economy
-    if (selectedCategory === "All" && m.externalSource === "ter") return false;
+    // TER markets temporarily hidden — will be re-enabled soon
+    if (m.externalSource === "ter") return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
