@@ -14,7 +14,10 @@ import { PwaBetForm } from "../components/PwaBetForm";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { useMarketSocket } from "../hooks/useMarketSocket";
-import { UnderdogBanner, getUnderdogLabel } from "../../shared/components/UnderdogBanner";
+import {
+  UnderdogBanner,
+  getUnderdogLabel,
+} from "../../shared/components/UnderdogBanner";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -43,16 +46,8 @@ function TerPricePanel({ market }: { market: Market }) {
   const diff = displayPrice != null ? displayPrice - refPrice : null;
   const pct =
     diff != null && refPrice ? ((diff / refPrice) * 100).toFixed(2) : null;
-  const refMid = meta.referenceTerPrice ?? 0;
-  const liveMid = isSettled ? meta.settlementTerPrice : live?.midPrice;
   const dir =
-    liveMid == null
-      ? null
-      : liveMid > refMid
-        ? "up"
-        : liveMid < refMid
-          ? "down"
-          : "flat";
+    diff == null ? null : diff > 0 ? "up" : diff < 0 ? "down" : "flat";
   const winLabel = isSettled
     ? market.outcomes.find((o) => o.id === market.resolvedOutcomeId)?.label
     : null;
@@ -814,7 +809,14 @@ export function PwaMarketDetailPage() {
                 gap: "var(--space-md)",
               }}
             >
-              {isOpen && (() => { const ul = getUnderdogLabel(displayMarket.outcomes, Number(displayMarket.totalPool)); return ul ? <UnderdogBanner underdogLabel={ul} /> : null; })()}
+              {isOpen &&
+                (() => {
+                  const ul = getUnderdogLabel(
+                    displayMarket.outcomes,
+                    Number(displayMarket.totalPool),
+                  );
+                  return ul ? <UnderdogBanner underdogLabel={ul} /> : null;
+                })()}
               {displayMarket.outcomes.map((outcome, idx) => {
                 // Laplace-smoothed probability — avoids misleading 100%/0% at thin liquidity
                 const prior = 1000; // virtual BTN spread evenly across outcomes

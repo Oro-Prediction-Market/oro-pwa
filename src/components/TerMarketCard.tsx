@@ -71,22 +71,19 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
       ? (meta.settlementBuyPrice ?? meta.settlementTerPrice)
       : (livePrice.live?.buyPrice ?? livePrice.live?.midPrice);
 
-    const refMid = meta.referenceTerPrice ?? 0;
-    const liveMid = isSettled
-      ? meta.settlementTerPrice
-      : livePrice.live?.midPrice;
     const priceHistory = livePrice.history;
-    const direction =
-      liveMid == null
-        ? null
-        : liveMid > refMid
-          ? "up"
-          : liveMid < refMid
-            ? "down"
-            : "flat";
 
     const priceDiff =
       liveDisplayPrice != null ? liveDisplayPrice - refPrice : null;
+    const direction =
+      priceDiff == null
+        ? null
+        : priceDiff > 0
+          ? "up"
+          : priceDiff < 0
+            ? "down"
+            : "flat";
+
     const pips = priceDiff != null ? Math.round(priceDiff * 10000) : null;
     const pricePct =
       priceDiff != null && refPrice
@@ -377,12 +374,38 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
             <span style={{ fontSize: "0.6rem", color: upColor }}>
               ▲ UP {upPct}%
               {!isSettled && downPct > 85 && (
-                <span style={{ marginLeft: 4, fontSize: "0.5rem", fontWeight: 800, color: "#f59e0b", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", padding: "1px 4px", borderRadius: 3 }}>⚡</span>
+                <span
+                  style={{
+                    marginLeft: 4,
+                    fontSize: "0.5rem",
+                    fontWeight: 800,
+                    color: "#f59e0b",
+                    background: "rgba(245,158,11,0.15)",
+                    border: "1px solid rgba(245,158,11,0.3)",
+                    padding: "1px 4px",
+                    borderRadius: 3,
+                  }}
+                >
+                  ⚡
+                </span>
               )}
             </span>
             <span style={{ fontSize: "0.6rem", color: downColor }}>
               {!isSettled && upPct > 85 && (
-                <span style={{ marginRight: 4, fontSize: "0.5rem", fontWeight: 800, color: "#f59e0b", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", padding: "1px 4px", borderRadius: 3 }}>⚡</span>
+                <span
+                  style={{
+                    marginRight: 4,
+                    fontSize: "0.5rem",
+                    fontWeight: 800,
+                    color: "#f59e0b",
+                    background: "rgba(245,158,11,0.15)",
+                    border: "1px solid rgba(245,158,11,0.3)",
+                    padding: "1px 4px",
+                    borderRadius: 3,
+                  }}
+                >
+                  ⚡
+                </span>
               )}
               ▼ DN {downPct}%
             </span>
