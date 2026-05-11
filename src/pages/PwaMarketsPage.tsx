@@ -156,8 +156,8 @@ export function PwaMarketsPage() {
     selectedCategory === "All" ||
     (m.category ?? "").toLowerCase() === selectedCategory.toLowerCase();
 
-  const openMarkets = markets.filter((m) => m.status === "open" && byCat(m));
-  const upcomingMarkets = markets.filter((m) => m.status === "upcoming" && byCat(m));
+  const openMarkets = markets.filter((m) => m.status === "open" && m.externalSource !== "ter" && byCat(m));
+  const upcomingMarkets = markets.filter((m) => m.status === "upcoming" && m.externalSource !== "ter" && byCat(m));
   const activeMarket = activeBet ? markets.find((m) => m.id === activeBet.marketId) : null;
   const hasResults = markets.length > 0;
 
