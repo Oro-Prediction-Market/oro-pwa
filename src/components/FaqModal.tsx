@@ -87,13 +87,13 @@ const FAQ_DATA: FAQSection[] = [
         id: "05",
         question: "How does parimutuel betting work?",
         answer:
-          "In a parimutuel market, all stakes go into a single shared pool. When the market resolves, the total pool (minus the platform fee) is distributed proportionally among everyone who bet on the winning outcome.",
+          "In a parimutuel market, all stakes go into a single shared pool. When the market resolves, the total pool (minus the platform fee) is distributed proportionally among everyone who predcited on the winning outcome.",
       },
       {
         id: "06",
         question: "Why do the odds change after I place my bet?",
         answer:
-          "Oro uses a parimutuel pool — odds shift as more people bet. When more people predict on the same outcome as you, your potential payout multiplier decreases. When fewer people predict on your outcome, the multiplier increases.",
+          "Oro uses a parimutuel pool — odds shift as more people predict. When more people predict on the same outcome as you, your potential payout multiplier decreases. When fewer people predict on your outcome, the multiplier increases.",
       },
     ],
   },

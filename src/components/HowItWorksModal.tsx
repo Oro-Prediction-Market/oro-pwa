@@ -49,7 +49,7 @@ const STEPS: Step[] = [
   {
     icon: <BarChart2 size={32} />,
     title: "Watch the odds move",
-    desc: "Oro uses a parimutuel pool — odds shift as more people bet. The more people agree with you, the lower your potential payout.",
+    desc: "Oro uses a parimutuel pool — odds shift as more people predict. The more people agree with you, the lower your potential payout.",
   },
   {
     icon: <Trophy size={32} />,
@@ -59,7 +59,7 @@ const STEPS: Step[] = [
   {
     icon: <Sword size={32} />,
     title: "Challenge a friend (Duels)",
-    desc: "Already placed a bet? Create a duel! Pick your outcome, set a wager, and share the link. Winner takes the entire pot.",
+    desc: "Already predicted on an outcome? Create a duel! Pick your outcome, set a wager, and share the link. Winner takes the entire pot.",
   },
 ];
 
