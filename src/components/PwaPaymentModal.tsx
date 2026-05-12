@@ -702,7 +702,7 @@ export function PwaPaymentModal({
                             textAlign: "right",
                           }}
                         >
-                          Grows as more bets join
+                          Grows when more people join
                         </div>
                       )}
                     </div>
