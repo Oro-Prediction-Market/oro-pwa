@@ -18,7 +18,7 @@ import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { PwaMarketCard } from "../components/PwaMarketCard";
 import { TerMarketCard } from "../components/TerMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
-import { Flame } from "lucide-react";
+import { Flame, TrendingUp } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
 
 interface FormattedEvent {
@@ -333,7 +333,7 @@ export function PwaFeedPage({
               border: "1px solid rgba(124, 58, 237, 0.2)",
             }}
           />
-          <div style={{ fontSize: 48, zIndex: 1 }}>🔮</div>
+          <TrendingUp size={28} strokeWidth={1.5} color="var(--color-primary, #7c3aed)" style={{ zIndex: 1 }} />
         </div>
         <div
           style={{
