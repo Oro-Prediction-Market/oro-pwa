@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   getMe,
   getMyTransactions,
@@ -202,23 +203,7 @@ export function PwaWalletPage() {
         Wallet
       </h1>
 
-      {loading && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "100px 0",
-            gap: 16,
-          }}
-        >
-          <div className="spinner" />
-          <span style={{ color: "var(--text-subtle)", fontWeight: 600 }}>
-            Syncing balance...
-          </span>
-        </div>
-      )}
+      {loading && <LoadingScreen message="Syncing balance…" />}
 
       {error && (
         <div style={{ textAlign: "center", padding: "60px 20px" }}>
@@ -472,16 +457,29 @@ export function PwaWalletPage() {
                 <div
                   style={{
                     textAlign: "center",
-                    padding: "48px 0",
-                    color: "var(--text-subtle)",
+                    padding: "60px 20px",
                   }}
                 >
                   <Wallet
                     size={48}
                     strokeWidth={1.5}
-                    style={{ marginBottom: 12, opacity: 0.5 }}
+                    style={{ marginBottom: 16, opacity: 0.3, display: "block", margin: "0 auto 16px" }}
                   />
-                  <p style={{ fontWeight: 600 }}>No transactions yet</p>
+                  <div
+                    style={{
+                      fontWeight: 900,
+                      color: "var(--text-main)",
+                      fontSize: "1.1rem",
+                      marginBottom: 8,
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "-0.02em",
+                    }}
+                  >
+                    No transactions yet
+                  </div>
+                  <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontWeight: 500 }}>
+                    Your deposit and payout history will appear here.
+                  </div>
                 </div>
               ) : (
                 <>

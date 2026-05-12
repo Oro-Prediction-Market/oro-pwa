@@ -3,6 +3,7 @@ import doubleDownImg from "@shared/assets/card/doubleDown.png";
 import shieldImg from "@shared/assets/card/shield.png";
 import ghostImg from "@shared/assets/card/ghost.png";
 import { Page } from "@shared/components/Page";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { useAuth } from "@shared/hooks/useAuth";
 import {
   getMarkets,
@@ -1560,18 +1561,7 @@ function OpenFeedTab({
   onJoin: (c: Challenge) => void;
 }) {
   if (loading) {
-    return (
-      <div
-        style={{
-          padding: "40px 0",
-          textAlign: "center",
-          color: "var(--text-muted)",
-          fontSize: "0.8rem",
-        }}
-      >
-        Loading…
-      </div>
-    );
+    return <LoadingScreen message="Loading…" fullPage={false} />;
   }
 
   if (challenges.length === 0) {
@@ -1657,18 +1647,7 @@ function LeaderboardTab({
   loading: boolean;
 }) {
   if (loading) {
-    return (
-      <div
-        style={{
-          padding: "40px 0",
-          textAlign: "center",
-          color: "var(--text-muted)",
-          fontSize: "0.8rem",
-        }}
-      >
-        Loading…
-      </div>
-    );
+    return <LoadingScreen message="Loading…" fullPage={false} />;
   }
 
   if (entries.length === 0) {
@@ -2326,16 +2305,7 @@ export const TmaChallengesPage: FC = () => {
       </div>
 
       {loading ? (
-        <div
-          style={{
-            padding: "40px 0",
-            textAlign: "center",
-            color: "var(--text-muted)",
-            fontSize: "0.8rem",
-          }}
-        >
-          Loading…
-        </div>
+        <LoadingScreen message="Consulting the duel masters…" />
       ) : !isEligible ? (
         <div className="eligibility-gate-wrap">
           <EligibilityGate totalPredictions={totalBetCount} />

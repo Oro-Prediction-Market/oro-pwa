@@ -16,6 +16,7 @@ import {
 import { getMyBets, type Bet } from "@shared/api/client";
 // import { useAuth } from "@shared/hooks/useAuth";
 import { BetShareCard } from "@shared/components/BetShareCard";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 
 const STATUS_COLOR: Record<Bet["status"], string> = {
   pending: "#f59e0b",
@@ -416,17 +417,7 @@ export function PwaMyBetsPage() {
         ))}
       </div>
 
-      {loading && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px 0",
-            color: "var(--text-subtle)",
-          }}
-        >
-          Loading…
-        </div>
-      )}
+      {loading && <LoadingScreen message="Retrieving your picks…" fullPage={false} />}
       {error && (
         <div
           style={{ textAlign: "center", padding: "40px 0", color: "#ef4444" }}
@@ -438,31 +429,71 @@ export function PwaMyBetsPage() {
         <div
           style={{
             textAlign: "center",
-            padding: "60px 0",
+            padding: "60px 20px",
             color: "var(--text-subtle)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          <svg
-            width="40"
-            height="40"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="var(--text-subtle)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ marginBottom: 12 }}
+          <div
+            style={{
+              position: "relative",
+              width: 80,
+              height: 80,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 20,
+            }}
           >
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
-          <div>
-            No predictions yet.{" "}
-            <Link to="/markets" style={{ color: "var(--accent)" }}>
-              Browse markets →
-            </Link>
+            <div
+              style={{
+                position: "absolute",
+                width: 50,
+                height: 50,
+                borderRadius: "50%",
+                background: "rgba(124, 58, 237, 0.1)",
+                border: "1px solid rgba(124, 58, 237, 0.2)",
+              }}
+            />
+            <Target size={32} style={{ zIndex: 1, color: "var(--accent)" }} />
           </div>
+          <div
+            style={{
+              fontSize: "1.1rem",
+              fontWeight: 800,
+              color: "var(--text-main)",
+              marginBottom: 8,
+              fontFamily: "var(--font-display)",
+            }}
+          >
+            No predictions yet
+          </div>
+          <div
+            style={{
+              fontSize: "0.9rem",
+              marginBottom: 20,
+              fontWeight: 500,
+            }}
+          >
+            Your betting history will appear here.
+          </div>
+          <Link
+            to="/markets"
+            style={{
+              padding: "10px 20px",
+              background: "var(--accent)",
+              color: "#fff",
+              borderRadius: 12,
+              textDecoration: "none",
+              fontWeight: 800,
+              fontSize: "0.9rem",
+              boxShadow: "0 4px 12px rgba(124, 58, 237, 0.3)",
+            }}
+          >
+            Explore Markets
+          </Link>
         </div>
       )}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

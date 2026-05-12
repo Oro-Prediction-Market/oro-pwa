@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   getMarket,
   getDisputes,
@@ -316,36 +317,55 @@ export function PwaMarketDetailPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          textAlign: "center",
-          color: "var(--text-subtle)",
-          padding: "100px 0",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "3rem",
-            marginBottom: "16px",
-            animation: "bounce 2s infinite",
-          }}
-        >
-          🔮
-        </div>
-        <div style={{ fontWeight: 600 }}>Syncing market...</div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen message="Syncing market..." />;
 
   if (error || !market) {
     return (
-      <div style={{ padding: "40px 20px", textAlign: "center" }}>
-        <div style={{ color: "#ec3942", marginBottom: "16px" }}>
-          ❌ {error || "Market not found"}
+      <div style={{ padding: "80px 20px", textAlign: "center" }}>
+        <div
+          style={{
+            position: "relative",
+            width: 100,
+            height: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 24,
+            margin: "0 auto",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              width: 60,
+              height: 60,
+              borderRadius: "50%",
+              background: "rgba(236, 57, 66, 0.1)",
+              border: "1px solid rgba(236, 57, 66, 0.2)",
+            }}
+          />
+          <div style={{ fontSize: 40, zIndex: 1 }}>❌</div>
         </div>
-        <Link to="/" style={{ color: "#3b82f6" }}>
+        <div
+          style={{
+            fontSize: 20,
+            fontWeight: 900,
+            color: "var(--text-main)",
+            fontFamily: "var(--font-display)",
+            letterSpacing: "-0.02em",
+            marginBottom: 16,
+          }}
+        >
+          {error || "Market not found"}
+        </div>
+        <Link
+          to="/"
+          style={{
+            color: "var(--color-primary)",
+            fontWeight: 700,
+            textDecoration: "none",
+          }}
+        >
           ← Back to Markets
         </Link>
       </div>

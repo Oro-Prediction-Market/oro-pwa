@@ -14,13 +14,12 @@ const TmaBetModal = lazy(() =>
     default: m.TmaBetModal,
   })),
 );
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { PwaMarketCard } from "../components/PwaMarketCard";
 import { TerMarketCard } from "../components/TerMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { Flame } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
-
-// ── Live Activity Ticker ──────────────────────────────────────────────────────
 
 interface FormattedEvent {
   userName: string;
@@ -297,39 +296,7 @@ export function PwaFeedPage({
       .catch(console.error);
   };
 
-  if (loading)
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "100px 0",
-        }}
-      >
-        <div style={{ textAlign: "center", color: "var(--text-subtle)" }}>
-          <div
-            style={{
-              fontSize: 48,
-              marginBottom: 16,
-              animation: "bounce 2s infinite",
-            }}
-          >
-            🔮
-          </div>
-          <div
-            style={{
-              fontSize: 16,
-              fontWeight: 900,
-              color: "var(--text-main)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            Reading the Oracles…
-          </div>
-        </div>
-      </div>
-    );
+  if (loading) return <LoadingScreen message="Reading the Oracles…" />;
 
   if (!markets.length)
     return (
@@ -347,11 +314,26 @@ export function PwaFeedPage({
         <div className="mesh-bg" />
         <div
           style={{
-            fontSize: 64,
-            filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.2))",
+            position: "relative",
+            width: 100,
+            height: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 8,
           }}
         >
-          🔮
+          <div
+            style={{
+              position: "absolute",
+              width: 60,
+              height: 60,
+              borderRadius: "50%",
+              background: "rgba(124, 58, 237, 0.1)",
+              border: "1px solid rgba(124, 58, 237, 0.2)",
+            }}
+          />
+          <div style={{ fontSize: 48, zIndex: 1 }}>🔮</div>
         </div>
         <div
           style={{

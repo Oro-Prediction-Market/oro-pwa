@@ -1,4 +1,5 @@
 import { FC, useState, useEffect, useRef } from "react";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import dkBankLogo from "@shared/assets/dk blue.png";
 import { useAuth } from "@shared/hooks/useAuth";
 import {
@@ -591,22 +592,12 @@ export const TmaWalletPage: FC = () => {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <Page>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "50vh",
-          }}
-        >
-          <div style={spinner} />
-        </div>
+        <LoadingScreen message="Syncing wallet security..." />
       </Page>
     );
-  }
 
   return (
     <Page>

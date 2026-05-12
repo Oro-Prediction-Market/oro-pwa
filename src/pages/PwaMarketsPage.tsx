@@ -11,6 +11,7 @@ import type { PaymentResponse } from "@shared/types/payment";
 import { PwaMarketCard } from "../components/PwaMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { useFilter } from "@shared/contexts/FilterContext";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { Flame } from "lucide-react";
 
 // ── Live Activity Ticker ──────────────────────────────────────────────────────
@@ -142,15 +143,7 @@ export function PwaMarketsPage() {
     getMarkets(debouncedSearch.trim() || undefined).then(setMarkets).catch(console.error);
   };
 
-  if (loading)
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "100px 0" }}>
-        <div style={{ textAlign: "center", color: "var(--text-subtle)" }}>
-          <div style={{ fontSize: 48, marginBottom: 16, animation: "bounce 2s infinite" }}>🔮</div>
-          <div style={{ fontSize: 16, fontWeight: 600 }}>Syncing predictions…</div>
-        </div>
-      </div>
-    );
+  if (loading) return <LoadingScreen message="Syncing predictions…" />;
 
   const byCat = (m: Market) =>
     selectedCategory === "All" ||
@@ -198,7 +191,30 @@ export function PwaMarketsPage() {
         {/* No results */}
         {!hasResults && debouncedSearch.trim() && (
           <div style={{ textAlign: "center", padding: "80px 0", color: "var(--text-subtle)" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+            <div
+              style={{
+                position: "relative",
+                width: 100,
+                height: 100,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+                margin: "0 auto",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  width: 60,
+                  height: 60,
+                  borderRadius: "50%",
+                  background: "rgba(124, 58, 237, 0.1)",
+                  border: "1px solid rgba(124, 58, 237, 0.2)",
+                }}
+              />
+              <div style={{ fontSize: 40, zIndex: 1 }}>🔍</div>
+            </div>
             <div style={{ fontSize: 20, fontWeight: 900, color: "var(--text-main)", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}>No markets found</div>
             <div style={{ fontSize: "1rem", marginTop: 8, fontWeight: 500 }}>Try a different search term.</div>
           </div>

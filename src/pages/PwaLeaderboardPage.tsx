@@ -7,6 +7,7 @@ import {
   type LeaderboardResponse,
   type AuthUser,
 } from "@shared/api/client";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   Medal,
   TrendingUp,
@@ -225,19 +226,7 @@ export function PwaLeaderboardPage() {
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "100px 0" }}>
-            <div className="premium-loader" />
-            <p
-              style={{
-                marginTop: 24,
-                fontSize: "1rem",
-                color: "var(--text-muted)",
-                fontWeight: 600,
-              }}
-            >
-              Calculating global standings...
-            </p>
-          </div>
+          <LoadingScreen message="Calculating global standings..." />
         ) : (
           <div
             style={{

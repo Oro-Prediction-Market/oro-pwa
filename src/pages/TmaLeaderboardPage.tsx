@@ -1,5 +1,6 @@
 import { FC, useCallback, useEffect, useRef, useState } from "react";
 import { Page } from "@shared/components/Page";
+import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { useAuth } from "@shared/hooks/useAuth";
 import {
   getLeaderboard,
@@ -1447,31 +1448,12 @@ export const TmaLeaderboardPage: FC = () => {
     month: "This Month",
   };
 
-  if (loading) {
+  if (loading)
     return (
       <Page>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "60vh",
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              border: "3px solid var(--glass-border)",
-              borderTopColor: "var(--color-primary)",
-              animation: "spin 0.8s linear infinite",
-            }}
-          />
-        </div>
+        <LoadingScreen message="Calculating global standings…" />
       </Page>
     );
-  }
 
   const board = lb?.board ?? [];
   const shownBoard = board.slice(0, visibleCount);
