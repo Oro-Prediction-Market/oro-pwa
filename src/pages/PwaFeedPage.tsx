@@ -361,8 +361,7 @@ export function PwaFeedPage({
     );
 
   const filteredMarkets = markets.filter((m) => {
-    // TER markets temporarily hidden — will be re-enabled soon
-    if (m.externalSource === "ter") return false;
+    if (selectedCategory === "All" && m.externalSource === "ter") return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
