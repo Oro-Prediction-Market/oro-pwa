@@ -81,7 +81,7 @@ const FAQ_DATA: FAQSection[] = [
     ],
   },
   {
-    title: "Betting & Markets",
+    title: "Prediction & Markets",
     items: [
       {
         id: "05",
@@ -93,7 +93,7 @@ const FAQ_DATA: FAQSection[] = [
         id: "06",
         question: "Why do the odds change after I place my bet?",
         answer:
-          "Oro uses a parimutuel pool — odds shift as more people bet. When more people bet on the same outcome as you, your potential payout multiplier decreases. When fewer people bet on your outcome, the multiplier increases.",
+          "Oro uses a parimutuel pool — odds shift as more people bet. When more people predict on the same outcome as you, your potential payout multiplier decreases. When fewer people predict on your outcome, the multiplier increases.",
       },
     ],
   },
