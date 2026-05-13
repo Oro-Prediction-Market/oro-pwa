@@ -817,13 +817,10 @@ export function PwaMarketDetailPage() {
                     ? (outcome as any).lmsrProbability * 100
                     : (smoothedAmount / smoothedTotal) * 100;
 
-                const colors = [
-                  "#22c55e",
-                  "#ef4444",
-                  "#f59e0b",
-                  "#3b82f6",
-                  "#8b5cf6",
-                ];
+                const isResolved = market.status === "resolved" || market.status === "settled";
+                const colors = isResolved
+                  ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
+                  : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
                 const color = colors[idx % colors.length];
 
                 const avatarUrl = !imgError

@@ -3,10 +3,14 @@ import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { getUnderdogLabel } from "@shared/components/UnderdogBanner";
 
-function outcomeColor(rank: number, total: number): string {
-  if (rank === 0) return "#22c55e";
-  if (rank === total - 1 && total > 1) return "#ef4444";
-  return "#f59e0b";
+function outcomeColor(rank: number, total: number, resolved: boolean): string {
+  if (resolved) {
+    if (rank === 0) return "#22c55e";
+    if (rank === total - 1 && total > 1) return "#ef4444";
+    return "#f59e0b";
+  }
+  const neutral = ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
+  return neutral[rank % neutral.length];
 }
 
 function useCountdown(targetAt: string | null): string {
@@ -71,7 +75,8 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
       const sorted = [...raw].sort((a, b) => b.pct - a.pct);
       return raw.map((o) => {
         const rank = sorted.findIndex((s) => s.id === o.id);
-        return { ...o, color: outcomeColor(rank, raw.length) };
+        const resolved = market.status === "resolved" || market.status === "settled";
+        return { ...o, color: outcomeColor(rank, raw.length, resolved) };
       });
     })();
 
@@ -412,7 +417,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                             </span>
                             {underdogLabel === s.label && (
                               <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "#f59e0b", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", padding: "1px 5px", borderRadius: 3, display: "inline-block", marginTop: 2 }}>
-                                ⚡ Better odds
+                                ⚡ Higher payout if correct
                               </span>
                             )}
                           </div>

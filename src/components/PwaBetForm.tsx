@@ -152,13 +152,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         >
           {market.outcomes.map((outcome, idx) => {
             const isSelected = selectedOutcomeId === outcome.id;
-            const colors = [
-              "#22c55e",
-              "#ef4444",
-              "#f59e0b",
-              "#3b82f6",
-              "#8b5cf6",
-            ];
+            const colors = ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
             const baseColor = colors[idx % colors.length];
 
             return (
