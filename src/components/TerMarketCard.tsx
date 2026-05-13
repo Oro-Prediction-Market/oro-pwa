@@ -159,7 +159,7 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
               whiteSpace: "nowrap",
             }}
           >
-            TER · 15 Min
+            TER · 1 Hour
           </span>
           {!isSettled && !isClosed && (
             <div
