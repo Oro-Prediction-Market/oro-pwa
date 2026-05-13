@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getMarkets,
   getMe,
@@ -28,25 +29,29 @@ interface FormattedEvent {
   outcome: string;
   amount: string;
   marketTitle: string;
+  marketId: string;
   type: "bet" | "win";
+}
+
+function makeInitials(raw: string): string {
+  const name = raw.startsWith("@") ? raw.substring(1) : raw;
+  const parts = name.trim().split(/[\s_]+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase() || "??";
 }
 
 function parseActivityEvent(e: ActivityEvent): FormattedEvent {
   const amount = `Nu ${Number(e.amount).toLocaleString()}`;
   const rawUserName = e.userName || "";
-  const userName = rawUserName.startsWith("@")
-    ? rawUserName.substring(1)
-    : rawUserName;
-  const initials = rawUserName
-    ? rawUserName.substring(0, 1).toUpperCase()
-    : "?";
+  const initials = rawUserName ? makeInitials(rawUserName) : "??";
   return {
-    userName,
+    userName: initials,
     initials,
     action: e.type === "win" ? "won" : "just bet",
     outcome: e.outomeLabel,
     amount,
     marketTitle: e.marketTitle,
+    marketId: e.marketId,
     type: e.type,
   };
 }
@@ -55,6 +60,7 @@ function LiveTicker() {
   const [events, setEvents] = useState<FormattedEvent[]>([]);
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getRecentActivity()
@@ -99,6 +105,8 @@ function LiveTicker() {
         }}
       />
       <div
+        role="button"
+        onClick={() => current.marketId && navigate(`/market/${current.marketId}`)}
         style={{
           flex: 1,
           minWidth: 0,
@@ -110,6 +118,7 @@ function LiveTicker() {
           alignItems: "center",
           gap: 6,
           overflow: "hidden",
+          cursor: current.marketId ? "pointer" : "default",
         }}
       >
         <Flame

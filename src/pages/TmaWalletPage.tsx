@@ -130,7 +130,7 @@ function TxRow({
   const isCredit = tx.amount > 0;
   const color = isCredit ? TX_COLOR_IN : TX_COLOR_OUT;
   const isWin = tx.type === "bet_payout";
-  const isPositiveNet = !stakeAmount || Number(tx.amount) > stakeAmount;
+  const isPositiveNet = !!stakeAmount && Number(tx.amount) > stakeAmount;
   const isShareableWin = isWin && isPositiveNet;
 
   return (
@@ -755,7 +755,7 @@ export const TmaWalletPage: FC = () => {
                 color: "rgba(255,255,255,0.7)",
               },
               {
-                label: "This Week",
+                label: "7-Day P&L",
                 value: `${weeklyProfit >= 0 ? "+" : ""}${weeklyProfit.toLocaleString()}`,
                 color: weeklyProfit >= 0 ? "#6ee7b7" : "#fca5a5",
               },
@@ -924,7 +924,7 @@ export const TmaWalletPage: FC = () => {
           {hasDKBank && hasPhoneVerified ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                { label: "CID", value: user?.dkCid },
+                { label: "CID", value: user?.dkCid ? user.dkCid.slice(0, 3) + "•".repeat(user.dkCid.length - 5) + user.dkCid.slice(-2) : "—" },
                 { label: "Account", value: user?.dkAccountName || "—" },
               ].map(({ label, value }) => (
                 <p

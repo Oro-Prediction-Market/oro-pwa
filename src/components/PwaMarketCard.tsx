@@ -494,19 +494,27 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                 gap: 4,
               }}
             >
-              <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
-                Nu {Number(market.totalPool).toLocaleString()}
-              </span>
-              <span
-                style={{
-                  fontSize: "0.58rem",
-                  opacity: 0.7,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Pool
-              </span>
+              {Number(market.totalPool) > 0 ? (
+                <>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
+                    Nu {Number(market.totalPool).toLocaleString()}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "0.58rem",
+                      opacity: 0.7,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Pool
+                  </span>
+                </>
+              ) : (
+                <span style={{ fontSize: "0.78rem", opacity: 0.7 }}>
+                  No predictions yet
+                </span>
+              )}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
