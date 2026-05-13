@@ -156,9 +156,9 @@ export function TmaBetModal({
         zIndex: 2000,
       });
     } catch (err: any) {
-      setError(err.message || "Failed to place bet");
+      setError(err.message || "Failed to place prediction");
       setStatus("failed");
-      onFailure?.(err.message || "Failed to place bet");
+      onFailure?.(err.message || "Failed to place prediction");
     }
   };
 
@@ -471,7 +471,7 @@ export function TmaBetModal({
                 animation: "tmaFadeIn 0.35s ease 0.45s both",
               }}
             >
-              {error || "Could not place bet"}
+              {error || "Could not place prediction"}
             </div>
             <button
               onClick={() => {
@@ -727,7 +727,7 @@ export function TmaBetModal({
                   marginBottom: 8,
                 }}
               >
-                Bet Amount (Nu)
+                Stake (Nu)
               </div>
               <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
                 {QUICK_AMOUNTS.map((q) => (
@@ -984,7 +984,7 @@ export function TmaBetModal({
                 ) : !hasEnoughBalance ? (
                   "Insufficient Balance"
                 ) : (
-                  `Place Bet — Nu ${betAmount.toLocaleString()}`
+                  `Predict — Nu ${betAmount.toLocaleString()}`
                 )}
               </button>
             </div>

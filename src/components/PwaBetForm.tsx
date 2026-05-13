@@ -141,7 +141,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             textTransform: "uppercase",
           }}
         >
-          Cast Your Vote
+          Make Your Prediction
         </div>
         <div
           style={{
@@ -233,7 +233,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
                   letterSpacing: "0.05em",
                 }}
               >
-                Potential Return
+                Potential Payout
               </div>
               <div
                 style={{
@@ -349,7 +349,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         }
       >
         {isReady
-          ? `Cast Nu ${amount} Prophecy`
+          ? `Predict Nu ${amount}`
           : selectedOutcomeId
             ? `Minimum Nu ${MIN_BET} Required`
             : "Select an Outcome"}
@@ -365,7 +365,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
           opacity: 0.8,
         }}
       >
-        By casting this prophecy, you agree to the parimutuel pool rules.
+        By making this prediction, you agree to the parimutuel pool rules.
         <br />
         Final rewards are determined by the oracle at market close.
       </div>

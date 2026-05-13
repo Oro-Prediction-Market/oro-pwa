@@ -383,7 +383,7 @@ export function PwaMyBetsPage() {
           fontWeight: 600,
         }}
       >
-        Tracking your betting performance
+        Tracking your prediction performance
       </p>
 
       {/* Filter tabs */}
@@ -479,7 +479,7 @@ export function PwaMyBetsPage() {
               fontWeight: 500,
             }}
           >
-            Your betting history will appear here.
+            Your prediction history will appear here.
           </div>
           <Link
             to="/markets"

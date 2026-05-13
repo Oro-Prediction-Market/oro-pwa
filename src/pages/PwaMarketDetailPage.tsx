@@ -1347,7 +1347,7 @@ export function PwaMarketDetailPage() {
                   fontWeight: 500,
                 }}
               >
-                This portal opens for betting on
+                This portal opens for predictions on
                 <br />
                 <strong
                   style={{

@@ -69,7 +69,7 @@ const STEPS = [
   {
     emoji: <Sword />,
     title: "Challenge a friend (Duels)",
-    desc: "Already placed a bet? Create a duel on the same market. Pick your outcome, set a wager, and share the link. First person to accept takes the opposite side — winner takes the pot.",
+    desc: "Already made a prediction? Create a duel on the same market. Pick your outcome, set a stake, and share the link. First person to accept takes the opposite side — winner takes the pot.",
   },
 ];
 

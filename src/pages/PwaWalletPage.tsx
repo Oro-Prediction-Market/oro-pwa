@@ -46,9 +46,9 @@ const TX_ICON: Record<Transaction["type"], React.ReactNode> = {
 const TX_LABEL: Record<Transaction["type"], string> = {
   deposit: "Top Up",
   withdrawal: "Cash Out",
-  bet_placed: "Position opened",
-  bet_payout: "Returns",
-  refund: "Refund",
+  bet_placed: "Prediction placed",
+  bet_payout: "Payout received",
+  refund: "Prediction refunded",
   dispute_bond: "Dispute bond",
   dispute_refund: "Bond refund",
   referral_bonus: "Referral bonus",

@@ -1,7 +1,6 @@
 import { useState, useEffect, memo, type FC } from "react";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
-import { getUnderdogLabel } from "@shared/components/UnderdogBanner";
 
 function outcomeColor(rank: number, total: number, resolved: boolean): string {
   if (resolved) {
@@ -260,7 +259,6 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   }}
                 >
                   {(() => {
-                    const underdogLabel = market.status === "open" ? getUnderdogLabel(market.outcomes, totalPool) : null;
                     return displayOutcomes.map((s, idx) => {
                     const barWidth = Math.max(4, Math.min(100, s.pct));
                     const avatarUrl = !imgError
@@ -415,11 +413,6 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                             >
                               {s.label}
                             </span>
-                            {underdogLabel === s.label && (
-                              <span style={{ fontSize: "0.58rem", fontWeight: 800, color: "#f59e0b", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.3)", padding: "1px 5px", borderRadius: 3, display: "inline-block", marginTop: 2 }}>
-                                ⚡ Higher payout if correct
-                              </span>
-                            )}
                           </div>
 
                           <div
