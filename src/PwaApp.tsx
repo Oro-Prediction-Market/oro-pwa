@@ -201,14 +201,19 @@ function PageTitleBar() {
 
 // ── Nav items ────────────────────────────────────────────────────────────────
 
-const NAV_ITEMS = [
+const NAV_ITEMS_PUBLIC = [
   { to: "/", label: "Feed", icon: LayoutGrid },
   { to: "/results", label: "Results", icon: TrendingUp },
   { to: "/leaderboard", label: "Ranks", icon: Medal },
+];
+
+const NAV_ITEMS_AUTH = [
   { to: "/wallet", label: "Wallet", icon: Wallet },
   { to: "/challenges", label: "Duels", icon: Swords },
   { to: "/profile", label: "Profile", icon: UserCircle },
 ];
+
+const NAV_ITEMS = [...NAV_ITEMS_PUBLIC, ...NAV_ITEMS_AUTH];
 
 // ── Hamburger Menu (mobile: full-screen drawer · desktop: dropdown) ───────────
 
@@ -294,7 +299,7 @@ function HamburgerMenu({
                   to   { opacity: 1; transform: translateY(0) scale(1); }
                 }
               `}</style>
-              {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+              {(authed ? NAV_ITEMS : NAV_ITEMS_PUBLIC).map(({ to, label, icon: Icon }) => (
                 <NavLink
                   key={to}
                   to={to}
@@ -683,6 +688,75 @@ function PwaSearch({
       )}
     </div>
   );
+}
+
+// ── Auth Gate — wraps protected routes ───────────────────────────────────────
+
+function AuthGate({
+  authed,
+  onAuthSuccess,
+  children,
+}: {
+  authed: boolean;
+  onAuthSuccess: () => void;
+  children: React.ReactNode;
+}) {
+  if (!authed) {
+    return (
+      <div
+        style={{
+          maxWidth: 480,
+          margin: "0 auto",
+          padding: "var(--space-xl) var(--space-md) 100px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+        }}
+      >
+        <div
+          style={{
+            textAlign: "center",
+            padding: "16px 20px",
+            borderRadius: 14,
+            background: "rgba(39,117,208,0.06)",
+            border: "1px solid rgba(39,117,208,0.2)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700 }}>
+            Sign in to access this feature
+          </p>
+          <a
+            href="https://t.me/OroPredictBot"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 16px",
+              borderRadius: 10,
+              background: "var(--grad-primary)",
+              color: "#fff",
+              fontSize: "0.82rem",
+              fontWeight: 800,
+              textDecoration: "none",
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+            </svg>
+            Open Oro in Telegram
+          </a>
+        </div>
+        <ProtectedRoute onLogin={onAuthSuccess} />
+      </div>
+    );
+  }
+  return <>{children}</>;
 }
 
 // ── Layout ───────────────────────────────────────────────────────────────────
@@ -1153,25 +1227,19 @@ function PwaLayout({
           <Route
             path="/wallet"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    style={{
-                      padding: 40,
-                      textAlign: "center",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    Loading…
-                  </div>
-                }
-              >
-                <LazyTonConnectProvider
-                  manifestUrl={publicUrl("tonconnect-manifest.json")}
+              <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
+                <Suspense
+                  fallback={
+                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                      Loading…
+                    </div>
+                  }
                 >
-                  <PwaWalletTmaPage />
-                </LazyTonConnectProvider>
-              </Suspense>
+                  <LazyTonConnectProvider manifestUrl={publicUrl("tonconnect-manifest.json")}>
+                    <PwaWalletTmaPage />
+                  </LazyTonConnectProvider>
+                </Suspense>
+              </AuthGate>
             }
           />
           <Route
@@ -1237,61 +1305,49 @@ function PwaLayout({
           <Route
             path="/challenges"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    style={{
-                      padding: 40,
-                      textAlign: "center",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    Loading…
-                  </div>
-                }
-              >
-                <PwaChallengesPage />
-              </Suspense>
+              <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
+                <Suspense
+                  fallback={
+                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                      Loading…
+                    </div>
+                  }
+                >
+                  <PwaChallengesPage />
+                </Suspense>
+              </AuthGate>
             }
           />
           <Route
             path="/profile"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    style={{
-                      padding: 40,
-                      textAlign: "center",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    Loading…
-                  </div>
-                }
-              >
-                <PwaProfilePage />
-              </Suspense>
+              <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
+                <Suspense
+                  fallback={
+                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                      Loading…
+                    </div>
+                  }
+                >
+                  <PwaProfilePage />
+                </Suspense>
+              </AuthGate>
             }
           />
           <Route
             path="/settings"
             element={
-              <Suspense
-                fallback={
-                  <div
-                    style={{
-                      padding: 40,
-                      textAlign: "center",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    Loading…
-                  </div>
-                }
-              >
-                <PwaSettingsPage />
-              </Suspense>
+              <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
+                <Suspense
+                  fallback={
+                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                      Loading…
+                    </div>
+                  }
+                >
+                  <PwaSettingsPage />
+                </Suspense>
+              </AuthGate>
             }
           />
           <Route
@@ -1319,12 +1375,12 @@ function PwaLayout({
       </main>
 
       {/* Footer hidden on mobile — bottom nav covers primary navigation */}
-      {!isMobile && <PwaFooter setShowFaq={setShowFaq} />}
+      {!isMobile && <PwaFooter setShowFaq={setShowFaq} authed={authed} />}
 
       {/* Spacer for mobile bottom nav so content isn't covered */}
       {isMobile && <div style={{ height: 72, flexShrink: 0 }} />}
 
-      <PwaBottomNav />
+      <PwaBottomNav authed={authed} onOpenLogin={() => setShowLoginModal(true)} />
 
       {/* How It Works Modal (Slider) */}
       {showHowItWorks && (
@@ -1343,7 +1399,7 @@ function PwaLayout({
   );
 }
 
-function PwaFooter({ setShowFaq }: { setShowFaq: (v: boolean) => void }) {
+function PwaFooter({ setShowFaq, authed }: { setShowFaq: (v: boolean) => void; authed: boolean }) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -1410,7 +1466,7 @@ function PwaFooter({ setShowFaq }: { setShowFaq: (v: boolean) => void }) {
             </h4>
             <FooterLink to="/">Active Feed</FooterLink>
             <FooterLink to="/leaderboard">Leaderboard</FooterLink>
-            <FooterLink to="/challenges">Duels (1v1)</FooterLink>
+            {authed && <FooterLink to="/challenges">Duels (1v1)</FooterLink>}
             <FooterLink to="/results">Settled Markets</FooterLink>
           </div>
 
@@ -1447,9 +1503,9 @@ function PwaFooter({ setShowFaq }: { setShowFaq: (v: boolean) => void }) {
             >
               FAQ
             </button>
-            <FooterLink to="/wallet">Wallet & Deposit</FooterLink>
-            <FooterLink to="/profile">My Portfolio</FooterLink>
-            <FooterLink to="/settings">Account Settings</FooterLink>
+            {authed && <FooterLink to="/wallet">Wallet & Deposit</FooterLink>}
+            {authed && <FooterLink to="/profile">My Portfolio</FooterLink>}
+            {authed && <FooterLink to="/settings">Account Settings</FooterLink>}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

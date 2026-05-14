@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LayoutGrid, Wallet, UserCircle, Swords, Medal } from "lucide-react";
+import { LayoutGrid, Wallet, UserCircle, Swords, Medal, LogIn } from "lucide-react";
 
-export const PwaBottomNav: React.FC = () => {
+interface PwaBottomNavProps {
+  authed: boolean;
+  onOpenLogin: () => void;
+}
+
+export const PwaBottomNav: React.FC<PwaBottomNavProps> = ({ authed, onOpenLogin }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -13,13 +18,30 @@ export const PwaBottomNav: React.FC = () => {
 
   if (!isMobile) return null;
 
-  const navItems = [
+  const publicItems = [
     { to: "/", label: "Feed", icon: LayoutGrid },
     { to: "/leaderboard", label: "Ranks", icon: Medal },
+  ];
+
+  const authItems = [
     { to: "/wallet", label: "Wallet", icon: Wallet },
     { to: "/challenges", label: "Duels", icon: Swords },
     { to: "/profile", label: "Profile", icon: UserCircle },
   ];
+
+  const navItems = authed ? [...publicItems, ...authItems] : publicItems;
+
+  const navLinkStyle = (isActive: boolean) => ({
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: "4px",
+    textDecoration: "none",
+    color: isActive ? "#2775d0" : "var(--text-muted)",
+    transition: "all 0.2s ease",
+    padding: "8px 12px",
+    borderRadius: "12px",
+  });
 
   return (
     <nav
@@ -45,17 +67,7 @@ export const PwaBottomNav: React.FC = () => {
         <NavLink
           key={to}
           to={to}
-          style={({ isActive }) => ({
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "4px",
-            textDecoration: "none",
-            color: isActive ? "#2775d0" : "var(--text-muted)",
-            transition: "all 0.2s ease",
-            padding: "8px 12px",
-            borderRadius: "12px",
-          })}
+          style={({ isActive }) => navLinkStyle(isActive)}
         >
           {({ isActive }) => (
             <>
@@ -80,6 +92,29 @@ export const PwaBottomNav: React.FC = () => {
           )}
         </NavLink>
       ))}
+
+      {!authed && (
+        <button
+          onClick={onOpenLogin}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--color-primary)",
+            padding: "8px 12px",
+            borderRadius: "12px",
+          }}
+        >
+          <LogIn size={22} strokeWidth={2} />
+          <span style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.01em" }}>
+            Sign In
+          </span>
+        </button>
+      )}
     </nav>
   );
 };
