@@ -223,6 +223,18 @@ export function PwaLeaderboardPage() {
               </button>
             ))}
           </div>
+
+          {/* Ranking threshold note */}
+          <p
+            style={{
+              margin: "14px 0 0",
+              fontSize: "0.8rem",
+              color: "var(--text-subtle)",
+              fontWeight: 600,
+            }}
+          >
+            Make at least 10 predictions to appear on the leaderboard.
+          </p>
         </div>
 
         {loading ? (
@@ -474,16 +486,60 @@ export function PwaLeaderboardPage() {
                       >
                         Current Rank
                       </div>
-                      <div
-                        style={{
-                          fontSize: "1.75rem",
-                          fontWeight: 950,
-                          color: "var(--color-primary)",
-                          letterSpacing: "-0.04em",
-                        }}
-                      >
-                        #{myRank || "—"}
-                      </div>
+                      {myRank ? (
+                        <div
+                          style={{
+                            fontSize: "1.75rem",
+                            fontWeight: 950,
+                            color: "var(--color-primary)",
+                            letterSpacing: "-0.04em",
+                          }}
+                        >
+                          #{myRank}
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              fontSize: "1.1rem",
+                              fontWeight: 950,
+                              color: "var(--text-subtle)",
+                              letterSpacing: "-0.02em",
+                              marginBottom: 6,
+                            }}
+                          >
+                            {me.totalPredictions ?? 0}/10
+                          </div>
+                          <div
+                            style={{
+                              height: 4,
+                              borderRadius: 99,
+                              background: "var(--bg-card)",
+                              overflow: "hidden",
+                              marginBottom: 4,
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: "100%",
+                                width: `${Math.min((me.totalPredictions ?? 0) / 10, 1) * 100}%`,
+                                borderRadius: 99,
+                                background: "var(--grad-primary)",
+                                transition: "width 0.6s ease",
+                              }}
+                            />
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.65rem",
+                              color: "var(--text-subtle)",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {Math.max(10 - (me.totalPredictions ?? 0), 0)} more to rank
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div
                       style={{
