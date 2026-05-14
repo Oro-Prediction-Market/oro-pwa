@@ -17,7 +17,7 @@ const QUICK_AMOUNTS_DEFAULT = [50, 100, 200, 500];
 const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
 
 function getMinBet(market: Market): number {
-  return market.externalSource === "ter" ? 10 : 50;
+  return ["ter", "btc"].includes(market.externalSource ?? "") ? 10 : 50;
 }
 
 interface PwaPaymentModalProps {
@@ -49,8 +49,9 @@ export function PwaPaymentModal({
 
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
   const MIN_BET = getMinBet(market);
-  const QUICK_AMOUNTS =
-    market.externalSource === "ter" ? QUICK_AMOUNTS_TER : QUICK_AMOUNTS_DEFAULT;
+  const QUICK_AMOUNTS = ["ter", "btc"].includes(market.externalSource ?? "")
+    ? QUICK_AMOUNTS_TER
+    : QUICK_AMOUNTS_DEFAULT;
   const betAmount = parseFloat(amountStr) || 0;
   const isValidAmount = betAmount >= MIN_BET;
   const canPay =

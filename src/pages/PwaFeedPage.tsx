@@ -18,6 +18,7 @@ const TmaBetModal = lazy(() =>
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { PwaMarketCard } from "../components/PwaMarketCard";
 import { TerMarketCard } from "../components/TerMarketCard";
+import { BtcMarketCard } from "../components/BtcMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { Flame, TrendingUp } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
@@ -370,7 +371,7 @@ export function PwaFeedPage({
     );
 
   const filteredMarkets = markets.filter((m) => {
-    if (selectedCategory === "All" && m.externalSource === "ter") return false;
+    if (selectedCategory === "All" && ["ter", "btc"].includes(m.externalSource ?? "")) return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -384,9 +385,15 @@ export function PwaFeedPage({
   const openMarkets = filteredMarkets
     .filter((m) => m.status === "open")
     .sort((a, b) => {
-      // TER markets always appear first
-      if (a.externalSource === "ter" && b.externalSource !== "ter") return -1;
-      if (b.externalSource === "ter" && a.externalSource !== "ter") return 1;
+      // TER then BTC markets appear first in the economy category
+      const autoA = ["ter", "btc"].includes(a.externalSource ?? "");
+      const autoB = ["ter", "btc"].includes(b.externalSource ?? "");
+      if (autoA && !autoB) return -1;
+      if (autoB && !autoA) return 1;
+      if (autoA && autoB) {
+        if (a.externalSource === "ter") return -1;
+        if (b.externalSource === "ter") return 1;
+      }
       return 0;
     });
   const resolvingMarkets = filteredMarkets.filter(
@@ -402,7 +409,6 @@ export function PwaFeedPage({
   const renderGrid = (items: Market[]) => (
     <PwaMarketGrid>
       {items.map((market) => {
-        // Use TerMarketCard for TER markets
         if (market.externalSource === "ter") {
           return (
             <TerMarketCard
@@ -410,7 +416,17 @@ export function PwaFeedPage({
               market={market}
               onBet={async (marketId, outcomeId) => {
                 handleBetClick(marketId, outcomeId);
-                // The actual bet placement will happen in the modal
+              }}
+            />
+          );
+        }
+        if (market.externalSource === "btc") {
+          return (
+            <BtcMarketCard
+              key={market.id}
+              market={market}
+              onBet={async (marketId, outcomeId) => {
+                handleBetClick(marketId, outcomeId);
               }}
             />
           );

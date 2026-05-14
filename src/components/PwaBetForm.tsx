@@ -19,7 +19,7 @@ const QUICK_AMOUNTS_DEFAULT = [50, 100, 200, 500];
 const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
 
 function getMinBet(market: Market): number {
-  return market.externalSource === "ter" ? 10 : 50;
+  return ["ter", "btc"].includes(market.externalSource ?? "") ? 10 : 50;
 }
 
 function calcWin(market: Market, outcomeId: string, bet: number): number {
@@ -44,8 +44,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
 
   const betAmount = parseFloat(amount) || 0;
   const MIN_BET = getMinBet(market);
-  const QUICK_AMOUNTS =
-    market.externalSource === "ter" ? QUICK_AMOUNTS_TER : QUICK_AMOUNTS_DEFAULT;
+  const QUICK_AMOUNTS = ["ter", "btc"].includes(market.externalSource ?? "")
+    ? QUICK_AMOUNTS_TER
+    : QUICK_AMOUNTS_DEFAULT;
   const winAmount = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount)
     : 0;
