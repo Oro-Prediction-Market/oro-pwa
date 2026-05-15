@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getMarkets,
   placeBet,
@@ -22,6 +23,7 @@ interface FormattedEvent {
   outcome: string;
   amount: string;
   type: "bet" | "win";
+  marketId: string;
 }
 
 function parseEvent(e: ActivityEvent): FormattedEvent {
@@ -32,6 +34,7 @@ function parseEvent(e: ActivityEvent): FormattedEvent {
     outcome: e.outomeLabel,
     amount: `Nu ${Number(e.amount).toLocaleString()}`,
     type: e.type,
+    marketId: e.marketId,
   };
 }
 
@@ -39,6 +42,7 @@ function LiveTicker() {
   const [events, setEvents] = useState<FormattedEvent[]>([]);
   const [idx, setIdx] = useState(0);
   const [visible, setVisible] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getRecentActivity()
@@ -61,12 +65,16 @@ function LiveTicker() {
   return (
     <>
       <div style={{ width: 1, height: 16, background: "var(--glass-border)", flexShrink: 0, margin: "0 4px" }} />
-      <div style={{
-        flex: 1, minWidth: 0,
-        animation: visible ? "tickerSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
-        opacity: visible ? 1 : 0,
-        display: "flex", alignItems: "center", gap: 6, overflow: "hidden",
-      }}>
+      <div
+        role="button"
+        onClick={() => cur.marketId && navigate(`/market/${cur.marketId}`)}
+        style={{
+          flex: 1, minWidth: 0,
+          animation: visible ? "tickerSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards" : "none",
+          opacity: visible ? 1 : 0,
+          display: "flex", alignItems: "center", gap: 6, overflow: "hidden",
+          cursor: cur.marketId ? "pointer" : "default",
+        }}>
         <Flame size={14} style={{ flexShrink: 0, color: "var(--color-warning)", fill: "#f59e0b40" }} />
         <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--text-main)", whiteSpace: "nowrap", flexShrink: 0 }}>{cur.userName}</span>
         <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", whiteSpace: "nowrap", flexShrink: 0 }}>{cur.action}</span>
