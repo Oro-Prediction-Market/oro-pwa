@@ -190,6 +190,22 @@ export async function loginWithDKBank(
   return result;
 }
 
+export async function loginWithBhutanApp(payload: {
+  token: string;
+  externalUserId: string;
+  fullName: string;
+  username?: string;
+  phoneNumber?: string;
+  email?: string;
+}): Promise<AuthResponse> {
+  const result = await request<AuthResponse>("/auth/bhutanapp", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  setToken(result.token);
+  return result;
+}
+
 /**
  * Check whether the account for a given CID has a PWA password set.
  * Used by the PWA login form to know whether to show the password field.
@@ -220,6 +236,49 @@ export async function setPwaPassword(
  * Requires a valid JWT. Stores dkPhoneHash on the user row so that
  * the bot's /verify phone check can compare Telegram phone == DK phone.
  */
+/**
+ * PWA-only: send a 6-digit SMS OTP to the supplied phone number so the user
+ * can verify ownership. The verified phone is later used for withdrawal OTPs
+ * (PWA users have no Telegram chat).
+ */
+export async function sendPwaPhoneOtp(
+  phoneNumber: string,
+): Promise<{ ok: boolean; message: string }> {
+  return request("/auth/pwa/send-phone-otp", {
+    method: "POST",
+    body: JSON.stringify({ phoneNumber }),
+  });
+}
+
+/** PWA-only: verify the SMS OTP. Returns the refreshed user object. */
+export async function verifyPwaPhoneOtp(
+  otp: string,
+): Promise<{ ok: boolean; user: AuthUser }> {
+  const result = await request<{ ok: boolean; user: AuthUser }>(
+    "/auth/pwa/verify-phone-otp",
+    { method: "POST", body: JSON.stringify({ otp }) },
+  );
+  bustCache("/users/me");
+  return result;
+}
+
+/**
+ * PWA-only: enter a CID to link (and optionally merge) with an existing
+ * TMA/DK Bank account. If another user owns this CID, their balance is
+ * transferred to the caller and a JWT for that user is returned.
+ */
+export async function linkCidAccount(
+  cid: string,
+): Promise<AuthResponse & { merged: boolean }> {
+  const result = await request<AuthResponse & { merged: boolean }>(
+    "/auth/link-cid",
+    { method: "POST", body: JSON.stringify({ cid }) },
+  );
+  setToken(result.token);
+  bustCache("/users/me");
+  return result;
+}
+
 export async function linkDKBank(cid: string): Promise<AuthResponse> {
   const result = await request<AuthResponse>("/auth/link-dkbank", {
     method: "POST",

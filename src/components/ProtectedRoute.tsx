@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { loginWithDKBank, getPwaStatus, setToken } from "@shared/api/client";
-import { Eye, EyeOff } from "lucide-react";
+import { loginWithDKBank, getPwaStatus } from "@shared/api/client";
+import { Eye, EyeOff, QrCode } from "lucide-react";
 import { OroLogo } from "@shared/components/OroLogo";
+import { BhutanAppLogin } from "./BhutanAppLogin";
 
 interface Props {
   onLogin: () => void;
@@ -9,16 +10,18 @@ interface Props {
 }
 
 export function ProtectedRoute({ onLogin }: Props) {
+  const [showBhutanApp, setShowBhutanApp] = useState(false);
+
+  // ── CID / password state ───────────────────────────────────────────────────
   const [cid, setCid] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [hasPassword, setHasPassword] = useState<boolean | null>(null); // null = not checked yet
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // When CID reaches 11 digits, check if this account has a PWA password set
   useEffect(() => {
     if (cid.trim().length !== 11) {
       setHasPassword(null);
@@ -44,11 +47,7 @@ export function ProtectedRoute({ onLogin }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await loginWithDKBank(
-        cid.trim(),
-        hasPassword ? password : undefined,
-      );
-      setToken(res.token);
+      await loginWithDKBank(cid.trim(), hasPassword ? password : undefined);
       onLogin();
     } catch (err: any) {
       setError(err.message || "Login failed");
@@ -63,77 +62,80 @@ export function ProtectedRoute({ onLogin }: Props) {
     hasPassword === true &&
     password.length >= 1;
 
-  return (
-    <div
-      style={{
-        maxWidth: 360,
-        margin: "5px auto",
-        padding: "0 20px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 16,
-      }}
-    >
-      <div
-        style={{
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 4,
-        }}
-      >
-        <OroLogo size={72} />
-        <div>
-          <h2
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: 800,
-              color: "var(--text-main)",
-              margin: 0,
-              marginTop: -10,
-            }}
-          >
-            Sign in to Oro
-          </h2>
-          <p
-            style={{
-              fontSize: "0.78rem",
-              color: "var(--text-muted)",
-              margin: 0,
-              lineHeight: 1.4,
-            }}
-          >
-            Enter your DK Bank CID
-          </p>
+  // ── BhutanApp active ───────────────────────────────────────────────────────
+  if (showBhutanApp) {
+    return (
+      <div style={container}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <header style={headerWrap}>
+          <OroLogo size={56} />
+          <h2 style={heading}>My Bhutan App</h2>
+        </header>
+        <div style={card}>
+          <BhutanAppLogin
+            onSuccess={onLogin}
+            onCancel={() => setShowBhutanApp(false)}
+          />
         </div>
       </div>
+    );
+  }
 
-      <form
-        onSubmit={handleLogin}
+  // ── Default: login options ─────────────────────────────────────────────────
+  return (
+    <div style={container}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
+      <header style={headerWrap}>
+        <OroLogo size={72} />
+        <div>
+          <h2 style={heading}>Sign in to Oro</h2>
+          <p style={subtext}>Bhutan's prediction market</p>
+        </div>
+      </header>
+
+      {/* ── Primary: My Bhutan App ── */}
+      <button
+        onClick={() => setShowBhutanApp(true)}
         style={{
           width: "100%",
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 10,
-          background: "var(--glass-bg)",
-          border: "1px solid var(--glass-border)",
-          borderRadius: 14,
-          padding: 18,
+          padding: "13px 16px",
+          borderRadius: 12,
+          border: "1.5px solid rgba(245,158,11,0.4)",
+          background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.08))",
+          color: "#f59e0b",
+          fontWeight: 800,
+          fontSize: 15,
+          cursor: "pointer",
+          letterSpacing: "-0.01em",
         }}
       >
+        <QrCode size={18} />
+        Log in with My Bhutan App
+      </button>
+
+      {/* ── Divider ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
+        <div style={{ flex: 1, height: 1, background: "var(--glass-border)" }} />
+        <span style={{ fontSize: 11, color: "var(--text-subtle)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          or
+        </span>
+        <div style={{ flex: 1, height: 1, background: "var(--glass-border)" }} />
+      </div>
+
+      {/* ── Secondary: CID / Password ── */}
+      <form onSubmit={handleLogin} style={card}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-subtle)", margin: "0 0 10px", textAlign: "center" }}>
+          Sign in with DK Bank CID
+        </p>
+
         {/* CID field */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label
-            style={{
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              color: "var(--text-subtle)",
-            }}
-          >
-            DK Bank CID
-          </label>
+        <div style={fieldWrap}>
+          <label style={label}>CID</label>
           <input
             type="text"
             value={cid}
@@ -141,38 +143,22 @@ export function ProtectedRoute({ onLogin }: Props) {
               setCid(e.target.value.replace(/\D/g, "").slice(0, 11));
               setError(null);
             }}
-            placeholder="11-digit CID"
+            placeholder="11-digit national ID"
             maxLength={11}
             required
-            style={{
-              padding: "8px 12px",
-              borderRadius: 10,
-              border: "1px solid var(--glass-border)",
-              background: "var(--glass-bg)",
-              color: "var(--text-main)",
-              fontSize: "16px",
-              outline: "none",
-            }}
+            style={inputStyle}
           />
           {checking && (
-            <div style={{ fontSize: "0.75rem", color: "var(--text-subtle)" }}>
-              Checking account…
-            </div>
+            <span style={{ fontSize: "0.72rem", color: "var(--text-subtle)" }}>
+              Checking…
+            </span>
           )}
         </div>
 
-        {/* Password field — only shown when account has a password set */}
+        {/* Password field */}
         {hasPassword && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label
-              style={{
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                color: "var(--text-subtle)",
-              }}
-            >
-              PWA Password
-            </label>
+          <div style={fieldWrap}>
+            <label style={label}>PWA Password</label>
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
@@ -184,24 +170,14 @@ export function ProtectedRoute({ onLogin }: Props) {
                 placeholder="Enter your password"
                 required
                 autoFocus
-                style={{
-                  width: "100%",
-                  padding: "8px 36px 8px 12px",
-                  borderRadius: 10,
-                  border: "1px solid var(--glass-border)",
-                  background: "var(--glass-bg)",
-                  color: "var(--text-main)",
-                  fontSize: "16px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
+                style={{ ...inputStyle, paddingRight: 36 }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: "absolute",
-                  right: 12,
+                  right: 10,
                   top: "50%",
                   transform: "translateY(-50%)",
                   background: "none",
@@ -215,56 +191,29 @@ export function ProtectedRoute({ onLogin }: Props) {
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <div
-              style={{
-                fontSize: "0.72rem",
-                color: "var(--text-subtle)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 5,
-              }}
-            >
-              <span>Password set via Telegram → Settings → Website Access</span>
-              <a
-                href="https://t.me/OroPredictBot"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "var(--color-primary, #2563eb)",
-                  textDecoration: "none",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Forgot?
-              </a>
-            </div>
+            <span style={{ fontSize: "0.7rem", color: "var(--text-subtle)" }}>
+              Set via Telegram → Settings → Website Access
+            </span>
           </div>
         )}
 
-        {/* Block login when no password has been set yet */}
         {hasPassword === false && cid.trim().length === 11 && (
-          <div
-            style={{
-              fontSize: "0.78rem",
-              color: "var(--color-warning)",
-              background: "rgba(245,158,11,0.08)",
-              border: "1px solid rgba(245,158,11,0.25)",
-              borderRadius: 8,
-              padding: "8px 12px",
-              lineHeight: 1.5,
-            }}
-          >
-            <strong style={{ display: "block", marginBottom: 4 }}>
-              Password required
-            </strong>
-            Open Telegram → Oro app → <strong>Settings → PWA Access</strong> and
-            set a password before logging in here.
+          <div style={{
+            fontSize: "0.78rem",
+            color: "var(--color-warning, #f59e0b)",
+            background: "rgba(245,158,11,0.08)",
+            border: "1px solid rgba(245,158,11,0.25)",
+            borderRadius: 8,
+            padding: "8px 12px",
+            lineHeight: 1.5,
+          }}>
+            <strong style={{ display: "block", marginBottom: 2 }}>Password required</strong>
+            Open Telegram → Oro → <strong>Settings → PWA Access</strong> to set one.
           </div>
         )}
 
         {error && (
-          <div style={{ fontSize: "0.8rem", color: "#ef4444" }}>{error}</div>
+          <p style={{ fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>{error}</p>
         )}
 
         <button
@@ -289,3 +238,73 @@ export function ProtectedRoute({ onLogin }: Props) {
     </div>
   );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const container: React.CSSProperties = {
+  maxWidth: 360,
+  margin: "5px auto",
+  padding: "0 20px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 14,
+};
+
+const headerWrap: React.CSSProperties = {
+  textAlign: "center",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 4,
+};
+
+const heading: React.CSSProperties = {
+  fontSize: "1.1rem",
+  fontWeight: 800,
+  color: "var(--text-main)",
+  margin: 0,
+  marginTop: -10,
+};
+
+const subtext: React.CSSProperties = {
+  fontSize: "0.75rem",
+  color: "var(--text-muted)",
+  margin: 0,
+};
+
+const card: React.CSSProperties = {
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  gap: 10,
+  background: "var(--glass-bg)",
+  border: "1px solid var(--glass-border)",
+  borderRadius: 14,
+  padding: 18,
+  boxSizing: "border-box",
+};
+
+const fieldWrap: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 5,
+};
+
+const label: React.CSSProperties = {
+  fontSize: "0.78rem",
+  fontWeight: 600,
+  color: "var(--text-subtle)",
+};
+
+const inputStyle: React.CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: 10,
+  border: "1px solid var(--glass-border)",
+  background: "var(--glass-bg)",
+  color: "var(--text-main)",
+  fontSize: "16px",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+};

@@ -2,6 +2,7 @@ import { FC, useState, useEffect, useRef } from "react";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import dkBankLogo from "@shared/assets/dk blue.png";
 import { useAuth } from "@shared/hooks/useAuth";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import {
   linkDKBank,
   verifyPhoneTma,
@@ -227,8 +228,210 @@ function TxRow({
   );
 }
 
+// ── PWA Phone Verify Card ─────────────────────────────────────────────────────
+function PwaPhoneVerifyCard({ onVerified }: { onVerified: () => void }) {
+  const [step, setStep] = useState<"phone" | "otp" | "done">("phone");
+  const [phone, setPhone] = useState("");
+  const [phoneValid, setPhoneValid] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSendOtp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!phoneValid) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { sendPwaPhoneOtp } = await import("@shared/api/client");
+      await sendPwaPhoneOtp(phone);
+      setStep("otp");
+    } catch (err: any) {
+      setError(err.message || "Could not send code");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify(e: React.FormEvent) {
+    e.preventDefault();
+    if (otp.length !== 6) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { verifyPwaPhoneOtp } = await import("@shared/api/client");
+      await verifyPwaPhoneOtp(otp);
+      setStep("done");
+      onVerified();
+    } catch (err: any) {
+      setError(err.message || "Verification failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === "done") {
+    return (
+      <Card style={{ gap: 10, margin: "0 var(--space-md)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#059669", fontWeight: 700, fontSize: 14 }}>
+          <CheckCircle2 size={18} color="#059669" />
+          Phone verified — withdrawals will use SMS.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card style={{ gap: 12, margin: "0 var(--space-md)" }}>
+      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: 8 }}>
+        <ShieldCheck size={16} color="#f59e0b" />
+        Verify your phone
+      </h3>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+        {step === "phone"
+          ? "We'll send a 6-digit code by SMS. Required to receive withdrawal OTPs."
+          : `Enter the 6-digit code we sent to ${phone}.`}
+      </p>
+
+      {step === "phone" ? (
+        <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <PhoneInput
+            value={phone}
+            onChange={(e164, isValid) => {
+              setPhone(e164);
+              setPhoneValid(isValid);
+              setError(null);
+            }}
+            defaultCountry="BT"
+            disabled={loading}
+            error={error ?? undefined}
+          />
+          <Button type="submit" disabled={!phoneValid || loading}>
+            {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Send Code"}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={otp}
+            onChange={(e) => { setOtp(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(null); }}
+            placeholder="6-digit code"
+            maxLength={6}
+            style={{
+              padding: "10px 14px", borderRadius: 10, border: "1.5px solid var(--glass-border)",
+              background: "var(--bg-main)", color: "var(--text-main)", fontSize: 18, fontWeight: 700,
+              outline: "none", width: "100%", boxSizing: "border-box" as const, letterSpacing: "0.3em", textAlign: "center" as const,
+            }}
+          />
+          {error && (
+            <div style={{ fontSize: 12, color: "#ef4444", padding: "6px 10px", background: "rgba(239,68,68,0.08)", borderRadius: 8 }}>
+              {error}
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button
+              type="button"
+              onClick={() => { setStep("phone"); setOtp(""); setError(null); }}
+              style={{ flex: 1, background: "var(--bg-secondary)", color: "var(--text-main)" }}
+            >
+              Back
+            </Button>
+            <Button type="submit" disabled={otp.length !== 6 || loading} style={{ flex: 2 }}>
+              {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Verify"}
+            </Button>
+          </div>
+        </form>
+      )}
+    </Card>
+  );
+}
+
+// ── PWA CID Link Card ─────────────────────────────────────────────────────────
+function PwaCidLinkCard({ onLinked }: { onLinked: (merged: boolean) => void }) {
+  const [cid, setCid] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [merged, setMerged] = useState(false);
+
+  async function handleLink(e: React.FormEvent) {
+    e.preventDefault();
+    if (cid.trim().length !== 11) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { linkCidAccount } = await import("@shared/api/client");
+      const result = await linkCidAccount(cid.trim());
+      setMerged(result.merged);
+      onLinked(result.merged);
+    } catch (err: any) {
+      setError(err.message || "Failed to link account");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (merged) {
+    return (
+      <Card style={{ gap: 10, margin: "0 var(--space-md)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#059669", fontWeight: 700, fontSize: 14 }}>
+          <CheckCircle2 size={18} color="#059669" />
+          Account linked — balance updated!
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card style={{ gap: 12, margin: "0 var(--space-md)" }}>
+      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: 8 }}>
+        <Link2 size={16} color="#2775d0" />
+        Link your account
+      </h3>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+        Enter your 11-digit CID to link your DK Bank account and sync your balance with the Telegram app.
+      </p>
+      <form onSubmit={handleLink} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={cid}
+          onChange={(e) => { setCid(e.target.value.replace(/\D/g, "").slice(0, 11)); setError(null); }}
+          placeholder="11-digit CID"
+          maxLength={11}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1.5px solid var(--glass-border)",
+            background: "var(--bg-main)",
+            color: "var(--text-main)",
+            fontSize: 15,
+            fontWeight: 600,
+            outline: "none",
+            width: "100%",
+            boxSizing: "border-box" as const,
+          }}
+        />
+        {error && (
+          <div style={{ fontSize: 12, color: "#ef4444", padding: "6px 10px", background: "rgba(239,68,68,0.08)", borderRadius: 8 }}>
+            {error}
+          </div>
+        )}
+        <Button
+          type="submit"
+          disabled={cid.trim().length !== 11 || loading}
+          style={{ alignSelf: "stretch" }}
+        >
+          {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Link Account"}
+        </Button>
+      </form>
+    </Card>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
-export const TmaWalletPage: FC = () => {
+export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
   const { user: authUser, loading: authLoading } = useAuth();
 
   const [freshUser, setFreshUser] = useState<AuthUser | null>(null);
@@ -347,7 +550,8 @@ export const TmaWalletPage: FC = () => {
   const loading = authLoading && freshLoading;
 
   const hasDKBank = !!user?.dkCid;
-  const hasPhoneVerified = !!user?.isPhoneVerified;
+  // In PWA, BhutanApp login already verified identity via national ID — skip phone check
+  const hasPhoneVerified = isPwa || !!user?.isPhoneVerified;
 
   const totalWon = txs
     .filter((t) => t.type === "bet_payout")
@@ -875,6 +1079,27 @@ export const TmaWalletPage: FC = () => {
               <X size={14} />
             </button>
           </div>
+        )}
+
+        {/* ── PWA: CID linking form ─────────────────────────────── */}
+        {isPwa && !user?.dkAccountName && (
+          <PwaCidLinkCard
+            onLinked={(merged) => {
+              if (merged) {
+                setTimeout(() => window.location.reload(), 600);
+              } else {
+                refreshWallet();
+              }
+            }}
+          />
+        )}
+
+        {/* ── PWA: Phone verification (for withdrawal OTPs) ──────────────
+            Shown once a DK Bank account is linked, while no phone-verify
+            timestamp is set. telegramLinkedAt is set after either: TMA-side
+            phone verification, OR our PWA SMS-OTP verify — both flows count. */}
+        {isPwa && user?.dkAccountName && !user?.telegramLinkedAt && (
+          <PwaPhoneVerifyCard onVerified={() => refreshWallet()} />
         )}
 
         {/* ── DK Bank Setup ────────────────────────────────────── */}

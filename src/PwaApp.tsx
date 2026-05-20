@@ -74,7 +74,7 @@ const PwaResolvedPage = lazy(() =>
 );
 const PwaWalletTmaPage = lazy(() =>
   import("@/pages/TmaWalletPage").then((m) => ({
-    default: m.TmaWalletPage,
+    default: () => <m.TmaWalletPage isPwa />,
   })),
 );
 

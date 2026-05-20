@@ -1,13 +1,13 @@
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   Market,
   placeBet,
   getMarket,
+  getMe,
   bustCache,
   trackEvent,
 } from "@shared/api/client";
-import { PwaPaymentModal } from "./PwaPaymentModal";
-import type { PaymentResponse } from "@shared/types/payment";
+import { useNavigate } from "react-router-dom";
 
 interface PwaBetFormProps {
   market: Market;
@@ -35,12 +35,22 @@ function calcWin(market: Market, outcomeId: string, bet: number): number {
 }
 
 export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
+  const navigate = useNavigate();
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(
     null,
   );
   const [amount, setAmount] = useState(DEFAULT_AMOUNT.toString());
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [betSuccess, setBetSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
+
+  // Load current wallet balance — drives "insufficient funds" UI
+  useEffect(() => {
+    getMe()
+      .then((u) => setBalance(Number(u.creditsBalance ?? 0)))
+      .catch(() => setBalance(0));
+  }, []);
 
   const betAmount = parseFloat(amount) || 0;
   const MIN_BET = getMinBet(market);
@@ -50,26 +60,30 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const winAmount = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount)
     : 0;
-  const isReady = !!selectedOutcomeId && betAmount >= MIN_BET;
   const show2Outcomes = market.outcomes.length === 2;
 
-  const handlePaymentSuccess = async (payment: PaymentResponse) => {
-    if (!selectedOutcomeId) return;
+  const hasEnoughBalance = balance !== null && balance >= betAmount;
+  const isReady =
+    !!selectedOutcomeId &&
+    betAmount >= MIN_BET &&
+    hasEnoughBalance &&
+    !submitting;
+
+  async function handleSubmit() {
+    if (!selectedOutcomeId || betAmount < MIN_BET) return;
+    setSubmitting(true);
+    setError(null);
     try {
       await placeBet(market.id, {
         outcomeId: selectedOutcomeId,
-        amount: payment.amount,
+        amount: betAmount,
       });
+      // Optimistically update local balance
+      setBalance((b) => (b == null ? null : b - betAmount));
+      window.dispatchEvent(new CustomEvent("oro:balance-changed"));
       setBetSuccess(true);
       if (onBetPlaced) {
         bustCache(`/markets/${market.id}`);
-        const freshMarket = await getMarket(market.id);
-        onBetPlaced(freshMarket);
-      }
-    } catch (e: any) {
-      console.error("Bet placement failed:", e.message);
-      setBetSuccess(true);
-      if (onBetPlaced) {
         try {
           const fresh = await getMarket(market.id);
           onBetPlaced(fresh);
@@ -77,8 +91,12 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
           onBetPlaced();
         }
       }
+    } catch (e: any) {
+      setError(e.message || "Failed to place prediction");
+    } finally {
+      setSubmitting(false);
     }
-  };
+  }
 
   if (betSuccess) {
     return (
@@ -322,10 +340,71 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         </div>
       )}
 
+      {/* Balance / error feedback */}
+      {error && (
+        <div
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.25)",
+            color: "#ef4444",
+            padding: "8px 12px",
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {selectedOutcomeId &&
+        betAmount >= MIN_BET &&
+        balance !== null &&
+        !hasEnoughBalance && (
+          <div
+            style={{
+              background: "rgba(245,158,11,0.08)",
+              border: "1px solid rgba(245,158,11,0.25)",
+              padding: "10px 12px",
+              borderRadius: 10,
+              fontSize: 12,
+              color: "var(--text-muted)",
+              lineHeight: 1.5,
+            }}
+          >
+            <strong style={{ color: "var(--text-main)" }}>
+              Insufficient balance.
+            </strong>{" "}
+            You have Nu {balance.toLocaleString()}, need Nu{" "}
+            {betAmount.toLocaleString()}.{" "}
+            <button
+              onClick={() => navigate("/wallet")}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--color-primary)",
+                fontWeight: 800,
+                textDecoration: "underline",
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              Top up →
+            </button>
+          </div>
+        )}
+
       {/* CTA */}
       <button
         disabled={!isReady}
-        onClick={() => setShowPaymentModal(true)}
+        onClick={() => {
+          trackEvent({
+            eventType: "bet.submit",
+            platform: "pwa",
+            meta: { marketId: market.id, amount: betAmount },
+          });
+          handleSubmit();
+        }}
         style={{
           width: "100%",
           padding: "20px",
@@ -349,12 +428,29 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
           isReady && (e.currentTarget.style.transform = "translateY(0)")
         }
       >
-        {isReady
-          ? `Predict Nu ${amount}`
-          : selectedOutcomeId
-            ? `Minimum Nu ${MIN_BET} Required`
-            : "Select an Outcome"}
+        {submitting
+          ? "Placing…"
+          : !selectedOutcomeId
+            ? "Select an Outcome"
+            : betAmount < MIN_BET
+              ? `Minimum Nu ${MIN_BET} Required`
+              : !hasEnoughBalance
+                ? "Top Up to Predict"
+                : `Predict Nu ${amount}`}
       </button>
+
+      {balance !== null && (
+        <div
+          style={{
+            fontSize: "0.75rem",
+            color: "var(--text-subtle)",
+            textAlign: "center",
+            fontWeight: 700,
+          }}
+        >
+          Wallet balance: Nu {balance.toLocaleString()}
+        </div>
+      )}
 
       <div
         style={{
@@ -370,15 +466,6 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         <br />
         Final rewards are determined by the oracle at market close.
       </div>
-
-      <PwaPaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        market={market}
-        outcomeId={selectedOutcomeId ?? ""}
-        onSuccess={handlePaymentSuccess}
-        onFailure={(err) => console.error("Payment failed:", err)}
-      />
     </div>
   );
 };
