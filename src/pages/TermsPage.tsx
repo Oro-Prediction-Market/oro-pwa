@@ -122,7 +122,7 @@ const SECTIONS = [
       },
       {
         heading: "5.4 Bonus Balance",
-        text: "Bonus credits cannot be directly withdrawn. Winnings from bonus bets are capped at Nu 50 withdrawable per bonus grant. Excess winnings are locked as bonus balance for further betting only.",
+        text: "Bonus credits are not real money — they are promotional play credits. They cannot be withdrawn under any circumstances. If you win a market position funded with bonus credits, you do not receive a real money payout — winnings are returned as bonus credits only. If you lose a position funded with bonus credits, the opposing real-money winners still receive their full payout (the platform covers it). Bonus credits cannot be transferred between users and may be revoked at any time.",
       },
       {
         heading: "5.5 Failed Transactions",
@@ -136,7 +136,7 @@ const SECTIONS = [
     subsections: [
       {
         heading: "6.1 Welcome Bonus",
-        text: "All new users receive a Nu 20 welcome bonus on first registration. This is non-transferable, non-refundable, and granted once per user. It is subject to the bonus withdrawal restrictions in Section 5.4.",
+        text: "All new users receive a Nu 20 welcome bonus on first registration. This is non-transferable, non-refundable, and granted once per user. It is subject to the bonus credit rules in Section 5.4 — not redeemable as real money.",
       },
       {
         heading: "6.2 Referral Programme",
