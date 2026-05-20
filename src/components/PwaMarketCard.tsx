@@ -42,10 +42,11 @@ function useCountdown(targetAt: string | null): string {
 interface PwaMarketCardProps {
   market: Market;
   onBet: (outcomeId: string) => void;
+  userPickedOutcomeId?: string;
 }
 
 export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
-  ({ market, onBet }) => {
+  ({ market, onBet, userPickedOutcomeId }) => {
     const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
     const isUpcoming = market.status === "upcoming";
@@ -74,7 +75,8 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
       const sorted = [...raw].sort((a, b) => b.pct - a.pct);
       return raw.map((o) => {
         const rank = sorted.findIndex((s) => s.id === o.id);
-        const resolved = market.status === "resolved" || market.status === "settled";
+        const resolved =
+          market.status === "resolved" || market.status === "settled";
         return { ...o, color: outcomeColor(rank, raw.length, resolved) };
       });
     })();
@@ -260,180 +262,197 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                 >
                   {(() => {
                     return displayOutcomes.map((s, idx) => {
-                    const barWidth = Math.max(4, Math.min(100, s.pct));
-                    const avatarUrl = !imgError
-                      ? (s as any).imageUrl ||
-                        (idx === 0
-                          ? market.imageUrl
-                          : idx === 1
-                            ? market.imageUrlAlt || market.imageUrl
-                            : null)
-                      : null;
-                    const vis = getCategoryVisual(market.category);
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onBet(s.id);
-                        }}
-                        style={{
-                          width: "100%",
-                          padding: "0",
-                          borderRadius: "var(--radius-md)",
-                          background: "var(--bg-card)",
-                          border: "none",
-                          cursor: "pointer",
-                          overflow: "hidden",
-                          display: "block",
-                          textAlign: "left",
-                          position: "relative",
-                          boxShadow: `4px 4px 10px rgba(0,0,0,0.25), -2px -2px 8px rgba(255,255,255,0.04), inset 0 0 0 1px ${s.color}30`,
-                          transition:
-                            "box-shadow 0.15s ease, transform 0.12s ease",
-                        }}
-                        onMouseDown={(e) => {
-                          const el = e.currentTarget;
-                          el.style.boxShadow = `inset 3px 3px 8px rgba(0,0,0,0.3), inset -1px -1px 4px rgba(255,255,255,0.03), inset 0 0 0 1px ${s.color}50`;
-                          el.style.transform = "scale(0.985)";
-                        }}
-                        onMouseUp={(e) => {
-                          const el = e.currentTarget;
-                          el.style.boxShadow = `4px 4px 10px rgba(0,0,0,0.25), -2px -2px 8px rgba(255,255,255,0.04), inset 0 0 0 1px ${s.color}30`;
-                          el.style.transform = "scale(1)";
-                        }}
-                        onMouseLeave={(e) => {
-                          const el = e.currentTarget;
-                          el.style.boxShadow = `4px 4px 10px rgba(0,0,0,0.25), -2px -2px 8px rgba(255,255,255,0.04), inset 0 0 0 1px ${s.color}30`;
-                          el.style.transform = "scale(1)";
-                        }}
-                      >
-                        {/* Pool fill gradient */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            width: `${barWidth}%`,
-                            background: `linear-gradient(90deg, ${s.color}55 0%, ${s.color}28 60%, transparent 100%)`,
-                            borderRadius:
-                              "var(--radius-md) 0 0 var(--radius-md)",
-                            transition: "width 1s ease",
-                            pointerEvents: "none",
+                      const barWidth = Math.max(4, Math.min(100, s.pct));
+                      const avatarUrl = !imgError
+                        ? (s as any).imageUrl ||
+                          (idx === 0
+                            ? market.imageUrl
+                            : idx === 1
+                              ? market.imageUrlAlt || market.imageUrl
+                              : null)
+                        : null;
+                      const vis = getCategoryVisual(market.category);
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onBet(s.id);
                           }}
-                        />
-                        {/* Shimmer sweep */}
-                        <div
                           style={{
-                            position: "absolute",
-                            inset: 0,
-                            overflow: "hidden",
+                            width: "100%",
+                            padding: "0",
                             borderRadius: "var(--radius-md)",
-                            pointerEvents: "none",
+                            background: "var(--bg-card)",
+                            border: "none",
+                            cursor: "pointer",
+                            overflow: "hidden",
+                            display: "block",
+                            textAlign: "left",
+                            position: "relative",
+                            boxShadow: `4px 4px 10px rgba(0,0,0,0.25), -2px -2px 8px rgba(255,255,255,0.04), inset 0 0 0 1px ${s.color}30`,
+                            transition:
+                              "box-shadow 0.15s ease, transform 0.12s ease",
+                          }}
+                          onMouseDown={(e) => {
+                            const el = e.currentTarget;
+                            el.style.boxShadow = `inset 3px 3px 8px rgba(0,0,0,0.3), inset -1px -1px 4px rgba(255,255,255,0.03), inset 0 0 0 1px ${s.color}50`;
+                            el.style.transform = "scale(0.985)";
+                          }}
+                          onMouseUp={(e) => {
+                            const el = e.currentTarget;
+                            el.style.boxShadow = `4px 4px 10px rgba(0,0,0,0.25), -2px -2px 8px rgba(255,255,255,0.04), inset 0 0 0 1px ${s.color}30`;
+                            el.style.transform = "scale(1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            const el = e.currentTarget;
+                            el.style.boxShadow = `4px 4px 10px rgba(0,0,0,0.25), -2px -2px 8px rgba(255,255,255,0.04), inset 0 0 0 1px ${s.color}30`;
+                            el.style.transform = "scale(1)";
                           }}
                         >
+                          {/* Pool fill gradient */}
                           <div
                             style={{
                               position: "absolute",
                               top: 0,
+                              left: 0,
                               bottom: 0,
-                              width: "40%",
-                              background: `linear-gradient(90deg, transparent, ${s.color}18, transparent)`,
-                              animation:
-                                "shimmer-slide 2.4s ease-in-out infinite",
+                              width: `${barWidth}%`,
+                              background: `linear-gradient(90deg, ${s.color}55 0%, ${s.color}28 60%, transparent 100%)`,
+                              borderRadius:
+                                "var(--radius-md) 0 0 var(--radius-md)",
+                              transition: "width 1s ease",
+                              pointerEvents: "none",
                             }}
                           />
-                        </div>
-
-                        {/* Content */}
-                        <div
-                          style={{
-                            position: "relative",
-                            padding: "7px 10px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 9,
-                          }}
-                        >
-                          {/* Avatar */}
+                          {/* Shimmer sweep */}
                           <div
                             style={{
-                              flexShrink: 0,
-                              width: 26,
-                              height: 26,
-                              borderRadius: "var(--radius-full)",
+                              position: "absolute",
+                              inset: 0,
                               overflow: "hidden",
-                              background: vis.gradient,
+                              borderRadius: "var(--radius-md)",
+                              pointerEvents: "none",
+                            }}
+                          >
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                bottom: 0,
+                                width: "40%",
+                                background: `linear-gradient(90deg, transparent, ${s.color}18, transparent)`,
+                                animation:
+                                  "shimmer-slide 2.4s ease-in-out infinite",
+                              }}
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div
+                            style={{
+                              position: "relative",
+                              padding: "7px 10px",
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "center",
-                              border: "1.5px solid rgba(255,255,255,0.15)",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+                              gap: 9,
                             }}
                           >
-                            {avatarUrl ? (
-                              <img
-                                src={avatarUrl}
-                                alt=""
-                                onError={() => setImgError(true)}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  display: "block",
-                                }}
-                              />
-                            ) : (
-                              <span
-                                style={{
-                                  fontSize: 11,
-                                  fontWeight: 900,
-                                  color: "#fff",
-                                  textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                                }}
-                              >
-                                {s.label.charAt(0).toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <span
+                            {/* Avatar */}
+                            <div
                               style={{
-                                fontSize: "0.82rem",
-                                fontWeight: 700,
-                                color: "var(--text-main)",
-                                letterSpacing: "-0.01em",
-                                whiteSpace: "nowrap",
+                                flexShrink: 0,
+                                width: 26,
+                                height: 26,
+                                borderRadius: "var(--radius-full)",
                                 overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                display: "block",
+                                background: vis.gradient,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                border: "1.5px solid rgba(255,255,255,0.15)",
+                                boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
                               }}
                             >
-                              {s.label}
-                            </span>
-                          </div>
+                              {avatarUrl ? (
+                                <img
+                                  src={avatarUrl}
+                                  alt=""
+                                  onError={() => setImgError(true)}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                    display: "block",
+                                  }}
+                                />
+                              ) : (
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 900,
+                                    color: "#fff",
+                                    textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                                  }}
+                                >
+                                  {s.label.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
 
-                          <div
-                            style={{
-                              background: `${s.color}20`,
-                              color: s.color,
-                              fontSize: "0.7rem",
-                              fontWeight: 900,
-                              padding: "3px 8px",
-                              borderRadius: "var(--radius-full)",
-                              flexShrink: 0,
-                              marginLeft: "auto",
-                              boxShadow: `inset 0 0 0 1px ${s.color}30`,
-                            }}
-                          >
-                            {s.pct.toFixed(0)}%
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span
+                                style={{
+                                  fontSize: "0.82rem",
+                                  fontWeight: 700,
+                                  color: "var(--text-main)",
+                                  letterSpacing: "-0.01em",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  display: "block",
+                                }}
+                              >
+                                {s.label}
+                              </span>
+                              {s.id === userPickedOutcomeId && (
+                                <span
+                                  style={{
+                                    fontSize: "0.55rem",
+                                    fontWeight: 800,
+                                    color: s.color,
+                                    background: `${s.color}18`,
+                                    border: `1px solid ${s.color}40`,
+                                    padding: "1px 5px",
+                                    borderRadius: 4,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.04em",
+                                  }}
+                                >
+                                  Your pick
+                                </span>
+                              )}
+                            </div>
+
+                            <div
+                              style={{
+                                background: `${s.color}20`,
+                                color: s.color,
+                                fontSize: "0.7rem",
+                                fontWeight: 900,
+                                padding: "3px 8px",
+                                borderRadius: "var(--radius-full)",
+                                flexShrink: 0,
+                                marginLeft: "auto",
+                                boxShadow: `inset 0 0 0 1px ${s.color}30`,
+                              }}
+                            >
+                              {s.pct.toFixed(0)}%
+                            </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  });
+                        </button>
+                      );
+                    });
                   })()}
                 </div>
 

@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import {
   getMarkets,
   getMe,
+  getMyBets,
   getRecentActivity,
   type Market,
   type ActivityEvent,
   type AuthUser,
+  type Bet,
 } from "@shared/api/client";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 // Lazy-load TmaBetModal — it pulls in heavy TMA SDK deps and is only shown on interaction
@@ -107,7 +109,9 @@ function LiveTicker() {
       />
       <div
         role="button"
-        onClick={() => current.marketId && navigate(`/market/${current.marketId}`)}
+        onClick={() =>
+          current.marketId && navigate(`/market/${current.marketId}`)
+        }
         style={{
           flex: 1,
           minWidth: 0,
@@ -202,6 +206,7 @@ export function PwaFeedPage({
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingBet, setPendingBet] = useState<ActiveBet | null>(null);
   const [me, setMe] = useState<AuthUser | null>(null);
+  const [myBets, setMyBets] = useState<Bet[]>([]);
 
   const handleBetClick = (marketId: string, outcomeId: string) => {
     if (!authed) {
@@ -225,6 +230,11 @@ export function PwaFeedPage({
     getMe()
       .then(setMe)
       .catch(() => {});
+    if (authed) {
+      getMyBets()
+        .then(setMyBets)
+        .catch(() => {});
+    }
   }, [authed]);
   const {
     searchQuery,
@@ -343,7 +353,12 @@ export function PwaFeedPage({
               border: "1px solid rgba(124, 58, 237, 0.2)",
             }}
           />
-          <TrendingUp size={28} strokeWidth={1.5} color="var(--color-primary, #7c3aed)" style={{ zIndex: 1 }} />
+          <TrendingUp
+            size={28}
+            strokeWidth={1.5}
+            color="var(--color-primary, #7c3aed)"
+            style={{ zIndex: 1 }}
+          />
         </div>
         <div
           style={{
@@ -371,7 +386,11 @@ export function PwaFeedPage({
     );
 
   const filteredMarkets = markets.filter((m) => {
-    if (selectedCategory === "All" && ["ter", "btc"].includes(m.externalSource ?? "")) return false;
+    if (
+      selectedCategory === "All" &&
+      ["ter", "btc"].includes(m.externalSource ?? "")
+    )
+      return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -436,6 +455,9 @@ export function PwaFeedPage({
           <PwaMarketCard
             key={market.id}
             market={market}
+            userPickedOutcomeId={
+              myBets.find((b) => b.marketId === market.id)?.outcomeId
+            }
             onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
           />
         );
