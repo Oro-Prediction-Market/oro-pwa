@@ -14,16 +14,16 @@ const variants: Record<CardVariant, React.CSSProperties> = {
   default: {
     background: "var(--bg-card)",
     border: "1px solid var(--border)",
-    boxShadow: "var(--shadow-sm)",
+    boxShadow: "var(--shadow-md)",
   },
   elevated: {
     background: "var(--bg-card)",
     border: "1px solid var(--border)",
-    boxShadow: "var(--shadow-md)",
+    boxShadow: "var(--shadow-lg)",
   },
   outlined: {
     background: "transparent",
-    border: "1.5px solid var(--border)",
+    border: "1px solid var(--border)",
     boxShadow: "none",
   },
   glass: {
@@ -31,20 +31,20 @@ const variants: Record<CardVariant, React.CSSProperties> = {
     border: "1px solid var(--glass-border)",
     backdropFilter: "var(--glass-blur)",
     WebkitBackdropFilter: "var(--glass-blur)",
-    boxShadow: "var(--shadow-sm)",
+    boxShadow: "var(--shadow-md)",
   },
 }
 
 const paddings: Record<CardPadding, React.CSSProperties> = {
   none: { padding: 0 },
-  sm: { padding: "10px 12px" },
+  sm: { padding: "12px" },
   md: { padding: "16px" },
   lg: { padding: "20px" },
 }
 
 const radii = {
   md: "var(--radius-md)",
-  lg: "var(--radius-lg)",
+  lg: "var(--radius-card)",
 }
 
 export const Card: React.FC<CardProps> = ({

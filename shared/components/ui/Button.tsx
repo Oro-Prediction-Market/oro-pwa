@@ -17,25 +17,26 @@ const base: React.CSSProperties = {
   justifyContent: "center",
   gap: 8,
   border: "none",
-  borderRadius: "var(--radius-md)",
+  borderRadius: "var(--radius-button)",
   fontFamily: "var(--font-primary)",
-  fontWeight: 700,
+  fontWeight: 600,
   cursor: "pointer",
-  transition: "opacity 0.15s ease, transform 0.1s ease",
+  transition: "background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease",
   WebkitTapHighlightColor: "transparent",
   flexShrink: 0,
+  lineHeight: "20px",
 }
 
 const variants: Record<ButtonVariant, React.CSSProperties> = {
   primary: {
     background: "var(--grad-primary)",
     color: "#fff",
-    boxShadow: "0 8px 20px -6px rgba(39,117,208,0.45)",
+    boxShadow: "0 4px 12px rgba(39,117,208,0.3)",
   },
   secondary: {
     background: "var(--bg-card)",
     color: "var(--text-main)",
-    border: "1.5px solid var(--border)",
+    border: "1px solid var(--border)",
     boxShadow: "var(--shadow-sm)",
   },
   ghost: {
@@ -48,14 +49,14 @@ const variants: Record<ButtonVariant, React.CSSProperties> = {
   danger: {
     background: "var(--color-danger)",
     color: "#fff",
-    boxShadow: "0 8px 20px -6px rgba(239,68,68,0.4)",
+    boxShadow: "0 4px 12px rgba(239,68,68,0.3)",
   },
 }
 
 const sizes: Record<ButtonSize, React.CSSProperties> = {
-  sm: { fontSize: "0.8rem", padding: "8px 14px", gap: 6 },
-  md: { fontSize: "0.9rem", padding: "12px 20px" },
-  lg: { fontSize: "1rem", padding: "15px 24px" },
+  sm: { fontSize: "14px", padding: "6px 12px", height: "32px", gap: 6 },
+  md: { fontSize: "14px", padding: "8px 16px", height: "36px" },
+  lg: { fontSize: "14px", padding: "10px 20px", height: "40px" },
 }
 
 export const Button: React.FC<ButtonProps> = ({

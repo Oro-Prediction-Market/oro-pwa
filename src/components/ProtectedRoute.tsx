@@ -76,22 +76,21 @@ export function ProtectedRoute({ onLogin }: Props) {
             position: "absolute",
             top: -15,
             right: 0,
-            background: "var(--bg-secondary, rgba(0,0,0,0.05))",
+            background: "var(--bg-main)",
             border: "none",
             borderRadius: "50%",
-            width: 32,
-            height: 32,
+            width: 30,
+            height: 30,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
             color: "var(--text-muted)",
             fontSize: 18,
-            fontWeight: 700,
-            lineHeight: 1,
+            flexShrink: 0,
           }}
         >
-          ✕
+          ×
         </button>
         <header style={headerWrap}>
           <OroLogo size={56} />
@@ -122,22 +121,21 @@ export function ProtectedRoute({ onLogin }: Props) {
           position: "absolute",
           top: -15,
           right: 0,
-          background: "var(--bg-secondary, rgba(0,0,0,0.05))",
+          background: "var(--bg-main)",
           border: "none",
           borderRadius: "50%",
-          width: 32,
-          height: 32,
+          width: 30,
+          height: 30,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
           color: "var(--text-muted)",
           fontSize: 18,
-          fontWeight: 700,
-          lineHeight: 1,
+          flexShrink: 0,
         }}
       >
-        ✕
+        ×
       </button>
 
       <header style={headerWrap}>

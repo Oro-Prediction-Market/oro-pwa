@@ -152,7 +152,7 @@ export function PhoneInput({
       <div
         style={{
           display: "flex",
-          borderRadius: 14,
+          borderRadius: "var(--radius-input, 6px)",
           border: `1px solid ${borderColor}`,
           background: "var(--bg-card, #1a1f2e)",
           overflow: "visible",
@@ -168,13 +168,13 @@ export function PhoneInput({
             display: "flex",
             alignItems: "center",
             gap: 6,
-            padding: "14px 10px 14px 14px",
+            padding: "10px 10px 10px 12px",
             background: "transparent",
             border: "none",
             borderRight: `1px solid ${borderColor}`,
             cursor: "pointer",
             flexShrink: 0,
-            borderRadius: "14px 0 0 14px",
+            borderRadius: "var(--radius-input, 6px) 0 0 var(--radius-input, 6px)",
           }}
         >
           <span style={{ fontSize: 18, lineHeight: 1 }}>
@@ -210,13 +210,14 @@ export function PhoneInput({
           placeholder="17 000 000"
           style={{
             flex: 1,
-            padding: "14px 14px 14px 12px",
+            padding: "10px 12px",
             background: "transparent",
             border: "none",
             color: "var(--text-main, #f8fafc)",
-            fontSize: 16,
+            fontSize: 14,
             outline: "none",
             minWidth: 0,
+            lineHeight: "20px",
           }}
         />
       </div>
@@ -230,10 +231,10 @@ export function PhoneInput({
             left: 0,
             right: 0,
             zIndex: 100,
-            borderRadius: 14,
+            borderRadius: "var(--radius-card, 15.2px)",
             background: "var(--bg-card, #1a1f2e)",
             border: "1px solid var(--glass-border, rgba(255,255,255,0.08))",
-            boxShadow: "0 12px 32px rgba(0,0,0,0.4)",
+            boxShadow: "var(--shadow-lg)",
             overflow: "hidden",
           }}
         >
@@ -261,14 +262,15 @@ export function PhoneInput({
               placeholder="Search country..."
               style={{
                 width: "100%",
-                padding: "10px 12px",
-                borderRadius: 10,
+                padding: "8px 12px",
+                borderRadius: "var(--radius-input, 6px)",
                 background: "var(--bg-main, #0f1117)",
                 border: "1px solid var(--glass-border, rgba(255,255,255,0.08))",
                 color: "var(--text-main, #f8fafc)",
-                fontSize: 16,
+                fontSize: 14,
                 outline: "none",
                 boxSizing: "border-box",
+                lineHeight: "20px",
               }}
             />
           </div>
