@@ -2506,7 +2506,7 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                         {
                           icon: <Send size={14} color="#2775d0" />,
                           text:
-                            payOtpChannel === "sms"
+                            isPwa || payOtpChannel === "sms"
                               ? "Check your My Bhutan App for the OTP notification"
                               : "Open Oro Bot in Telegram",
                           delay: "0ms",
@@ -2560,6 +2560,7 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                       >
                         {paymentModal === "withdraw" &&
                         i === 0 &&
+                        !isPwa &&
                         payOtpChannel !== "sms" ? (
                           <>
                             Open{" "}
