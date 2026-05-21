@@ -66,6 +66,8 @@ export interface PaymentResponse {
   timestamp: string;
   /** True when an OTP has been sent to the customer and must be submitted via confirmDKBankPayment */
   otpRequired?: boolean;
+  /** Channel used to deliver the OTP */
+  otpChannel?: "telegram" | "sms";
 }
 
 export interface PaymentStatus {

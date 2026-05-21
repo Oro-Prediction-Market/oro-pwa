@@ -235,11 +235,12 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
           clearInterval(id);
 
           const cid = (data.user?.username || data.user?.id || "").trim();
+          const bhutanAppUuid = (data.user?.id || "").trim();
 
           try {
             await loginWithBhutanApp({
               token: extractToken(data.token),
-              externalUserId: cid,
+              externalUserId: bhutanAppUuid || cid,
               fullName: data.user?.name ?? "",
               username: data.user?.username,
               phoneNumber: data.user?.phoneNumber?.phoneNumber,

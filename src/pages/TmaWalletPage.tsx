@@ -653,6 +653,9 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
   const [payError, setPayError] = useState("");
   const [payProcessing, setPayProcessing] = useState(false);
   const [paySuccessMsg, setPaySuccessMsg] = useState("");
+  const [payOtpChannel, setPayOtpChannel] = useState<"telegram" | "sms">(
+    "telegram",
+  );
 
   // Auto-focus OTP input when step becomes "otp" so keyboard opens immediately
   useEffect(() => {
@@ -810,6 +813,7 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
         res = await initiateDKBankWithdrawal({ amount });
       }
       setPayPendingId(res.paymentId);
+      setPayOtpChannel(res.otpChannel ?? "telegram");
       setPayStep("otp");
     } catch (err: any) {
       setPayError(err.message || "Something went wrong. Please try again.");
@@ -2443,7 +2447,7 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                 >
                   {paymentModal === "deposit"
                     ? "An OTP will be sent via SMS to your DK Bank registered phone."
-                    : "An OTP will be sent to your Telegram bot to confirm this transaction."}
+                    : "An OTP will be sent to confirm this transaction."}
                 </p>
               </div>
             )}
@@ -2501,7 +2505,10 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                     : [
                         {
                           icon: <Send size={14} color="#2775d0" />,
-                          text: "Open Oro Bot in Telegram",
+                          text:
+                            payOtpChannel === "sms"
+                              ? "Check your My Bhutan App for the OTP notification"
+                              : "Open Oro Bot in Telegram",
                           delay: "0ms",
                         },
                         {
@@ -2551,7 +2558,9 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                           lineHeight: 1.4,
                         }}
                       >
-                        {paymentModal === "withdraw" && i === 0 ? (
+                        {paymentModal === "withdraw" &&
+                        i === 0 &&
+                        payOtpChannel !== "sms" ? (
                           <>
                             Open{" "}
                             <a
