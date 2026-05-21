@@ -72,9 +72,14 @@ async function fetchAndCache<T>(
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
 
   if (res.status === 401) {
-    clearToken();
-    window.dispatchEvent(new Event("oro:unauthorized"));
     const err = await res.json().catch(() => ({ message: "Unauthorized" }));
+    // OTP verification endpoints return 401 for wrong codes — don't treat as session expiry
+    const isOtpEndpoint =
+      path.includes("verify-phone-otp") || path.includes("send-phone-otp");
+    if (!isOtpEndpoint) {
+      clearToken();
+      window.dispatchEvent(new Event("oro:unauthorized"));
+    }
     throw new Error(err.message || "Unauthorized");
   }
   if (!res.ok) {

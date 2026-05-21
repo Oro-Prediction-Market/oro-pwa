@@ -12,12 +12,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { CheckCircle } from "lucide-react";
 import { loginWithBhutanApp } from "@shared/api/client";
 import { isMobileDevice } from "@/lib/device-detection";
 
 const BHUTAN_APP_BASE = "https://service.bhutanapp.tech/svc/auth";
 const POLL_INTERVAL_MS = 2000;
-const MAX_POLL_ATTEMPTS = 30; // 60 seconds
+const MAX_POLL_ATTEMPTS = 30;
 
 type PollStatus =
   | "PENDING"
@@ -210,10 +211,7 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
   // ── Countdown ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (phase !== "ready" && phase !== "polling") return;
-    const id = setInterval(
-      () => setTimeLeft((t) => Math.max(0, t - 1)),
-      1000,
-    );
+    const id = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
     return () => clearInterval(id);
   }, [phase]);
 
@@ -324,8 +322,10 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
   if (phase === "success") {
     return (
       <div style={wrap}>
-        <span style={{ fontSize: 40 }}>✅</span>
-        <p style={{ fontWeight: 800, color: "#22c55e", fontSize: 15, margin: 0 }}>
+        <CheckCircle size={40} color="#22c55e" strokeWidth={2.5} />
+        <p
+          style={{ fontWeight: 800, color: "#22c55e", fontSize: 13, margin: 0 }}
+        >
           Authenticated! Signing you in…
         </p>
       </div>
@@ -362,21 +362,41 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
   if (mobile) {
     return (
       <div style={wrap}>
-        <span style={{ fontSize: 36 }}>📱</span>
+        <img
+          src="/bht.png"
+          alt="My Bhutan App"
+          style={{ width: 48, height: 48, borderRadius: 10 }}
+        />
 
         {phase === "ready" ? (
           <>
-            <p style={{ fontWeight: 800, color: "var(--text-main)", fontSize: 15, margin: 0 }}>
+            <p
+              style={{
+                fontWeight: 800,
+                color: "var(--text-main)",
+                fontSize: 15,
+                margin: 0,
+              }}
+            >
               Open My Bhutan App
             </p>
-            <p style={muted}>Tap below to open the app and approve the login.</p>
+            <p style={muted}>
+              Tap below to open the app and approve the login.
+            </p>
             <button onClick={handleOpenApp} style={primaryBtn}>
               Open My Bhutan App
             </button>
           </>
         ) : (
           <>
-            <p style={{ fontWeight: 800, color: "var(--text-main)", fontSize: 15, margin: 0 }}>
+            <p
+              style={{
+                fontWeight: 800,
+                color: "var(--text-main)",
+                fontSize: 15,
+                margin: 0,
+              }}
+            >
               Approve in My Bhutan App
             </p>
             <p style={muted}>
@@ -397,19 +417,42 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
   // ── Desktop: QR code flow ─────────────────────────────────────────────────
   return (
     <div style={wrap}>
-      <p style={{ fontWeight: 800, color: "var(--text-main)", fontSize: 15, margin: 0 }}>
+      <p
+        style={{
+          fontWeight: 800,
+          color: "var(--text-main)",
+          fontSize: 15,
+          margin: 0,
+        }}
+      >
         Scan with My Bhutan App
       </p>
 
       {qrData ? (
-        <div style={{ background: "#fff", borderRadius: 12, padding: 12, boxShadow: "0 4px 16px rgba(0,0,0,0.25)" }}>
+        <div
+          style={{
+            background: "#fff",
+            borderRadius: 12,
+            padding: 12,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+          }}
+        >
           <QRCodeSVG value={qrData} size={200} level="M" marginSize={2} />
         </div>
       ) : (
         <div style={spinner} />
       )}
 
-      <ol style={{ textAlign: "left", fontSize: 12, color: "var(--text-muted)", paddingLeft: 18, margin: 0, lineHeight: 1.9 }}>
+      <ol
+        style={{
+          textAlign: "left",
+          fontSize: 12,
+          color: "var(--text-muted)",
+          paddingLeft: 18,
+          margin: 0,
+          lineHeight: 1.9,
+        }}
+      >
         <li>Open My Bhutan App on your phone</li>
         <li>Tap the QR scanner icon</li>
         <li>Scan this code and approve</li>
@@ -449,8 +492,8 @@ const muted: React.CSSProperties = {
 const spinner: React.CSSProperties = {
   width: 24,
   height: 24,
-  border: "3px solid rgba(245,158,11,0.2)",
-  borderTop: "3px solid #f59e0b",
+  border: "3px solid rgba(39,117,208,0.2)",
+  borderTop: "3px solid #2775d0",
   borderRadius: "50%",
   animation: "spin 0.9s linear infinite",
   flexShrink: 0,
@@ -460,8 +503,8 @@ const primaryBtn: React.CSSProperties = {
   padding: "10px 24px",
   borderRadius: 10,
   border: "none",
-  background: "linear-gradient(135deg, #f59e0b, #d97706)",
-  color: "#0d1b2a",
+  background: "var(--grad-primary, linear-gradient(135deg, #2775d0, #1a5bb5))",
+  color: "#ffffff",
   fontWeight: 800,
   fontSize: 14,
   cursor: "pointer",
@@ -471,7 +514,7 @@ const ghostBtn: React.CSSProperties = {
   padding: "8px 20px",
   borderRadius: 10,
   border: "1px solid var(--glass-border)",
-  background: "transparent",
+  background: "var(--bg-secondary, transparent)",
   color: "var(--text-muted)",
   fontWeight: 600,
   fontSize: 13,
@@ -479,9 +522,9 @@ const ghostBtn: React.CSSProperties = {
 };
 
 const errorBox: React.CSSProperties = {
-  background: "rgba(239,68,68,0.1)",
-  border: "1px solid rgba(239,68,68,0.3)",
-  borderRadius: 8,
+  background: "rgba(239,68,68,0.08)",
+  border: "1px solid rgba(239,68,68,0.2)",
+  borderRadius: 12,
   padding: "10px 14px",
   fontSize: 13,
   color: "#ef4444",

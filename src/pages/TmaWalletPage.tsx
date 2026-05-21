@@ -169,7 +169,11 @@ function TxRow({
             marginBottom: tx.note ? 2 : 0,
           }}
         >
-          {tx.note ? tx.note : isWin && !isPositiveNet ? "Payout received" : TX_LABEL[tx.type]}
+          {tx.note
+            ? tx.note
+            : isWin && !isPositiveNet
+              ? "Payout received"
+              : TX_LABEL[tx.type]}
         </div>
         {tx.note && (
           <div
@@ -273,7 +277,16 @@ function PwaPhoneVerifyCard({ onVerified }: { onVerified: () => void }) {
   if (step === "done") {
     return (
       <Card style={{ gap: 10, margin: "0 var(--space-md)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#059669", fontWeight: 700, fontSize: 14 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: "#059669",
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
           <CheckCircle2 size={18} color="#059669" />
           Phone verified — withdrawals will use SMS.
         </div>
@@ -283,18 +296,38 @@ function PwaPhoneVerifyCard({ onVerified }: { onVerified: () => void }) {
 
   return (
     <Card style={{ gap: 12, margin: "0 var(--space-md)" }}>
-      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: 8 }}>
+      <h3
+        style={{
+          margin: 0,
+          fontSize: 15,
+          fontWeight: 700,
+          color: "var(--text-main)",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
         <ShieldCheck size={16} color="#f59e0b" />
         Verify your phone
       </h3>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 13,
+          color: "var(--text-muted)",
+          lineHeight: 1.5,
+        }}
+      >
         {step === "phone"
           ? "We'll send a 6-digit code by SMS. Required to receive withdrawal OTPs."
           : `Enter the 6-digit code we sent to ${phone}.`}
       </p>
 
       {step === "phone" ? (
-        <form onSubmit={handleSendOtp} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <form
+          onSubmit={handleSendOtp}
+          style={{ display: "flex", flexDirection: "column", gap: 10 }}
+        >
           <PhoneInput
             value={phone}
             onChange={(e164, isValid) => {
@@ -307,39 +340,147 @@ function PwaPhoneVerifyCard({ onVerified }: { onVerified: () => void }) {
             error={error ?? undefined}
           />
           <Button type="submit" disabled={!phoneValid || loading}>
-            {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Send Code"}
+            {loading ? (
+              <Loader2
+                size={16}
+                style={{ animation: "spin 1s linear infinite" }}
+              />
+            ) : (
+              "Send Code"
+            )}
           </Button>
         </form>
       ) : (
-        <form onSubmit={handleVerify} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <form
+          onSubmit={handleVerify}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          {/* OTP 6-box input */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              justifyContent: "center",
+              cursor: "text",
+            }}
+            onClick={() => document.getElementById("phone-otp-input")?.focus()}
+          >
+            {Array.from({ length: 6 }).map((_, i) => {
+              const digit = otp[i];
+              const isFilled = !!digit;
+              const isActive = otp.length === i;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    width: 40,
+                    height: 50,
+                    borderRadius: 10,
+                    border: isFilled
+                      ? "2px solid #2775d0"
+                      : isActive
+                        ? "2px solid rgba(39,117,208,0.5)"
+                        : "2px solid var(--glass-border)",
+                    background: isFilled
+                      ? "rgba(39,117,208,0.1)"
+                      : "var(--bg-main)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: "#2775d0",
+                    transition: "all 0.15s",
+                    boxShadow: isActive
+                      ? "0 0 0 3px rgba(39,117,208,0.15)"
+                      : "none",
+                  }}
+                >
+                  {digit ??
+                    (isActive ? (
+                      <span
+                        style={{
+                          width: 2,
+                          height: 20,
+                          background: "#2775d0",
+                          borderRadius: 2,
+                          animation: "nudgePulse 0.8s ease-in-out infinite",
+                        }}
+                      />
+                    ) : (
+                      ""
+                    ))}
+                </div>
+              );
+            })}
+          </div>
           <input
+            id="phone-otp-input"
+            style={{
+              position: "absolute",
+              opacity: 0,
+              pointerEvents: "none",
+              width: 1,
+              height: 1,
+            }}
             type="text"
             inputMode="numeric"
-            value={otp}
-            onChange={(e) => { setOtp(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(null); }}
-            placeholder="6-digit code"
             maxLength={6}
-            style={{
-              padding: "10px 14px", borderRadius: 10, border: "1.5px solid var(--glass-border)",
-              background: "var(--bg-main)", color: "var(--text-main)", fontSize: 18, fontWeight: 700,
-              outline: "none", width: "100%", boxSizing: "border-box" as const, letterSpacing: "0.3em", textAlign: "center" as const,
+            value={otp}
+            onChange={(e) => {
+              setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+              setError(null);
             }}
+            autoFocus
           />
           {error && (
-            <div style={{ fontSize: 12, color: "#ef4444", padding: "6px 10px", background: "rgba(239,68,68,0.08)", borderRadius: 8 }}>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#ef4444",
+                padding: "6px 10px",
+                background: "rgba(239,68,68,0.08)",
+                borderRadius: 8,
+              }}
+            >
               {error}
             </div>
           )}
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, width: "100%" }}>
             <Button
               type="button"
-              onClick={() => { setStep("phone"); setOtp(""); setError(null); }}
-              style={{ flex: 1, background: "var(--bg-secondary)", color: "var(--text-main)" }}
+              onClick={() => {
+                setStep("phone");
+                setOtp("");
+                setError(null);
+              }}
+              style={{
+                flex: 1,
+                background: "var(--bg-secondary)",
+                color: "var(--text-main)",
+                boxShadow: "none",
+              }}
             >
               Back
             </Button>
-            <Button type="submit" disabled={otp.length !== 6 || loading} style={{ flex: 2 }}>
-              {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Verify"}
+            <Button
+              type="submit"
+              disabled={otp.length !== 6 || loading}
+              style={{ flex: 1 }}
+            >
+              {loading ? (
+                <Loader2
+                  size={16}
+                  style={{ animation: "spin 1s linear infinite" }}
+                />
+              ) : (
+                "Verify"
+              )}
             </Button>
           </div>
         </form>
@@ -375,7 +516,16 @@ function PwaCidLinkCard({ onLinked }: { onLinked: (merged: boolean) => void }) {
   if (merged) {
     return (
       <Card style={{ gap: 10, margin: "0 var(--space-md)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#059669", fontWeight: 700, fontSize: 14 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: "#059669",
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
           <CheckCircle2 size={18} color="#059669" />
           Account linked — balance updated!
         </div>
@@ -385,19 +535,43 @@ function PwaCidLinkCard({ onLinked }: { onLinked: (merged: boolean) => void }) {
 
   return (
     <Card style={{ gap: 12, margin: "0 var(--space-md)" }}>
-      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-main)", display: "flex", alignItems: "center", gap: 8 }}>
+      <h3
+        style={{
+          margin: 0,
+          fontSize: 15,
+          fontWeight: 700,
+          color: "var(--text-main)",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}
+      >
         <Link2 size={16} color="#2775d0" />
         Link your account
       </h3>
-      <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5 }}>
-        Enter your 11-digit CID to link your DK Bank account and sync your balance with the Telegram app.
+      <p
+        style={{
+          margin: 0,
+          fontSize: 13,
+          color: "var(--text-muted)",
+          lineHeight: 1.5,
+        }}
+      >
+        Enter your 11-digit CID to link your DK Bank account and sync your
+        balance with the Telegram app.
       </p>
-      <form onSubmit={handleLink} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <form
+        onSubmit={handleLink}
+        style={{ display: "flex", flexDirection: "column", gap: 10 }}
+      >
         <input
           type="text"
           inputMode="numeric"
           value={cid}
-          onChange={(e) => { setCid(e.target.value.replace(/\D/g, "").slice(0, 11)); setError(null); }}
+          onChange={(e) => {
+            setCid(e.target.value.replace(/\D/g, "").slice(0, 11));
+            setError(null);
+          }}
           placeholder="11-digit CID"
           maxLength={11}
           style={{
@@ -414,7 +588,15 @@ function PwaCidLinkCard({ onLinked }: { onLinked: (merged: boolean) => void }) {
           }}
         />
         {error && (
-          <div style={{ fontSize: 12, color: "#ef4444", padding: "6px 10px", background: "rgba(239,68,68,0.08)", borderRadius: 8 }}>
+          <div
+            style={{
+              fontSize: 12,
+              color: "#ef4444",
+              padding: "6px 10px",
+              background: "rgba(239,68,68,0.08)",
+              borderRadius: 8,
+            }}
+          >
             {error}
           </div>
         )}
@@ -423,7 +605,14 @@ function PwaCidLinkCard({ onLinked }: { onLinked: (merged: boolean) => void }) {
           disabled={cid.trim().length !== 11 || loading}
           style={{ alignSelf: "stretch" }}
         >
-          {loading ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Link Account"}
+          {loading ? (
+            <Loader2
+              size={16}
+              style={{ animation: "spin 1s linear infinite" }}
+            />
+          ) : (
+            "Link Account"
+          )}
         </Button>
       </form>
     </Card>
@@ -1149,7 +1338,14 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
           {hasDKBank && hasPhoneVerified ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {[
-                { label: "CID", value: user?.dkCid ? user.dkCid.slice(0, 3) + "•".repeat(user.dkCid.length - 5) + user.dkCid.slice(-2) : "—" },
+                {
+                  label: "CID",
+                  value: user?.dkCid
+                    ? user.dkCid.slice(0, 3) +
+                      "•".repeat(user.dkCid.length - 5) +
+                      user.dkCid.slice(-2)
+                    : "—",
+                },
                 { label: "Account", value: user?.dkAccountName || "—" },
               ].map(({ label, value }) => (
                 <p
@@ -1769,8 +1965,8 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                         }}
                       >
                         {referralTxs.length} friend
-                        {referralTxs.length !== 1 ? "s" : ""} made a prediction ·
-                        bonus credited to your wallet
+                        {referralTxs.length !== 1 ? "s" : ""} made a prediction
+                        · bonus credited to your wallet
                       </div>
                     </div>
                     <div style={{ textAlign: "right", flexShrink: 0 }}>

@@ -33,8 +33,8 @@ const STEPS: Step[] = [
   },
   {
     icon: <Lock size={32} />,
-    title: "Set your website password",
-    desc: "To access Oro on the web, open Telegram → Oro app → Settings → Website Access → Set Password. Then visit the site and sign in with your CID and that password.",
+    title: "Sign in to Oro on the web",
+    desc: "You can sign in using My Bhutan App (recommended) or with your CID + password. To set a password, open Telegram → Oro app → Settings → Website Access → Set Password.",
   },
   {
     icon: <Coins size={32} />,
@@ -116,7 +116,7 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
           to { opacity: 1; }
         }
       `}</style>
-      
+
       <div
         style={{
           background: "var(--bg-card)",
@@ -132,7 +132,13 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ padding: "20px 24px 0", display: "flex", justifyContent: "flex-end" }}>
+        <div
+          style={{
+            padding: "20px 24px 0",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
           <button
             onClick={onClose}
             style={{
@@ -148,21 +154,33 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
               cursor: "pointer",
               transition: "background 0.2s",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.1)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "rgba(255,255,255,0.05)")
+            }
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Content Card */}
-        <div key={currentStep} style={{ padding: isMobile ? "0 20px 24px" : "0 32px 32px", textAlign: "center", animation: "slideIn 0.3s ease-out" }}>
+        <div
+          key={currentStep}
+          style={{
+            padding: isMobile ? "0 20px 24px" : "0 32px 32px",
+            textAlign: "center",
+            animation: "slideIn 0.3s ease-out",
+          }}
+        >
           <div
             style={{
               width: isMobile ? 52 : 72,
               height: isMobile ? 52 : 72,
               borderRadius: isMobile ? 14 : 20,
-              background: "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(62,207,110,0.1))",
+              background:
+                "linear-gradient(135deg, rgba(59,130,246,0.15), rgba(62,207,110,0.1))",
               border: "1px solid rgba(59,130,246,0.25)",
               display: "flex",
               alignItems: "center",
@@ -171,7 +189,9 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
               color: "#3b82f6",
             }}
           >
-            {React.cloneElement(current.icon as React.ReactElement, { size: isMobile ? 22 : 32 })}
+            {React.cloneElement(current.icon as React.ReactElement, {
+              size: isMobile ? 22 : 32,
+            })}
           </div>
 
           <h2
@@ -199,7 +219,14 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
           </p>
 
           {/* Progress Dots */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: isMobile ? 20 : 32 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: 6,
+              marginBottom: isMobile ? 20 : 32,
+            }}
+          >
             {STEPS.map((_, i) => (
               <div
                 key={i}
@@ -207,7 +234,8 @@ export function HowItWorksModal({ onClose }: HowItWorksModalProps) {
                   width: i === currentStep ? 20 : 6,
                   height: 6,
                   borderRadius: 3,
-                  background: i === currentStep ? "#3b82f6" : "var(--glass-border)",
+                  background:
+                    i === currentStep ? "#3b82f6" : "var(--glass-border)",
                   transition: "all 0.3s ease",
                 }}
               />

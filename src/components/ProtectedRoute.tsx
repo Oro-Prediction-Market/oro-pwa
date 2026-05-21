@@ -67,6 +67,32 @@ export function ProtectedRoute({ onLogin }: Props) {
     return (
       <div style={container}>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        {/* Close button */}
+        <button
+          onClick={() => setShowBhutanApp(false)}
+          aria-label="Close"
+          className="close-btn"
+          style={{
+            position: "absolute",
+            top: -15,
+            right: 0,
+            background: "var(--bg-secondary, rgba(0,0,0,0.05))",
+            border: "none",
+            borderRadius: "50%",
+            width: 32,
+            height: 32,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "var(--text-muted)",
+            fontSize: 18,
+            fontWeight: 700,
+            lineHeight: 1,
+          }}
+        >
+          ✕
+        </button>
         <header style={headerWrap}>
           <OroLogo size={56} />
           <h2 style={heading}>My Bhutan App</h2>
@@ -84,7 +110,35 @@ export function ProtectedRoute({ onLogin }: Props) {
   // ── Default: login options ─────────────────────────────────────────────────
   return (
     <div style={container}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }
+        @media (min-width: 768px) { .close-btn { right: -20px !important; } }`}</style>
+
+      {/* Close button */}
+      <button
+        onClick={onLogin}
+        aria-label="Close"
+        className="close-btn"
+        style={{
+          position: "absolute",
+          top: -15,
+          right: 0,
+          background: "var(--bg-secondary, rgba(0,0,0,0.05))",
+          border: "none",
+          borderRadius: "50%",
+          width: 32,
+          height: 32,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          color: "var(--text-muted)",
+          fontSize: 18,
+          fontWeight: 700,
+          lineHeight: 1,
+        }}
+      >
+        ✕
+      </button>
 
       <header style={headerWrap}>
         <OroLogo size={72} />
@@ -106,7 +160,8 @@ export function ProtectedRoute({ onLogin }: Props) {
           padding: "13px 16px",
           borderRadius: 12,
           border: "1.5px solid rgba(245,158,11,0.4)",
-          background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.08))",
+          background:
+            "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.08))",
           color: "#f59e0b",
           fontWeight: 800,
           fontSize: 15,
@@ -115,21 +170,48 @@ export function ProtectedRoute({ onLogin }: Props) {
         }}
       >
         <QrCode size={18} />
-        Log in with My Bhutan App
+        Login with My Bhutan App
       </button>
 
       {/* ── Divider ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
-        <div style={{ flex: 1, height: 1, background: "var(--glass-border)" }} />
-        <span style={{ fontSize: 11, color: "var(--text-subtle)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          width: "100%",
+        }}
+      >
+        <div
+          style={{ flex: 1, height: 1, background: "var(--glass-border)" }}
+        />
+        <span
+          style={{
+            fontSize: 11,
+            color: "var(--text-subtle)",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+          }}
+        >
           or
         </span>
-        <div style={{ flex: 1, height: 1, background: "var(--glass-border)" }} />
+        <div
+          style={{ flex: 1, height: 1, background: "var(--glass-border)" }}
+        />
       </div>
 
       {/* ── Secondary: CID / Password ── */}
       <form onSubmit={handleLogin} style={card}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--text-subtle)", margin: "0 0 10px", textAlign: "center" }}>
+        <p
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "var(--text-subtle)",
+            margin: "0 0 10px",
+            textAlign: "center",
+          }}
+        >
           Sign in with DK Bank CID
         </p>
 
@@ -198,22 +280,29 @@ export function ProtectedRoute({ onLogin }: Props) {
         )}
 
         {hasPassword === false && cid.trim().length === 11 && (
-          <div style={{
-            fontSize: "0.78rem",
-            color: "var(--color-warning, #f59e0b)",
-            background: "rgba(245,158,11,0.08)",
-            border: "1px solid rgba(245,158,11,0.25)",
-            borderRadius: 8,
-            padding: "8px 12px",
-            lineHeight: 1.5,
-          }}>
-            <strong style={{ display: "block", marginBottom: 2 }}>Password required</strong>
-            Open Telegram → Oro → <strong>Settings → PWA Access</strong> to set one.
+          <div
+            style={{
+              fontSize: "0.78rem",
+              color: "var(--color-warning, #f59e0b)",
+              background: "rgba(245,158,11,0.08)",
+              border: "1px solid rgba(245,158,11,0.25)",
+              borderRadius: 8,
+              padding: "8px 12px",
+              lineHeight: 1.5,
+            }}
+          >
+            <strong style={{ display: "block", marginBottom: 2 }}>
+              Password required
+            </strong>
+            Open Telegram → Oro → <strong>Settings → PWA Access</strong> to set
+            one.
           </div>
         )}
 
         {error && (
-          <p style={{ fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>{error}</p>
+          <p style={{ fontSize: "0.8rem", color: "#ef4444", margin: 0 }}>
+            {error}
+          </p>
         )}
 
         <button
@@ -242,13 +331,16 @@ export function ProtectedRoute({ onLogin }: Props) {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const container: React.CSSProperties = {
+  position: "relative",
   maxWidth: 360,
+  width: "100%",
   margin: "5px auto",
-  padding: "0 20px",
+  padding: "30px 20px 0",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   gap: 14,
+  overflow: "visible",
 };
 
 const headerWrap: React.CSSProperties = {
