@@ -292,8 +292,8 @@ export function ProtectedRoute({ onLogin }: Props) {
             <strong style={{ display: "block", marginBottom: 2 }}>
               Password required
             </strong>
-            Open Telegram → Oro → <strong>Settings → PWA Access</strong> to set
-            one.
+            Open Telegram → Oro → <strong>Settings → Website Access</strong> to
+            set one.
           </div>
         )}
 

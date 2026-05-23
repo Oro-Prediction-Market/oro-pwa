@@ -21,17 +21,44 @@ const FAQ_DATA: FAQSection[] = [
         id: "01",
         question: "Do I need to create an account to use Oro?",
         answer:
-          "No. Your account is created automatically the first time you open the Oro Mini App inside Telegram. Your Telegram username and display name are used directly — no sign-up form required.",
+          "No sign-up form is needed. If you open Oro through Telegram, your account is created automatically from your Telegram profile. On the web, you can sign in with My Bhutan App (recommended) or with your CID and a password you set in the Telegram app.",
       },
       {
         id: "02",
+        question: "How do I sign in to Oro on the web?",
+        answer: (
+          <>
+            <p style={{ margin: "0 0 8px" }}>
+              There are two ways to sign in on the web:
+            </p>
+            <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--text-main)" }}>
+              My Bhutan App (recommended)
+            </p>
+            <p style={{ margin: "0 0 8px" }}>
+              On mobile, tap "Login with My Bhutan App" and approve the request
+              in the app. On desktop, scan the QR code that appears with your
+              My Bhutan App.
+            </p>
+            <p style={{ margin: "0 0 4px", fontWeight: 700, color: "var(--text-main)" }}>
+              CID + Password
+            </p>
+            <p style={{ margin: 0 }}>
+              Enter your 11-digit CID and the password you set in the Telegram
+              Mini App under Settings → Website Access. You must set the
+              password in Telegram first before this option works.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "03",
         question: "Why do I need to link my DK Bank account?",
         answer: (
           <>
             <p style={{ margin: 0 }}>
               DK Bank is the payment gateway for moving real money in and out of
-              the platform. Go to Wallet Page &gt; Link DK Bank, enter your 11-digit
-              CID, and verify with your registered phone in DK Bank.
+              the platform. Go to the Wallet page, enter your 11-digit CID, and
+              verify with your registered phone in DK Bank.
             </p>
             <div
               style={{
@@ -67,16 +94,10 @@ const FAQ_DATA: FAQSection[] = [
         ),
       },
       {
-        id: "03",
-        question: "Can I use Oro without a Telegram account?",
-        answer:
-          "Oro's primary interface is the Telegram Mini App, so a Telegram account is required for most users. However, you can set a PWA password in Settings > Website Access and log in to the web version of Oro without opening Telegram each time.",
-      },
-      {
         id: "04",
         question: "What is a CID?",
         answer:
-          "CID stands for Citizenship Identity Number — the 11-digit ID on your Bhutanese citizenship card. DK Bank requires this to verify your identity before you can deposit or withdraw real money.",
+          "CID stands for Citizenship Identity Number — the 11-digit ID on your Bhutanese citizenship card. It is required by DK Bank to verify your identity before you can deposit or withdraw real money.",
       },
     ],
   },
@@ -87,13 +108,31 @@ const FAQ_DATA: FAQSection[] = [
         id: "05",
         question: "How does parimutuel betting work?",
         answer:
-          "In a parimutuel market, all stakes go into a single shared pool. When the market resolves, the total pool (minus the platform fee) is distributed proportionally among everyone who predicted on the winning outcome.",
+          "All stakes go into a single shared pool. When the market resolves, the total pool (minus the platform fee) is distributed proportionally among everyone who predicted on the winning outcome. Your potential payout is shown before you confirm.",
       },
       {
         id: "06",
         question: "Why do the odds change after I make a prediction?",
         answer:
-          "Oro uses a parimutuel pool — odds shift as more people predict. When more people predict on the same outcome as you, your potential payout multiplier decreases. When fewer people predict on your outcome, the multiplier increases.",
+          "Odds shift in real time as more people predict. The more people who pick the same outcome as you, the smaller each person's share of the pool — and the lower your payout multiplier. The fewer people agree with you, the higher the potential payout.",
+      },
+      {
+        id: "07",
+        question: "What is the minimum prediction amount?",
+        answer:
+          "The minimum is Nu 10 for TER and BTC price markets, and Nu 50 for all other markets. The button in the bet form will show the exact minimum required for the market you are viewing.",
+      },
+      {
+        id: "08",
+        question: "What happens if a market is cancelled?",
+        answer:
+          "If an admin cancels a market before it resolves, every prediction is fully refunded to your Oro wallet automatically. You will receive a notification in Telegram confirming the refund.",
+      },
+      {
+        id: "09",
+        question: "What are Duels?",
+        answer:
+          "Duels let you challenge another person to a head-to-head prediction on a market you have already predicted on. You pick your outcome, set a wager, and share the link. The first person to accept takes the opposite side — the winner collects the entire pot.",
       },
     ],
   },
@@ -101,16 +140,28 @@ const FAQ_DATA: FAQSection[] = [
     title: "Wallet & Payments",
     items: [
       {
-        id: "07",
+        id: "10",
         question: "What is the minimum deposit and withdrawal?",
         answer:
           "The minimum for both deposits and withdrawals is Nu 50 per transaction.",
       },
       {
-        id: "08",
+        id: "11",
         question: "How long does a withdrawal take?",
         answer:
           "Withdrawals are processed through DK Bank and are typically near-instant during bank operating hours. Processing may be slower outside standard hours.",
+      },
+      {
+        id: "12",
+        question: "What is the welcome bonus?",
+        answer:
+          "New accounts may receive free Oro credits when they sign up for the first time. These credits are credited directly to your wallet and appear as a 'Welcome bonus' in your transaction history. They can be used to make predictions just like a regular deposit.",
+      },
+      {
+        id: "13",
+        question: "What is a referral bonus?",
+        answer:
+          "When a friend signs up using your referral link and makes their first prediction, you both receive Oro credits as a bonus. Referral bonuses appear as a 'Referral bonus' entry in your transaction history.",
       },
     ],
   },

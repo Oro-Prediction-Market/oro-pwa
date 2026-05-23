@@ -6,8 +6,10 @@ import {
   getMe,
   bustCache,
   trackEvent,
+  isTokenValid,
 } from "@shared/api/client";
 import { useNavigate } from "react-router-dom";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 interface PwaBetFormProps {
   market: Market;
@@ -44,6 +46,71 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [authed, setAuthed] = useState(() => isTokenValid());
+
+  // If not authenticated, show login prompt
+  if (!authed && !showLoginModal) {
+    return (
+      <div style={{ textAlign: "center", padding: "32px 20px" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h3
+          style={{
+            margin: "0 0 8px",
+            fontSize: 18,
+            fontWeight: 800,
+            color: "var(--text-main)",
+          }}
+        >
+          Sign in to predict
+        </h3>
+        <p
+          style={{
+            margin: "0 0 20px",
+            fontSize: 14,
+            color: "var(--text-muted)",
+            lineHeight: 1.5,
+          }}
+        >
+          Create an account or sign in to place your prediction on this market.
+        </p>
+        <button
+          onClick={() => setShowLoginModal(true)}
+          style={{
+            width: "100%",
+            padding: "14px",
+            fontSize: 15,
+            fontWeight: 700,
+            background:
+              "var(--grad-primary, linear-gradient(135deg, #2775d0, #1a5bb5))",
+            color: "#fff",
+            border: "none",
+            borderRadius: 12,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          Sign In
+        </button>
+      </div>
+    );
+  }
+
+  if (!authed && showLoginModal) {
+    return (
+      <div style={{ padding: "16px 0" }}>
+        <ProtectedRoute
+          onLogin={() => {
+            setAuthed(true);
+            setShowLoginModal(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   // Load current wallet balance — drives "insufficient funds" UI
   useEffect(() => {
@@ -171,7 +238,13 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         >
           {market.outcomes.map((outcome, idx) => {
             const isSelected = selectedOutcomeId === outcome.id;
-            const colors = ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
+            const colors = [
+              "#3b82f6",
+              "#8b5cf6",
+              "#f59e0b",
+              "#06b6d4",
+              "#f97316",
+            ];
             const baseColor = colors[idx % colors.length];
 
             return (
