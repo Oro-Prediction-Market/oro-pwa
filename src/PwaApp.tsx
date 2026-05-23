@@ -96,7 +96,7 @@ import {
   LogIn,
   ArrowLeft,
   CheckCircle,
-  TrendingUp,
+  History,
 } from "lucide-react";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 // Lazy-load HowItWorksModal — only needed on click
@@ -203,7 +203,7 @@ function PageTitleBar() {
 
 const NAV_ITEMS_PUBLIC = [
   { to: "/", label: "Feed", icon: LayoutGrid },
-  { to: "/results", label: "Results", icon: TrendingUp },
+  { to: "/results", label: "Results", icon: History },
   { to: "/leaderboard", label: "Ranks", icon: Medal },
 ];
 
@@ -1128,7 +1128,7 @@ function PwaLayout({
                 flexShrink: 0,
               })}
             >
-              <TrendingUp size={13} strokeWidth={2.5} />
+              <History size={13} strokeWidth={2.5} />
               Results
             </NavLink>
 
