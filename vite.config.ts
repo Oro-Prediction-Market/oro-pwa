@@ -24,13 +24,13 @@ export default defineConfig(async (): Promise<UserConfig> => {
       ...extraPlugins,
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ["oro_favicon.ico", "apple-touch-icon.png", "icons/*.png"],
+        includeAssets: ["oro_favicon.ico", "icons/*.png"],
         manifest: {
           name: "Oro",
           short_name: "Oro",
           description: "Oro App",
-          theme_color: "#ffffff",
-          background_color: "#ffffff",
+          theme_color: "#0a0f1d",
+          background_color: "#0a0f1d",
           display: "standalone",
           scope: "/",
           start_url: "/",
@@ -38,6 +38,26 @@ export default defineConfig(async (): Promise<UserConfig> => {
             { src: "icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
             { src: "icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
             { src: "icons/icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          ],
+          shortcuts: [
+            {
+              name: "Markets",
+              short_name: "Markets",
+              url: "/markets",
+              icons: [{ src: "icons/icon-192x192.png", sizes: "192x192" }],
+            },
+            {
+              name: "My Predictions",
+              short_name: "Predictions",
+              url: "/portfolio",
+              icons: [{ src: "icons/icon-192x192.png", sizes: "192x192" }],
+            },
+            {
+              name: "Leaderboard",
+              short_name: "Leaderboard",
+              url: "/leaderboard",
+              icons: [{ src: "icons/icon-192x192.png", sizes: "192x192" }],
+            },
           ],
         },
         workbox: {
@@ -54,6 +74,10 @@ export default defineConfig(async (): Promise<UserConfig> => {
               },
             },
           ],
+        },
+        devOptions: {
+          enabled: true,
+          type: "module",
         },
       }),
     ],

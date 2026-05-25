@@ -7,7 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
 // Eagerly-loaded shell components
@@ -40,6 +40,50 @@ const PwaMyBetsPage = lazy(() =>
 const PwaResultsPage = lazy(() =>
   import("./pages/PwaResultsPage").then((m) => ({ default: m.PwaResultsPage })),
 );
+
+// ── PWA install prompt hook ───────────────────────────────────────────────────
+
+function usePwaInstall() {
+  const deferredPrompt = useRef<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+  const [isIos, setIsIos] = useState(false);
+  const [alreadyInstalled, setAlreadyInstalled] = useState(false);
+
+  useEffect(() => {
+    // Already running as installed PWA — no need to prompt
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setAlreadyInstalled(true);
+      return;
+    }
+
+    // iOS Safari: no beforeinstallprompt — detect and show manual instructions
+    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
+    if (ios) {
+      setIsIos(true);
+      return;
+    }
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e;
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const install = async () => {
+    if (!deferredPrompt.current) return;
+    deferredPrompt.current.prompt();
+    const { outcome } = await deferredPrompt.current.userChoice;
+    if (outcome === "accepted") {
+      deferredPrompt.current = null;
+      setCanInstall(false);
+    }
+  };
+
+  return { canInstall, isIos, alreadyInstalled, install };
+}
 
 // Mark as PWA mode so TMA-specific SDK calls (backButton etc.) are skipped
 if (typeof window !== "undefined") {
@@ -223,12 +267,18 @@ function HamburgerMenu({
   setShowFaq,
   authed,
   onOpenLogin,
+  canInstall,
+  isIos,
+  onInstall,
 }: {
   isMobile: boolean;
   setShowHowItWorks: (val: boolean) => void;
   setShowFaq: (val: boolean) => void;
   authed: boolean;
   onOpenLogin: () => void;
+  canInstall: boolean;
+  isIos: boolean;
+  onInstall: () => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -347,6 +397,32 @@ function HamburgerMenu({
                 }}
               />
 
+              {(canInstall || isIos) && (
+                <button
+                  onClick={() => { setOpen(false); onInstall(); }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "calc(100% - 24px)",
+                    margin: "0 12px 6px",
+                    padding: "10px 18px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(16,185,129,0.3)",
+                    background: "rgba(16,185,129,0.08)",
+                    color: "#10b981",
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Install App
+                </button>
+              )}
               {!authed && (
                 <button
                   onClick={() => {
@@ -469,6 +545,31 @@ function HamburgerMenu({
                 FAQ
               </button>
 
+              {(canInstall || isIos) && (
+                <button
+                  onClick={() => { setOpen(false); onInstall(); }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "14px",
+                    borderRadius: 14,
+                    border: "1px solid rgba(16,185,129,0.3)",
+                    background: "rgba(16,185,129,0.08)",
+                    color: "#10b981",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Install App
+                </button>
+              )}
               {!authed && (
                 <button
                   onClick={() => {
@@ -771,6 +872,13 @@ function PwaLayout({
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [showIosInstall, setShowIosInstall] = useState(false);
+  const { canInstall, isIos, install } = usePwaInstall();
+
+  function handleInstall() {
+    if (isIos) { setShowIosInstall(true); return; }
+    install();
+  }
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "info";
@@ -883,6 +991,66 @@ function PwaLayout({
           >
             <style>{`@keyframes fadeScaleIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
             <ProtectedRoute onLogin={handleAuthSuccess} />
+          </div>
+        </div>
+      )}
+
+      {/* ── iOS install instructions ── */}
+      {showIosInstall && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 10000,
+            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setShowIosInstall(false)}
+        >
+          <div
+            style={{
+              width: "100%", maxWidth: 440,
+              background: "var(--bg-card)",
+              borderRadius: 20, padding: "28px 24px 32px",
+              animation: "fadeScaleIn 0.2s ease-out",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)" }}>
+              Install Oro
+            </p>
+            <p style={{ margin: "0 0 20px", fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+              Tap the <b>Share</b> button below, then choose <b>Add to Home Screen</b>
+            </p>
+            <div style={{ display: "flex", justifyContent: "center", gap: 32, marginBottom: 24 }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--glass-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                  </svg>
+                </div>
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>1. Share</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 48, height: 48, borderRadius: 12, background: "var(--bg-secondary)", border: "1px solid var(--glass-border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7"/>
+                  </svg>
+                </div>
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>2. Add to Home</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowIosInstall(false)}
+              style={{
+                width: "100%", padding: "13px", borderRadius: 14,
+                border: "1px solid var(--glass-border)",
+                background: "var(--bg-secondary)",
+                color: "var(--text-main)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
@@ -1060,6 +1228,9 @@ function PwaLayout({
               setShowFaq={setShowFaq}
               authed={authed}
               onOpenLogin={() => setShowLoginModal(true)}
+              canInstall={canInstall}
+              isIos={isIos}
+              onInstall={handleInstall}
             />
           </div>
         </div>
