@@ -49,7 +49,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
             {
               name: "My Predictions",
               short_name: "Predictions",
-              url: "/portfolio",
+              url: "/wallet",
               icons: [{ src: "icons/icon-192x192.png", sizes: "192x192" }],
             },
             {

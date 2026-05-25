@@ -1349,6 +1349,7 @@ function PwaLayout({
           flex: 1,
           position: "relative",
           paddingTop: isMobile ? 106 : 112,
+          paddingBottom: isMobile ? "calc(70px + env(safe-area-inset-bottom))" : 0,
         }}
       >
         <PageTitleBar />
