@@ -30,7 +30,7 @@ function parseEvent(e: ActivityEvent): FormattedEvent {
   const rawName = e.userName || "";
   return {
     userName: rawName.startsWith("@") ? rawName.substring(1) : rawName,
-    action: e.type === "win" ? "won" : "just bet",
+    action: e.type === "win" ? "won" : "predicted",
     outcome: e.outomeLabel,
     amount: `Nu ${Number(e.amount).toLocaleString()}`,
     type: e.type,
