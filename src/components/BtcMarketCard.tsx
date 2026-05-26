@@ -515,6 +515,19 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
             Pool: Nu {totalPool.toLocaleString()}
           </div>
         )}
+
+        <div
+          style={{
+            textAlign: "center",
+            marginTop: 6,
+            fontSize: "0.58rem",
+            color: "var(--text-subtle)",
+            fontWeight: 600,
+            flexShrink: 0,
+          }}
+        >
+          Resolves via Binance · Coinbase
+        </div>
       </div>
     );
   },
