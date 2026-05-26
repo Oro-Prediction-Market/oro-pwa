@@ -47,6 +47,7 @@ function usePwaInstall() {
   const deferredPrompt = useRef<any>(null);
   const [canInstall, setCanInstall] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [alreadyInstalled, setAlreadyInstalled] = useState(false);
 
   useEffect(() => {
@@ -56,12 +57,14 @@ function usePwaInstall() {
       return;
     }
 
-    // iOS Safari: no beforeinstallprompt — detect and show manual instructions
+    // iOS: no beforeinstallprompt — show manual instructions
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
     if (ios) {
       setIsIos(true);
       return;
     }
+
+    const android = /android/i.test(navigator.userAgent);
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -69,7 +72,20 @@ function usePwaInstall() {
       setCanInstall(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // If beforeinstallprompt never fires on Android (e.g. Firefox),
+    // fall back to manual instructions after a short wait.
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    if (android) {
+      fallbackTimer = setTimeout(() => {
+        if (!deferredPrompt.current) setIsAndroid(true);
+      }, 2000);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+    };
   }, []);
 
   const install = async () => {
@@ -82,7 +98,7 @@ function usePwaInstall() {
     }
   };
 
-  return { canInstall, isIos, alreadyInstalled, install };
+  return { canInstall, isIos, isAndroid, alreadyInstalled, install };
 }
 
 // Mark as PWA mode so TMA-specific SDK calls (backButton etc.) are skipped
@@ -269,6 +285,7 @@ function HamburgerMenu({
   onOpenLogin,
   canInstall,
   isIos,
+  isAndroid,
   onInstall,
 }: {
   isMobile: boolean;
@@ -278,6 +295,7 @@ function HamburgerMenu({
   onOpenLogin: () => void;
   canInstall: boolean;
   isIos: boolean;
+  isAndroid: boolean;
   onInstall: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -397,7 +415,7 @@ function HamburgerMenu({
                 }}
               />
 
-              {(canInstall || isIos) && (
+              {(canInstall || isIos || isAndroid) && (
                 <button
                   onClick={() => { setOpen(false); onInstall(); }}
                   style={{
@@ -545,7 +563,7 @@ function HamburgerMenu({
                 FAQ
               </button>
 
-              {(canInstall || isIos) && (
+              {(canInstall || isIos || isAndroid) && (
                 <button
                   onClick={() => { setOpen(false); onInstall(); }}
                   style={{
@@ -873,10 +891,12 @@ function PwaLayout({
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
   const [showIosInstall, setShowIosInstall] = useState(false);
-  const { canInstall, isIos, install } = usePwaInstall();
+  const [showAndroidInstall, setShowAndroidInstall] = useState(false);
+  const { canInstall, isIos, isAndroid, install } = usePwaInstall();
 
   function handleInstall() {
     if (isIos) { setShowIosInstall(true); return; }
+    if (isAndroid && !canInstall) { setShowAndroidInstall(true); return; }
     install();
   }
   const [toast, setToast] = useState<{
@@ -1016,32 +1036,65 @@ function PwaLayout({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)" }}>
+            <p style={{ margin: "0 0 8px", fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)" }}>
               Install Oro
             </p>
-            <p style={{ margin: "0 0 20px", fontSize: "0.88rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-              Tap <b>Share</b> then choose <b>Add to Home Screen</b>
+            <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+              Tap the Share button in your browser toolbar and choose <b>Add to Home Screen</b>.
             </p>
-            <button
-              onClick={async () => {
-                if (navigator.share) {
-                  try {
-                    await navigator.share({ title: "Oro", url: window.location.href });
-                  } catch {}
-                }
-              }}
-              style={{
-                width: "100%", padding: "14px", borderRadius: 14, marginBottom: 12,
-                border: "none", background: "var(--color-primary)",
-                color: "#fff", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-              </svg>
-              Share
-            </button>
+
+            {/* Step-by-step visual guide */}
+            <div style={{
+              display: "flex", flexDirection: "column", gap: 12,
+              margin: "0 0 20px",
+              textAlign: "left",
+            }}>
+              {[
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                      <polyline points="16 6 12 2 8 6"/>
+                      <line x1="12" y1="2" x2="12" y2="15"/>
+                    </svg>
+                  ),
+                  label: "Tap the Share button", sub: "The box-with-arrow icon in your browser's toolbar",
+                },
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <line x1="12" y1="8" x2="12" y2="16"/>
+                      <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                  ),
+                  label: "Add to Home Screen", sub: "Scroll down in the share sheet and tap this option",
+                },
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  ),
+                  label: "Tap Add", sub: "Confirm by tapping Add in the top-right corner",
+                },
+              ].map((step, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <div style={{
+                    flexShrink: 0, width: 36, height: 36, borderRadius: 10,
+                    background: "var(--color-primary)", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {step.icon}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.88rem", color: "var(--text-main)" }}>{step.label}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{step.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <button
               onClick={() => setShowIosInstall(false)}
               style={{
@@ -1051,7 +1104,93 @@ function PwaLayout({
                 color: "var(--text-main)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
               }}
             >
-              Cancel
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Android install instructions ── */}
+      {showAndroidInstall && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 10000,
+            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            padding: "20px",
+          }}
+          onClick={() => setShowAndroidInstall(false)}
+        >
+          <div
+            style={{
+              width: "100%", maxWidth: 440,
+              background: "var(--bg-card)",
+              borderRadius: 20, padding: "28px 24px 32px",
+              animation: "fadeScaleIn 0.2s ease-out",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 8px", fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)" }}>
+              Install Oro
+            </p>
+            <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
+              Tap your browser's menu and choose <b>Add to Home Screen</b> or <b>Install app</b>.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "0 0 20px", textAlign: "left" }}>
+              {[
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/>
+                    </svg>
+                  ),
+                  label: "Open browser menu", sub: "Tap the three-dot (⋮) menu icon in the top-right corner of your browser",
+                },
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <line x1="12" y1="8" x2="12" y2="16"/>
+                      <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                  ),
+                  label: "Add to Home Screen", sub: 'Tap "Add to Home Screen" or "Install app" from the menu',
+                },
+                {
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  ),
+                  label: "Tap Add", sub: "Confirm the prompt to install Oro on your home screen",
+                },
+              ].map((step, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <div style={{
+                    flexShrink: 0, width: 36, height: 36, borderRadius: 10,
+                    background: "var(--color-primary)", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {step.icon}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.88rem", color: "var(--text-main)" }}>{step.label}</p>
+                    <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{step.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowAndroidInstall(false)}
+              style={{
+                width: "100%", padding: "13px", borderRadius: 14,
+                border: "1px solid var(--glass-border)",
+                background: "var(--bg-secondary)",
+                color: "var(--text-main)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              Got it
             </button>
           </div>
         </div>
@@ -1232,6 +1371,7 @@ function PwaLayout({
               onOpenLogin={() => setShowLoginModal(true)}
               canInstall={canInstall}
               isIos={isIos}
+              isAndroid={isAndroid}
               onInstall={handleInstall}
             />
           </div>
