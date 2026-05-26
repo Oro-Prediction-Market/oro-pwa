@@ -18,6 +18,13 @@ COPY shared ./shared
 
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=${VITE_API_URL}
+
+ARG VITE_UMAMI_SCRIPT_URL=https://analytics.oro.fun/script.js
+ENV VITE_UMAMI_SCRIPT_URL=${VITE_UMAMI_SCRIPT_URL}
+
+ARG VITE_UMAMI_WEBSITE_ID
+ENV VITE_UMAMI_WEBSITE_ID=${VITE_UMAMI_WEBSITE_ID}
+
 RUN bun run build
 
 # ── runtime: nginx:alpine on :8080 ─────────────────────────────────────────
