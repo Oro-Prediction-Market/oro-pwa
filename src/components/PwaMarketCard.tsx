@@ -491,6 +491,33 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
             )}
           </div>
 
+          {/* Settlement source */}
+          {(market.externalSource === "ter" || market.settlementSource) && (
+            <div style={{ fontSize: "0.68rem", color: "var(--text-subtle)", fontWeight: 600 }}>
+              Resolves via{" "}
+              {market.externalSource === "ter" ? (
+                "api.ter.bt"
+              ) : (() => {
+                try {
+                  const url = new URL(market.settlementSource!);
+                  return (
+                    <a
+                      href={market.settlementSource!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: "inherit", textDecoration: "underline", wordBreak: "break-all" }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {url.hostname.replace(/^www\./, "")}
+                    </a>
+                  );
+                } catch {
+                  return market.settlementSource;
+                }
+              })()}
+            </div>
+          )}
+
           {/* Footer */}
           <div
             style={{
