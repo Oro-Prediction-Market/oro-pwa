@@ -331,10 +331,7 @@ export function PwaLeaderboardPage() {
             </div>
 
             {/* Sidebar: Personal Performance Card */}
-            <div
-              className="lb-sidebar"
-              style={{ position: "sticky", top: 100 }}
-            >
+            <div className="lb-sidebar" style={{ position: "sticky", top: 100 }}>
               {me && (
                 <div
                   style={{
@@ -532,8 +529,7 @@ export function PwaLeaderboardPage() {
                               fontWeight: 700,
                             }}
                           >
-                            {Math.max(10 - (me.totalPredictions ?? 0), 0)} more
-                            to rank
+                            {Math.max(10 - (me.totalPredictions ?? 0), 0)} more to rank
                           </div>
                         </>
                       )}
@@ -647,8 +643,7 @@ export function PwaLeaderboardPage() {
             zIndex: 50,
             width: "calc(100% - 48px)",
             maxWidth: 640,
-            animation:
-              "rankBarSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
+            animation: "rankBarSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
           }}
         >
           <div
@@ -656,30 +651,16 @@ export function PwaLeaderboardPage() {
               background: "var(--bg-card)",
               borderRadius: 20,
               border: "1px solid var(--glass-border)",
-              boxShadow:
-                "0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(39,117,208,0.15)",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.3), 0 0 0 1px rgba(39,117,208,0.15)",
               overflow: "hidden",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
             }}
           >
             {/* Top accent line */}
-            <div
-              style={{
-                height: 3,
-                background: "var(--grad-primary)",
-                width: "100%",
-              }}
-            />
+            <div style={{ height: 3, background: "var(--grad-primary)", width: "100%" }} />
 
-            <div
-              style={{
-                padding: "14px 20px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-              }}
-            >
+            <div style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 14 }}>
               {/* Avatar */}
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <div
@@ -693,27 +674,9 @@ export function PwaLeaderboardPage() {
                   }}
                 >
                   {me.photoUrl ? (
-                    <img
-                      src={me.photoUrl}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
+                    <img src={me.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "1.1rem",
-                        fontWeight: 900,
-                      }}
-                    >
+                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", fontWeight: 900 }}>
                       {me.firstName?.[0]}
                     </div>
                   )}
@@ -739,151 +702,45 @@ export function PwaLeaderboardPage() {
 
               {/* Name + tier */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: "0.95rem",
-                    fontWeight: 800,
-                    color: "var(--text-main)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+                <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--text-main)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {me.firstName} {me.lastName}
                 </div>
-                <div
-                  style={{
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    color: tierColor(me.reputationTier || "rookie"),
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                  }}
-                >
+                <div style={{ fontSize: "0.72rem", fontWeight: 700, color: tierColor(me.reputationTier || "rookie"), textTransform: "uppercase", letterSpacing: "0.04em" }}>
                   {tierLabel(me.reputationTier || "rookie")}
                 </div>
               </div>
 
               {/* Divider */}
-              <div
-                style={{
-                  width: 1,
-                  height: 36,
-                  background: "var(--glass-border)",
-                  flexShrink: 0,
-                }}
-              />
+              <div style={{ width: 1, height: 36, background: "var(--glass-border)", flexShrink: 0 }} />
 
               {/* Rank */}
               <div style={{ textAlign: "center", flexShrink: 0 }}>
-                <div
-                  style={{
-                    fontSize: "0.6rem",
-                    fontWeight: 800,
-                    color: "var(--text-subtle)",
-                    textTransform: "uppercase",
-                    marginBottom: 2,
-                  }}
-                >
-                  Rank
-                </div>
+                <div style={{ fontSize: "0.6rem", fontWeight: 800, color: "var(--text-subtle)", textTransform: "uppercase", marginBottom: 2 }}>Rank</div>
                 {myRank ? (
-                  <div
-                    style={{
-                      fontSize: "1.3rem",
-                      fontWeight: 950,
-                      color: "var(--color-primary)",
-                      letterSpacing: "-0.04em",
-                    }}
-                  >
-                    #{myRank}
-                  </div>
+                  <div style={{ fontSize: "1.3rem", fontWeight: 950, color: "var(--color-primary)", letterSpacing: "-0.04em" }}>#{myRank}</div>
                 ) : (
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 800,
-                      color: "var(--text-subtle)",
-                    }}
-                  >
-                    {me.totalPredictions ?? 0}/10
-                  </div>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--text-subtle)" }}>{me.totalPredictions ?? 0}/10</div>
                 )}
               </div>
 
               {/* Divider */}
-              <div
-                style={{
-                  width: 1,
-                  height: 36,
-                  background: "var(--glass-border)",
-                  flexShrink: 0,
-                }}
-              />
+              <div style={{ width: 1, height: 36, background: "var(--glass-border)", flexShrink: 0 }} />
 
               {/* Win Rate */}
               <div style={{ textAlign: "center", flexShrink: 0 }}>
-                <div
-                  style={{
-                    fontSize: "0.6rem",
-                    fontWeight: 800,
-                    color: "var(--text-subtle)",
-                    textTransform: "uppercase",
-                    marginBottom: 2,
-                  }}
-                >
-                  Win Rate
-                </div>
-                <div
-                  style={{
-                    fontSize: "1.3rem",
-                    fontWeight: 950,
-                    color: "var(--color-success)",
-                    letterSpacing: "-0.04em",
-                  }}
-                >
-                  {(
-                    ((me.correctPredictions || 0) /
-                      (me.totalPredictions || 1)) *
-                    100
-                  ).toFixed(0)}
-                  %
+                <div style={{ fontSize: "0.6rem", fontWeight: 800, color: "var(--text-subtle)", textTransform: "uppercase", marginBottom: 2 }}>Win Rate</div>
+                <div style={{ fontSize: "1.3rem", fontWeight: 950, color: "var(--color-success)", letterSpacing: "-0.04em" }}>
+                  {(((me.correctPredictions || 0) / (me.totalPredictions || 1)) * 100).toFixed(0)}%
                 </div>
               </div>
 
               {/* Divider */}
-              <div
-                style={{
-                  width: 1,
-                  height: 36,
-                  background: "var(--glass-border)",
-                  flexShrink: 0,
-                }}
-              />
+              <div style={{ width: 1, height: 36, background: "var(--glass-border)", flexShrink: 0 }} />
 
               {/* Total picks */}
               <div style={{ textAlign: "center", flexShrink: 0 }}>
-                <div
-                  style={{
-                    fontSize: "0.6rem",
-                    fontWeight: 800,
-                    color: "var(--text-subtle)",
-                    textTransform: "uppercase",
-                    marginBottom: 2,
-                  }}
-                >
-                  Picks
-                </div>
-                <div
-                  style={{
-                    fontSize: "1.3rem",
-                    fontWeight: 950,
-                    color: "var(--text-main)",
-                    letterSpacing: "-0.04em",
-                  }}
-                >
-                  {me.totalPredictions ?? 0}
-                </div>
+                <div style={{ fontSize: "0.6rem", fontWeight: 800, color: "var(--text-subtle)", textTransform: "uppercase", marginBottom: 2 }}>Picks</div>
+                <div style={{ fontSize: "1.3rem", fontWeight: 950, color: "var(--text-main)", letterSpacing: "-0.04em" }}>{me.totalPredictions ?? 0}</div>
               </div>
             </div>
           </div>
