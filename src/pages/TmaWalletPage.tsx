@@ -53,6 +53,7 @@ import {
   Gift,
   Hash,
   PenLine,
+  Medal,
 } from "lucide-react";
 
 // ── Shared types ──────────────────────────────────────────────────────────────
@@ -80,6 +81,7 @@ const TX_ICON: Record<Transaction["type"], React.ReactNode> = {
   duel_wager: <Swords size={18} />,
   duel_payout: <Swords size={18} />,
   free_credit: <Gift size={18} />,
+  season_prize: <Medal size={18} />,
 };
 
 const TX_LABEL: Record<Transaction["type"], string> = {
@@ -94,6 +96,7 @@ const TX_LABEL: Record<Transaction["type"], string> = {
   duel_wager: "Duel wager locked",
   duel_payout: "Duel payout",
   free_credit: "Welcome bonus",
+  season_prize: "Season prize",
 };
 
 // ── AnimatedCounter ────────────────────────────────────────────────────────────

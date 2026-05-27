@@ -25,6 +25,7 @@ import {
   Eye,
   EyeOff,
   Gift,
+  Medal,
 } from "lucide-react";
 
 const INITIAL_LIMIT = 5;
@@ -41,6 +42,7 @@ const TX_ICON: Record<Transaction["type"], React.ReactNode> = {
   duel_wager: <Swords size={18} />,
   duel_payout: <Swords size={18} />,
   free_credit: <Gift size={18} />,
+  season_prize: <Medal size={18} />,
 };
 
 const TX_LABEL: Record<Transaction["type"], string> = {
@@ -55,6 +57,7 @@ const TX_LABEL: Record<Transaction["type"], string> = {
   duel_wager: "Duel wager locked",
   duel_payout: "Duel payout",
   free_credit: "Welcome bonus",
+  season_prize: "Season prize",
 };
 
 function TxRow({ tx }: { tx: Transaction }) {
@@ -463,7 +466,12 @@ export function PwaWalletPage() {
                   <Wallet
                     size={48}
                     strokeWidth={1.5}
-                    style={{ marginBottom: 16, opacity: 0.3, display: "block", margin: "0 auto 16px" }}
+                    style={{
+                      marginBottom: 16,
+                      opacity: 0.3,
+                      display: "block",
+                      margin: "0 auto 16px",
+                    }}
                   />
                   <div
                     style={{
@@ -477,7 +485,13 @@ export function PwaWalletPage() {
                   >
                     No transactions yet
                   </div>
-                  <div style={{ color: "var(--text-muted)", fontSize: "0.85rem", fontWeight: 500 }}>
+                  <div
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                    }}
+                  >
                     Your deposit and payout history will appear here.
                   </div>
                 </div>
