@@ -239,6 +239,8 @@ export function PwaFeedPage({
   const {
     searchQuery,
     selectedCategory,
+    selectedSubcategory,
+    setSelectedSubcategory,
     setAvailableCategories,
     setHasTrendingMarkets,
   } = useFilter();
@@ -398,8 +400,31 @@ export function PwaFeedPage({
       selectedCategory === "All" ||
       (m.category &&
         m.category.toLowerCase() === selectedCategory.toLowerCase());
-    return matchesSearch && matchesCategory;
+    const matchesSubcategory =
+      selectedSubcategory === "All" ||
+      (m.subcategory &&
+        m.subcategory.toLowerCase() === selectedSubcategory.toLowerCase());
+    return matchesSearch && matchesCategory && matchesSubcategory;
   });
+
+  // Subcategory pills: dynamically derived from markets in the selected category
+  const availableSubcategories =
+    selectedCategory === "All"
+      ? []
+      : [
+          "All",
+          ...Array.from(
+            new Set(
+              markets
+                .filter(
+                  (m) =>
+                    m.category?.toLowerCase() ===
+                      selectedCategory.toLowerCase() && m.subcategory,
+                )
+                .map((m) => m.subcategory!),
+            ),
+          ).sort(),
+        ];
 
   const openMarkets = filteredMarkets
     .filter((m) => m.status === "open")
@@ -517,6 +542,50 @@ export function PwaFeedPage({
           >
             {me.firstName ?? (me.username ? `@${me.username}` : "Oracle")} 👋
           </div>
+        </div>
+      )}
+
+      {/* ── Subcategory pills (shown when a category has subcategories) ── */}
+      {availableSubcategories.length > 1 && (
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            overflowX: "auto",
+            marginBottom: 20,
+            paddingBottom: 4,
+            scrollbarWidth: "none",
+          }}
+        >
+          <style>{`.hide-scrollbar-sub::-webkit-scrollbar{display:none}`}</style>
+          {availableSubcategories.map((sub) => {
+            const isActive = selectedSubcategory === sub;
+            return (
+              <button
+                key={sub}
+                onClick={() => setSelectedSubcategory(sub)}
+                style={{
+                  flexShrink: 0,
+                  padding: "5px 12px",
+                  borderRadius: 20,
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  border: `1px solid ${isActive ? "var(--color-primary)" : "var(--glass-border)"}`,
+                  background: isActive
+                    ? "rgba(59,130,246,0.12)"
+                    : "var(--bg-card)",
+                  color: isActive
+                    ? "var(--color-primary)"
+                    : "var(--text-muted)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {sub}
+              </button>
+            );
+          })}
         </div>
       )}
 

@@ -388,6 +388,7 @@ export interface Market {
   disputeDeadlineAt: string | null;
   resolutionCriteria: string | null;
   category: string | null;
+  subcategory: string | null;
   externalSource: string | null;
   externalMarketType: string | null;
   settlementSource: string | null;
@@ -473,6 +474,7 @@ export interface ResolvedMarket {
   imageUrl: string | null;
   imageUrlAlt: string | null;
   category: string | null;
+  subcategory: string | null;
   status: "resolved" | "settled";
   totalPool: number;
   resolutionCriteria: string | null;

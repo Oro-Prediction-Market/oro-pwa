@@ -58,7 +58,9 @@ function usePwaInstall() {
     }
 
     // iOS: no beforeinstallprompt — show manual instructions
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
+    const ios =
+      /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+      !(window as any).MSStream;
     if (ios) {
       setIsIos(true);
       return;
@@ -367,47 +369,49 @@ function HamburgerMenu({
                   to   { opacity: 1; transform: translateY(0) scale(1); }
                 }
               `}</style>
-              {(authed ? NAV_ITEMS : NAV_ITEMS_PUBLIC).map(({ to, label, icon: Icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={() => setOpen(false)}
-                  style={({ isActive }) => ({
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "11px 18px",
-                    textDecoration: "none",
-                    color: isActive
-                      ? "var(--color-primary)"
-                      : "var(--text-main)",
-                    background: isActive
-                      ? "rgba(39,117,208,0.07)"
-                      : "transparent",
-                    fontSize: "0.9rem",
-                    fontWeight: isActive ? 800 : 600,
-                    borderLeft: isActive
-                      ? "3px solid var(--color-primary)"
-                      : "3px solid transparent",
-                    transition: "background 0.12s",
-                  })}
-                >
-                  {({ isActive }) => (
-                    <>
-                      <Icon
-                        size={16}
-                        strokeWidth={isActive ? 2.5 : 2}
-                        color={
-                          isActive
-                            ? "var(--color-primary)"
-                            : "var(--text-muted)"
-                        }
-                      />
-                      {label}
-                    </>
-                  )}
-                </NavLink>
-              ))}
+              {(authed ? NAV_ITEMS : NAV_ITEMS_PUBLIC).map(
+                ({ to, label, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={() => setOpen(false)}
+                    style={({ isActive }) => ({
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "11px 18px",
+                      textDecoration: "none",
+                      color: isActive
+                        ? "var(--color-primary)"
+                        : "var(--text-main)",
+                      background: isActive
+                        ? "rgba(39,117,208,0.07)"
+                        : "transparent",
+                      fontSize: "0.9rem",
+                      fontWeight: isActive ? 800 : 600,
+                      borderLeft: isActive
+                        ? "3px solid var(--color-primary)"
+                        : "3px solid transparent",
+                      transition: "background 0.12s",
+                    })}
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <Icon
+                          size={16}
+                          strokeWidth={isActive ? 2.5 : 2}
+                          color={
+                            isActive
+                              ? "var(--color-primary)"
+                              : "var(--text-muted)"
+                          }
+                        />
+                        {label}
+                      </>
+                    )}
+                  </NavLink>
+                ),
+              )}
               <div
                 style={{
                   margin: "6px 16px",
@@ -417,7 +421,10 @@ function HamburgerMenu({
 
               {(canInstall || isIos || isAndroid) && (
                 <button
-                  onClick={() => { setOpen(false); onInstall(); }}
+                  onClick={() => {
+                    setOpen(false);
+                    onInstall();
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -435,8 +442,19 @@ function HamburgerMenu({
                     textAlign: "left",
                   }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                   Install App
                 </button>
@@ -565,7 +583,10 @@ function HamburgerMenu({
 
               {(canInstall || isIos || isAndroid) && (
                 <button
-                  onClick={() => { setOpen(false); onInstall(); }}
+                  onClick={() => {
+                    setOpen(false);
+                    onInstall();
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -582,8 +603,19 @@ function HamburgerMenu({
                     cursor: "pointer",
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                   Install App
                 </button>
@@ -845,7 +877,14 @@ function AuthGate({
             alignItems: "center",
           }}
         >
-          <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--text-main)", fontWeight: 700 }}>
+          <p
+            style={{
+              margin: 0,
+              fontSize: "0.9rem",
+              color: "var(--text-main)",
+              fontWeight: 700,
+            }}
+          >
             Sign in to access this feature
           </p>
           <a
@@ -895,8 +934,14 @@ function PwaLayout({
   const { canInstall, isIos, isAndroid, install } = usePwaInstall();
 
   function handleInstall() {
-    if (isIos) { setShowIosInstall(true); return; }
-    if (isAndroid && !canInstall) { setShowAndroidInstall(true); return; }
+    if (isIos) {
+      setShowIosInstall(true);
+      return;
+    }
+    if (isAndroid && !canInstall) {
+      setShowAndroidInstall(true);
+      return;
+    }
     install();
   }
   const [toast, setToast] = useState<{
@@ -924,6 +969,7 @@ function PwaLayout({
   const {
     selectedCategory,
     setSelectedCategory,
+    setSelectedSubcategory,
     availableCategories,
     hasTrendingMarkets,
   } = useFilter();
@@ -1019,77 +1065,162 @@ function PwaLayout({
       {showIosInstall && (
         <div
           style={{
-            position: "fixed", inset: 0, zIndex: 10000,
-            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
             padding: "20px",
           }}
           onClick={() => setShowIosInstall(false)}
         >
           <div
             style={{
-              width: "100%", maxWidth: 440,
+              width: "100%",
+              maxWidth: 440,
               background: "var(--bg-card)",
-              borderRadius: 20, padding: "28px 24px 32px",
+              borderRadius: 20,
+              padding: "28px 24px 32px",
               animation: "fadeScaleIn 0.2s ease-out",
               textAlign: "center",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 8px", fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)" }}>
+            <p
+              style={{
+                margin: "0 0 8px",
+                fontSize: "1.1rem",
+                fontWeight: 800,
+                color: "var(--text-main)",
+              }}
+            >
               Install Oro
             </p>
-            <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-              Tap the Share button in your browser toolbar and choose <b>Add to Home Screen</b>.
+            <p
+              style={{
+                margin: "0 0 20px",
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+                lineHeight: 1.6,
+              }}
+            >
+              Tap the Share button in your browser toolbar and choose{" "}
+              <b>Add to Home Screen</b>.
             </p>
 
             {/* Step-by-step visual guide */}
-            <div style={{
-              display: "flex", flexDirection: "column", gap: 12,
-              margin: "0 0 20px",
-              textAlign: "left",
-            }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                margin: "0 0 20px",
+                textAlign: "left",
+              }}
+            >
               {[
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                      <polyline points="16 6 12 2 8 6"/>
-                      <line x1="12" y1="2" x2="12" y2="15"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
                     </svg>
                   ),
-                  label: "Tap the Share button", sub: "The box-with-arrow icon in your browser's toolbar",
+                  label: "Tap the Share button",
+                  sub: "The box-with-arrow icon in your browser's toolbar",
                 },
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <line x1="12" y1="8" x2="12" y2="16"/>
-                      <line x1="8" y1="12" x2="16" y2="12"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <line x1="12" y1="8" x2="12" y2="16" />
+                      <line x1="8" y1="12" x2="16" y2="12" />
                     </svg>
                   ),
-                  label: "Add to Home Screen", sub: "Scroll down in the share sheet and tap this option",
+                  label: "Add to Home Screen",
+                  sub: "Scroll down in the share sheet and tap this option",
                 },
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ),
-                  label: "Tap Add", sub: "Confirm by tapping Add in the top-right corner",
+                  label: "Tap Add",
+                  sub: "Confirm by tapping Add in the top-right corner",
                 },
               ].map((step, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <div style={{
-                    flexShrink: 0, width: 36, height: 36, borderRadius: 10,
-                    background: "var(--color-primary)", color: "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
+                <div
+                  key={i}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+                >
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: "var(--color-primary)",
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     {step.icon}
                   </div>
                   <div>
-                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.88rem", color: "var(--text-main)" }}>{step.label}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{step.sub}</p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontWeight: 700,
+                        fontSize: "0.88rem",
+                        color: "var(--text-main)",
+                      }}
+                    >
+                      {step.label}
+                    </p>
+                    <p
+                      style={{
+                        margin: "2px 0 0",
+                        fontSize: "0.78rem",
+                        color: "var(--text-muted)",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {step.sub}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -1098,10 +1229,15 @@ function PwaLayout({
             <button
               onClick={() => setShowIosInstall(false)}
               style={{
-                width: "100%", padding: "13px", borderRadius: 14,
+                width: "100%",
+                padding: "13px",
+                borderRadius: 14,
                 border: "1px solid var(--glass-border)",
                 background: "var(--bg-secondary)",
-                color: "var(--text-main)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
+                color: "var(--text-main)",
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                cursor: "pointer",
               }}
             >
               Got it
@@ -1114,69 +1250,160 @@ function PwaLayout({
       {showAndroidInstall && (
         <div
           style={{
-            position: "fixed", inset: 0, zIndex: 10000,
-            background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "flex-end", justifyContent: "center",
+            position: "fixed",
+            inset: 0,
+            zIndex: 10000,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
             padding: "20px",
           }}
           onClick={() => setShowAndroidInstall(false)}
         >
           <div
             style={{
-              width: "100%", maxWidth: 440,
+              width: "100%",
+              maxWidth: 440,
               background: "var(--bg-card)",
-              borderRadius: 20, padding: "28px 24px 32px",
+              borderRadius: 20,
+              padding: "28px 24px 32px",
               animation: "fadeScaleIn 0.2s ease-out",
               textAlign: "center",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ margin: "0 0 8px", fontSize: "1.1rem", fontWeight: 800, color: "var(--text-main)" }}>
+            <p
+              style={{
+                margin: "0 0 8px",
+                fontSize: "1.1rem",
+                fontWeight: 800,
+                color: "var(--text-main)",
+              }}
+            >
               Install Oro
             </p>
-            <p style={{ margin: "0 0 20px", fontSize: "0.85rem", color: "var(--text-muted)", lineHeight: 1.6 }}>
-              Tap your browser's menu and choose <b>Add to Home Screen</b> or <b>Install app</b>.
+            <p
+              style={{
+                margin: "0 0 20px",
+                fontSize: "0.85rem",
+                color: "var(--text-muted)",
+                lineHeight: 1.6,
+              }}
+            >
+              Tap your browser's menu and choose <b>Add to Home Screen</b> or{" "}
+              <b>Install app</b>.
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "0 0 20px", textAlign: "left" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                margin: "0 0 20px",
+                textAlign: "left",
+              }}
+            >
               {[
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="19" r="1" fill="currentColor"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="5" r="1" fill="currentColor" />
+                      <circle cx="12" cy="12" r="1" fill="currentColor" />
+                      <circle cx="12" cy="19" r="1" fill="currentColor" />
                     </svg>
                   ),
-                  label: "Open browser menu", sub: "Tap the three-dot (⋮) menu icon in the top-right corner of your browser",
+                  label: "Open browser menu",
+                  sub: "Tap the three-dot (⋮) menu icon in the top-right corner of your browser",
                 },
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/>
-                      <line x1="12" y1="8" x2="12" y2="16"/>
-                      <line x1="8" y1="12" x2="16" y2="12"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <line x1="12" y1="8" x2="12" y2="16" />
+                      <line x1="8" y1="12" x2="16" y2="12" />
                     </svg>
                   ),
-                  label: "Add to Home Screen", sub: 'Tap "Add to Home Screen" or "Install app" from the menu',
+                  label: "Add to Home Screen",
+                  sub: 'Tap "Add to Home Screen" or "Install app" from the menu',
                 },
                 {
                   icon: (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ),
-                  label: "Tap Add", sub: "Confirm the prompt to install Oro on your home screen",
+                  label: "Tap Add",
+                  sub: "Confirm the prompt to install Oro on your home screen",
                 },
               ].map((step, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                  <div style={{
-                    flexShrink: 0, width: 36, height: 36, borderRadius: 10,
-                    background: "var(--color-primary)", color: "#fff",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
+                <div
+                  key={i}
+                  style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+                >
+                  <div
+                    style={{
+                      flexShrink: 0,
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: "var(--color-primary)",
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     {step.icon}
                   </div>
                   <div>
-                    <p style={{ margin: 0, fontWeight: 700, fontSize: "0.88rem", color: "var(--text-main)" }}>{step.label}</p>
-                    <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.4 }}>{step.sub}</p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontWeight: 700,
+                        fontSize: "0.88rem",
+                        color: "var(--text-main)",
+                      }}
+                    >
+                      {step.label}
+                    </p>
+                    <p
+                      style={{
+                        margin: "2px 0 0",
+                        fontSize: "0.78rem",
+                        color: "var(--text-muted)",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {step.sub}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -1184,10 +1411,15 @@ function PwaLayout({
             <button
               onClick={() => setShowAndroidInstall(false)}
               style={{
-                width: "100%", padding: "13px", borderRadius: 14,
+                width: "100%",
+                padding: "13px",
+                borderRadius: 14,
                 border: "1px solid var(--glass-border)",
                 background: "var(--bg-secondary)",
-                color: "var(--text-main)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer",
+                color: "var(--text-main)",
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                cursor: "pointer",
               }}
             >
               Got it
@@ -1399,7 +1631,10 @@ function PwaLayout({
             {hasTrendingMarkets && (
               <NavLink
                 to="/"
-                onClick={() => setSelectedCategory("All")}
+                onClick={() => {
+                  setSelectedCategory("All");
+                  setSelectedSubcategory("All");
+                }}
                 style={({ isActive }) => ({
                   display: "flex",
                   alignItems: "center",
@@ -1461,7 +1696,10 @@ function PwaLayout({
                     <NavLink
                       key={cat}
                       to="/"
-                      onClick={() => setSelectedCategory(cat)}
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setSelectedSubcategory("All");
+                      }}
                       style={({ isActive }) => ({
                         textDecoration: "none",
                         fontSize: isMobile ? "0.82rem" : "0.88rem",
@@ -1489,7 +1727,9 @@ function PwaLayout({
           flex: 1,
           position: "relative",
           paddingTop: isMobile ? 106 : 112,
-          paddingBottom: isMobile ? "calc(70px + env(safe-area-inset-bottom))" : 0,
+          paddingBottom: isMobile
+            ? "calc(70px + env(safe-area-inset-bottom))"
+            : 0,
         }}
       >
         <PageTitleBar />
@@ -1544,12 +1784,20 @@ function PwaLayout({
               <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
                 <Suspense
                   fallback={
-                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                    <div
+                      style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
                       Loading…
                     </div>
                   }
                 >
-                  <LazyTonConnectProvider manifestUrl={publicUrl("tonconnect-manifest.json")}>
+                  <LazyTonConnectProvider
+                    manifestUrl={publicUrl("tonconnect-manifest.json")}
+                  >
                     <PwaWalletTmaPage />
                   </LazyTonConnectProvider>
                 </Suspense>
@@ -1622,7 +1870,13 @@ function PwaLayout({
               <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
                 <Suspense
                   fallback={
-                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                    <div
+                      style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
                       Loading…
                     </div>
                   }
@@ -1638,7 +1892,13 @@ function PwaLayout({
               <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
                 <Suspense
                   fallback={
-                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                    <div
+                      style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
                       Loading…
                     </div>
                   }
@@ -1654,7 +1914,13 @@ function PwaLayout({
               <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
                 <Suspense
                   fallback={
-                    <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+                    <div
+                      style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
                       Loading…
                     </div>
                   }
@@ -1694,7 +1960,10 @@ function PwaLayout({
       {/* Spacer for mobile bottom nav so content isn't covered */}
       {isMobile && <div style={{ height: 72, flexShrink: 0 }} />}
 
-      <PwaBottomNav authed={authed} onOpenLogin={() => setShowLoginModal(true)} />
+      <PwaBottomNav
+        authed={authed}
+        onOpenLogin={() => setShowLoginModal(true)}
+      />
 
       {/* How It Works Modal (Slider) */}
       {showHowItWorks && (
@@ -1713,7 +1982,13 @@ function PwaLayout({
   );
 }
 
-function PwaFooter({ setShowFaq, authed }: { setShowFaq: (v: boolean) => void; authed: boolean }) {
+function PwaFooter({
+  setShowFaq,
+  authed,
+}: {
+  setShowFaq: (v: boolean) => void;
+  authed: boolean;
+}) {
   const currentYear = new Date().getFullYear();
 
   return (
