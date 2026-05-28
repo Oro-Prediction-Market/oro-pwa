@@ -153,12 +153,6 @@ const FAQ_DATA: FAQSection[] = [
       },
       {
         id: "12",
-        question: "What is the welcome bonus?",
-        answer:
-          "New accounts may receive free Oro credits when they sign up for the first time. These credits are credited directly to your wallet and appear as a 'Welcome bonus' in your transaction history. They can be used to make predictions just like a regular deposit.",
-      },
-      {
-        id: "13",
         question: "What is a referral bonus?",
         answer:
           "When a friend signs up using your referral link and makes their first prediction, you both receive Oro credits as a bonus. Referral bonuses appear as a 'Referral bonus' entry in your transaction history.",
