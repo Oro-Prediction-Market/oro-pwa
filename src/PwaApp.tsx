@@ -1882,7 +1882,7 @@ function PwaFooter({ setShowFaq, authed }: { setShowFaq: (v: boolean) => void; a
               </div>
             </a>
             <a
-              href="mailto:oro@romtech.bt"
+              href="mailto:oro@21.tech.bt"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -1926,7 +1926,7 @@ function PwaFooter({ setShowFaq, authed }: { setShowFaq: (v: boolean) => void; a
                 <span
                   style={{ fontSize: "0.75rem", opacity: 0.6, fontWeight: 500 }}
                 >
-                  oro@romtech.bt
+                  oro@21.tech.bt
                 </span>
               </div>
             </a>
