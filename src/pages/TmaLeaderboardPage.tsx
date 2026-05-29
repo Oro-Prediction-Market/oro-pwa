@@ -39,7 +39,6 @@ import {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-
 // ── Tier helpers ──────────────────────────────────────────────────────────────
 
 function tierLabel(tier: string) {
@@ -1034,7 +1033,11 @@ function SeasonsSheet({
                   color: "var(--text-main)",
                 }}
               >
-                Week {currentSeason.weekNumber}, {currentSeason.year}
+                {new Date(currentSeason.startsAt).toLocaleString(undefined, {
+                  month: "long",
+                  timeZone: "UTC",
+                })}{" "}
+                {currentSeason.year}
               </div>
               <div
                 style={{
@@ -1048,6 +1051,7 @@ function SeasonsSheet({
                   weekday: "short",
                   month: "short",
                   day: "numeric",
+                  timeZone: "UTC",
                 })}
               </div>
             </div>
@@ -1104,7 +1108,11 @@ function SeasonsSheet({
                         color: "var(--text-main)",
                       }}
                     >
-                      Week {s.weekNumber}, {s.year}
+                      {new Date(s.startsAt).toLocaleString(undefined, {
+                        month: "long",
+                        timeZone: "UTC",
+                      })}{" "}
+                      {s.year}
                     </div>
                     <div
                       style={{
@@ -1113,8 +1121,18 @@ function SeasonsSheet({
                         marginTop: 1,
                       }}
                     >
-                      {new Date(s.startsAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })} –{" "}
-                      {new Date(s.endsAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                      {new Date(s.startsAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        timeZone: "UTC",
+                      })}{" "}
+                      –{" "}
+                      {new Date(s.endsAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        timeZone: "UTC",
+                      })}
                     </div>
                   </div>
                   <Trophy size={16} color="#f59e0b" />
@@ -1231,7 +1249,15 @@ function PinnedSelfRow({
         }}
       >
         {entry.totalPredictions < 10 ? (
-          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)" }}>—</span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "var(--text-muted)",
+            }}
+          >
+            —
+          </span>
         ) : entry.rank <= 3 ? (
           rankMedal(entry.rank)
         ) : (
@@ -1329,7 +1355,13 @@ function PinnedSelfRow({
       >
         {entry.totalPredictions < 10 ? (
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)" }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                color: "var(--text-muted)",
+              }}
+            >
               {10 - entry.totalPredictions} more to rank
             </div>
           </div>
@@ -1624,7 +1656,6 @@ export const TmaLeaderboardPage: FC = () => {
               </span>
             </div>
           )}
-
         </div>
       </div>
 
