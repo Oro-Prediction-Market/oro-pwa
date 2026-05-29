@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import dkBankLogo from "@shared/assets/dk blue.png";
+import dkBankLogo from "@shared/assets/dk-blue.png";
 import {
   initiateDKBankPayment,
   checkDKBankPaymentStatus,
@@ -669,7 +669,9 @@ export function PwaPaymentModal({
                           color: estProfit >= 0 ? "#16a34a" : "#9ca3af",
                         }}
                       >
-                        {estProfit >= 0 ? `Nu ${Math.floor(estPayout).toLocaleString()}` : "—"}
+                        {estProfit >= 0
+                          ? `Nu ${Math.floor(estPayout).toLocaleString()}`
+                          : "—"}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
