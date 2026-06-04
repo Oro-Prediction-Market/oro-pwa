@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   Trophy,
   TrendingUp,
@@ -89,6 +90,12 @@ export function PwaResultsPage() {
     <div
       style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px 100px" }}
     >
+      <Helmet>
+        <title>Results | Oro Prediction Market</title>
+        <meta name="description" content="View your prediction results on Oro — see which markets you won and lost." />
+        <link rel="canonical" href="https://oro.fun/results" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="mesh-bg" />
 
       <div style={{ marginBottom: 28 }}>

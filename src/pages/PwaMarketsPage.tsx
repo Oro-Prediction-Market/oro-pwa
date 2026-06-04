@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import {
   getMarkets,
@@ -176,6 +177,14 @@ export function PwaMarketsPage() {
 
   return (
     <div style={{ padding: "0 0 100px", maxWidth: 1240, margin: "0 auto", position: "relative" }}>
+      <Helmet>
+        <title>Markets | Oro Prediction Market</title>
+        <meta name="description" content="All open prediction markets on Oro. Sports, crypto, politics, weather and more. Pick Yes or No and win real money." />
+        <link rel="canonical" href="https://oro.fun/markets" />
+        <meta property="og:url" content="https://oro.fun/markets" />
+        <meta property="og:title" content="Markets | Oro Prediction Market" />
+        <meta property="og:description" content="All open prediction markets on Oro. Pick Yes or No and win real money." />
+      </Helmet>
       <style>{`
         @keyframes livePing {
           0%   { transform: scale(1);   opacity: 0.8; }

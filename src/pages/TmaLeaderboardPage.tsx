@@ -1,4 +1,5 @@
 import { FC, useCallback, useEffect, useRef, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Page } from "@shared/components/Page";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { useAuth } from "@shared/hooks/useAuth";
@@ -1515,6 +1516,14 @@ export const TmaLeaderboardPage: FC = () => {
 
   return (
     <Page>
+      <Helmet>
+        <title>Leaderboard | Oro Prediction Market</title>
+        <meta name="description" content="See the top predictors on Oro. Compete, climb the ranks, and win real money with your prediction skills." />
+        <link rel="canonical" href="https://oro.fun/leaderboard" />
+        <meta property="og:url" content="https://oro.fun/leaderboard" />
+        <meta property="og:title" content="Leaderboard | Oro Prediction Market" />
+        <meta property="og:description" content="See the top predictors on Oro. Compete, climb the ranks, and win real money." />
+      </Helmet>
       <style>{`
         @keyframes rank1Pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }

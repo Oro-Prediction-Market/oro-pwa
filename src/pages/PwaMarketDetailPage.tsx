@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   getMarket,
@@ -397,6 +398,12 @@ export function PwaMarketDetailPage() {
     return `${h}h ${m}m remaining`;
   })();
 
+  const pageTitle = `${displayMarket.title} | Oro Prediction Market`;
+  const pageDesc =
+    displayMarket.description ||
+    `Predict the outcome of "${displayMarket.title}" and win real money on Oro.`;
+  const pageUrl = `https://oro.fun/markets/${displayMarket.id}`;
+
   return (
     <div
       style={{
@@ -409,6 +416,20 @@ export function PwaMarketDetailPage() {
         position: "relative",
       }}
     >
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <link rel="canonical" href={pageUrl} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:image" content="https://oro.fun/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDesc} />
+        <meta name="twitter:image" content="https://oro.fun/og-image.png" />
+      </Helmet>
       <div className="mesh-bg" />
 
       <div

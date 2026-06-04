@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const SECTIONS = [
   {
@@ -309,6 +310,11 @@ export function TermsPage() {
         color: "var(--text-main)",
       }}
     >
+      <Helmet>
+        <title>Terms of Service | Oro</title>
+        <meta name="description" content="Read Oro's Terms of Service. Understand the rules for using Oro's prediction market platform." />
+        <link rel="canonical" href="https://oro.fun/terms" />
+      </Helmet>
       <div
         style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}
       >

@@ -1,4 +1,5 @@
 import { FC, useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Page } from "@shared/components/Page";
 import { Link } from "@shared/components/Link/Link";
 import {
@@ -255,6 +256,14 @@ export const ResolvedMarketsPage: FC = () => {
 
   return (
     <Page back={true}>
+      <Helmet>
+        <title>Resolved Markets | Oro Prediction Market</title>
+        <meta name="description" content="Browse past prediction markets on Oro — see how they settled and who won." />
+        <link rel="canonical" href="https://oro.fun/resolved" />
+        <meta property="og:url" content="https://oro.fun/resolved" />
+        <meta property="og:title" content="Resolved Markets | Oro Prediction Market" />
+        <meta property="og:description" content="Browse past prediction markets on Oro — see how they settled and who won." />
+      </Helmet>
       <div
         style={{
           position: "relative",

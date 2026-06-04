@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 const SECTIONS = [
   {
@@ -162,6 +163,11 @@ export function PrivacyPage() {
         color: "var(--text-main)",
       }}
     >
+      <Helmet>
+        <title>Privacy Policy | Oro</title>
+        <meta name="description" content="Read Oro's Privacy Policy. Learn how we handle your data on the Oro prediction market platform." />
+        <link rel="canonical" href="https://oro.fun/privacy" />
+      </Helmet>
       <div
         style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 80px" }}
       >

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import {
   CheckCircle2,
@@ -362,6 +363,12 @@ export function PwaMyBetsPage() {
         position: "relative",
       }}
     >
+      <Helmet>
+        <title>My Bets | Oro Prediction Market</title>
+        <meta name="description" content="Track all your predictions on Oro — active, won, and lost bets." />
+        <link rel="canonical" href="https://oro.fun/my-bets" />
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="mesh-bg" />
       <h1
         style={{
