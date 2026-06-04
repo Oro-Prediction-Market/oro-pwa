@@ -4,12 +4,12 @@
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-// Store the JWT in localStorage — persists across browser/app restarts (PWA-friendly)
-let _token: string | null = localStorage.getItem("oro_token");
+// JWT lives only in memory — never persisted to localStorage to prevent XSS token theft.
+// Session is restored on page reload via the httpOnly "oro_auth" cookie + GET /auth/refresh.
+let _token: string | null = null;
 
 export function setToken(token: string) {
   _token = token;
-  localStorage.setItem("oro_token", token);
 }
 
 export function getToken(): string | null {
@@ -18,7 +18,50 @@ export function getToken(): string | null {
 
 export function clearToken() {
   _token = null;
-  localStorage.removeItem("oro_token");
+}
+
+/**
+ * Called once on app start. Reads the httpOnly "oro_auth" cookie server-side
+ * and returns a fresh in-memory token without exposing the cookie to JS.
+ * Returns null if no valid session exists.
+ */
+export async function refreshAuth(): Promise<{ token: string; user: any } | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: "GET",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data?.token) {
+      setToken(data.token);
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Calls POST /auth/logout to revoke the JWT on the server and clear the
+ * httpOnly cookie, then wipes the in-memory token.
+ */
+export async function logoutApi(): Promise<void> {
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (_token) headers["Authorization"] = `Bearer ${_token}`;
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+      headers,
+    });
+  } catch {
+    // Best-effort — always clear local state regardless
+  } finally {
+    clearToken();
+  }
 }
 
 // Decode a JWT payload without a library — returns null if malformed
@@ -69,7 +112,11 @@ async function fetchAndCache<T>(
   };
   if (_token) headers["Authorization"] = `Bearer ${_token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const res = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: "include",
+  });
 
   if (res.status === 401) {
     const err = await res.json().catch(() => ({ message: "Unauthorized" }));

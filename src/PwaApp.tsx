@@ -191,7 +191,7 @@ const LazyTonConnectProvider = lazy(() =>
   })),
 );
 import React from "react";
-import { isTokenValid, clearToken } from "@shared/api/client";
+import { isTokenValid, clearToken, logoutApi } from "@shared/api/client";
 
 // ── Page title map ───────────────────────────────────────────────────────────
 
@@ -304,8 +304,7 @@ function HamburgerMenu({
 
   function handleLogout() {
     setOpen(false);
-    clearToken();
-    window.dispatchEvent(new Event("oro:unauthorized"));
+    logoutApi().then(() => window.dispatchEvent(new Event("oro:unauthorized")));
   }
 
   return (

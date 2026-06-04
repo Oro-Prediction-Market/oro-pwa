@@ -4,6 +4,7 @@ import {
   getMe,
   clearToken,
   getToken,
+  refreshAuth,
   AuthUser,
 } from "@shared/api/client";
 
@@ -32,6 +33,16 @@ export function useAuth() {
       const referralCode = startParam?.startsWith("ref_")
         ? startParam
         : undefined;
+
+      // 1. If we already have an in-memory token (e.g. auth happened earlier this session), validate it.
+      // 2. Otherwise try to silently restore via the httpOnly cookie (page reload case).
+      if (!getToken() && !referralCode) {
+        const refreshed = await refreshAuth();
+        if (refreshed) {
+          setState({ user: refreshed.user, token: refreshed.token, loading: false, error: null });
+          return;
+        }
+      }
 
       if (getToken() && !referralCode) {
         try {

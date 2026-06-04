@@ -14,14 +14,9 @@ export function useAuth() {
     // Backend rejected the token (expired or tampered)
     const onUnauthorized = () => setIsAuthenticated(false);
 
-    // Token changed in another tab (login or logout)
-    const onStorage = () => setIsAuthenticated(isTokenValid());
-
     window.addEventListener("oro:unauthorized", onUnauthorized);
-    window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener("oro:unauthorized", onUnauthorized);
-      window.removeEventListener("storage", onStorage);
     };
   }, []);
 
