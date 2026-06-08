@@ -1710,6 +1710,7 @@ function PwaLayout({
                             : "var(--text-muted)",
                         cursor: "pointer",
                         flexShrink: 0,
+                        textTransform: "capitalize",
                       })}
                     >
                       {cat}
