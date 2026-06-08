@@ -25,7 +25,7 @@ import { BtcMarketCard } from "../components/BtcMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { Flame, TrendingUp } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
-import { isWCMarket, getWCFlag, parseWinnerCountry } from "./WorldCupHubPage";
+import { isWCMarket, getWCFlag, parseWinnerCountry, calcProb } from "./WorldCupHubPage";
 
 interface FormattedEvent {
   userName: string;
@@ -461,43 +461,34 @@ export function PwaFeedPage({
   const wcEntryMarkets = markets.filter(isWCMarket);
 
   const WC_DEFAULT_NATIONS = [
-    { flag: "🇧🇷", country: "Brazil" },
-    { flag: "🇦🇷", country: "Argentina" },
-    { flag: "🇫🇷", country: "France" },
-    { flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", country: "England" },
-    { flag: "🇩🇪", country: "Germany" },
-    { flag: "🇪🇸", country: "Spain" },
-    { flag: "🇵🇹", country: "Portugal" },
-    { flag: "🇳🇱", country: "Netherlands" },
-    { flag: "🇺🇸", country: "USA" },
-    { flag: "🇲🇽", country: "Mexico" },
-    { flag: "🇨🇦", country: "Canada" },
-    { flag: "🇯🇵", country: "Japan" },
-    { flag: "🇰🇷", country: "Korea" },
-    { flag: "🇲🇦", country: "Morocco" },
-    { flag: "🇺🇾", country: "Uruguay" },
-    { flag: "🇭🇷", country: "Croatia" },
+    { flag: "/worldcup/Brazil.svg", country: "Brazil" },
+    { flag: "/worldcup/Argentina.svg", country: "Argentina" },
+    { flag: "/worldcup/France.svg", country: "France" },
+    { flag: "/worldcup/England.svg", country: "England" },
+    { flag: "/worldcup/Germany.svg", country: "Germany" },
+    { flag: "/worldcup/Spain.svg", country: "Spain" },
+    { flag: "/worldcup/Portugal.svg", country: "Portugal" },
+    { flag: "/worldcup/Netherlands.svg", country: "Netherlands" },
+    { flag: "/worldcup/USA.svg", country: "USA" },
+    { flag: "/worldcup/Mexico.svg", country: "Mexico" },
+    { flag: "/worldcup/Canada.svg", country: "Canada" },
+    { flag: "/worldcup/Japan.svg", country: "Japan" },
+    { flag: "/worldcup/SouthKorea.svg", country: "Korea" },
+    { flag: "/worldcup/Morocco.svg", country: "Morocco" },
+    { flag: "/worldcup/Uruguay.svg", country: "Uruguay" },
+    { flag: "/worldcup/Croatia.svg", country: "Croatia" },
   ];
 
   const wcMarketItems = wcEntryMarkets
     .filter((m) => m.subcategory === "wc-winner")
-    .map((m) => {
-      const country = parseWinnerCountry(m.title);
-      const flag = getWCFlag(country);
-      const outcomes = m.outcomes ?? [];
-      const n = outcomes.length || 1;
-      const prior = 1000;
-      const tPool = Number(m.totalPool);
-      const hasData = tPool > 0;
-      const getProb = (o: (typeof outcomes)[0]) =>
-        (o.lmsrProbability ?? 0) > 0
-          ? o.lmsrProbability!
-          : (Number(o.totalBetAmount) + prior / n) / (tPool + prior);
-      const yesOutcome =
-        outcomes.find((o) => /yes|win/i.test(o.label)) ?? outcomes[0];
-      const prob = yesOutcome ? getProb(yesOutcome) : 1 / n;
-      return { flag, country, prob, hasData };
-    });
+    .flatMap((m) =>
+      (m.outcomes ?? []).map((outcome) => ({
+        flag: getWCFlag(outcome.label),
+        country: outcome.label,
+        prob: calcProb(m, outcome.id),
+        hasData: Number(m.totalPool) > 0,
+      }))
+    );
 
   const wcWinnerItems =
     wcMarketItems.length > 0
@@ -787,7 +778,10 @@ export function PwaFeedPage({
                   <div style={{ display: "flex", animation: `wcMarquee ${Math.max(12, wcWinnerItems.length * 2)}s linear infinite`, width: "max-content" }}>
                     {[...wcWinnerItems, ...wcWinnerItems].map((item, i) => (
                       <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "2px 10px", gap: 1, borderRight: "1px solid rgba(255,255,255,0.08)" }}>
-                        <span style={{ fontSize: 22, lineHeight: 1 }}>{item.flag}</span>
+                        {item.flag
+                          ? <img src={item.flag} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: "cover" }} />
+                          : null
+                        }
                         <span style={{ fontSize: 10, fontWeight: 800, color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)" }}>
                           {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
                         </span>
@@ -809,7 +803,7 @@ export function PwaFeedPage({
       {wcWinnerItems.length > 0 && !searchQuery.trim() && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
-            {wcWinnerItems.filter((item) => item.flag !== "🏳️").map((item) => {
+            {wcWinnerItems.filter((item) => item.flag !== "").map((item) => {
               const active = selectedCountries.includes(item.country);
               return (
                 <button
@@ -833,7 +827,7 @@ export function PwaFeedPage({
                     transition: "all 0.15s ease",
                   }}
                 >
-                  <span style={{ fontSize: 14 }}>{item.flag}</span>
+                  {item.flag && <img src={item.flag} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: "cover" }} />}
                   {item.country}
                 </button>
               );

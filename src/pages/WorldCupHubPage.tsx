@@ -9,38 +9,39 @@ const TmaBetModal = lazy(() =>
 
 // ── Helpers (mirrored from TMA — keep in sync) ────────────────────────────────
 
-const FLAG_MAP: Record<string, string> = {
-  afghanistan: "🇦🇫", albania: "🇦🇱", algeria: "🇩🇿", angola: "🇦🇴",
-  argentina: "🇦🇷", australia: "🇦🇺", austria: "🇦🇹", bahrain: "🇧🇭",
-  belgium: "🇧🇪", bolivia: "🇧🇴", brazil: "🇧🇷", bhutan: "🇧🇹",
-  cameroon: "🇨🇲", canada: "🇨🇦", chile: "🇨🇱", china: "🇨🇳",
-  colombia: "🇨🇴", "costa rica": "🇨🇷", croatia: "🇭🇷", cuba: "🇨🇺",
-  denmark: "🇩🇰", ecuador: "🇪🇨", egypt: "🇪🇬", england: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-  france: "🇫🇷", germany: "🇩🇪", ghana: "🇬🇭", greece: "🇬🇷",
-  honduras: "🇭🇳", hungary: "🇭🇺", india: "🇮🇳", indonesia: "🇮🇩",
-  iran: "🇮🇷", ireland: "🇮🇪", israel: "🇮🇱", italy: "🇮🇹",
-  "ivory coast": "🇨🇮", "côte d'ivoire": "🇨🇮", japan: "🇯🇵",
-  jordan: "🇯🇴", kenya: "🇰🇪", kuwait: "🇰🇼", malaysia: "🇲🇾",
-  mali: "🇲🇱", mexico: "🇲🇽", morocco: "🇲🇦", netherlands: "🇳🇱",
-  "new zealand": "🇳🇿", nigeria: "🇳🇬", norway: "🇳🇴", pakistan: "🇵🇰",
-  panama: "🇵🇦", paraguay: "🇵🇾", peru: "🇵🇪", poland: "🇵🇱",
-  portugal: "🇵🇹", qatar: "🇶🇦", romania: "🇷🇴", russia: "🇷🇺",
-  "saudi arabia": "🇸🇦", scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", senegal: "🇸🇳", serbia: "🇷🇸",
-  slovakia: "🇸🇰", "south africa": "🇿🇦", "south korea": "🇰🇷", korea: "🇰🇷",
-  spain: "🇪🇸", sweden: "🇸🇪", switzerland: "🇨🇭", thailand: "🇹🇭",
-  tunisia: "🇹🇳", turkey: "🇹🇷", ukraine: "🇺🇦", uae: "🇦🇪",
-  "united arab emirates": "🇦🇪", "united states": "🇺🇸", usa: "🇺🇸",
-  america: "🇺🇸", us: "🇺🇸", uruguay: "🇺🇾", venezuela: "🇻🇪",
-  wales: "🏴󠁧󠁢󠁷󠁬󠁳󠁿", zambia: "🇿🇲",
+const SVG_MAP: Record<string, string> = {
+  algeria: "Algeria", argentina: "Argentina", australia: "Australia",
+  austria: "Austria", belgium: "Belgium",
+  "bosnia and herzegovina": "BosniaAndHerzegovina", bosnia: "BosniaAndHerzegovina",
+  brazil: "Brazil", canada: "Canada", "cape verde": "Cape Verde",
+  colombia: "Colombia", croatia: "Croatia",
+  "curaçao": "Curaçao", curacao: "Curaçao",
+  czechia: "Czechia", "czech republic": "Czechia",
+  "dr congo": "DR Congo", congo: "DR Congo",
+  ecuador: "Ecuador", egypt: "Egypt", england: "England",
+  france: "France", germany: "Germany", ghana: "Ghana", haiti: "Haiti",
+  iran: "Iran", iraq: "Iraq",
+  "ivory coast": "Ivory Coast", "côte d'ivoire": "Ivory Coast",
+  japan: "Japan", jordan: "Jordan", mexico: "Mexico", morocco: "Morocco",
+  netherlands: "Netherlands", holland: "Netherlands",
+  "new zealand": "NewZealand", norway: "Norway",
+  panama: "Panama", paraguay: "Paraguay", portugal: "Portugal", qatar: "Qatar",
+  "saudi arabia": "Saudi Arabia", scotland: "Scotland", senegal: "Senegal",
+  "south africa": "SouthAfrica",
+  "south korea": "SouthKorea", korea: "SouthKorea",
+  spain: "Spain", sweden: "Sweden", switzerland: "Switzerland", tunisia: "Tunisia",
+  turkey: "Türkiye", "türkiye": "Türkiye",
+  "united states": "USA", usa: "USA", america: "USA", us: "USA",
+  uruguay: "Uruguay", uzbekistan: "Uzbekistan",
 };
 
 export function getWCFlag(country: string): string {
   const lower = country.toLowerCase().trim();
-  if (FLAG_MAP[lower]) return FLAG_MAP[lower];
-  for (const [key, flag] of Object.entries(FLAG_MAP)) {
-    if (lower.includes(key) || key.includes(lower)) return flag;
+  if (SVG_MAP[lower]) return `/worldcup/${SVG_MAP[lower]}.svg`;
+  for (const [key, file] of Object.entries(SVG_MAP)) {
+    if (lower.includes(key) || key.includes(lower)) return `/worldcup/${file}.svg`;
   }
-  return "🏳️";
+  return "";
 }
 
 export function parseWinnerCountry(title: string): string {
@@ -73,7 +74,7 @@ export function isWCMarket(m: Market): boolean {
   );
 }
 
-function calcProb(market: Market, outcomeId: string): number {
+export function calcProb(market: Market, outcomeId: string): number {
   const o = market.outcomes?.find((x) => x.id === outcomeId);
   if (!o) return 0;
   const n = market.outcomes.length || 1;
@@ -280,7 +281,10 @@ export function WorldCupHubPage() {
                         gap: 14,
                       }}
                     >
-                      <span style={{ fontSize: 38, lineHeight: 1, flexShrink: 0 }}>{flag}</span>
+                      {flag
+                        ? <img src={flag} alt={outcome.label} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                        : <span style={{ fontSize: 38, lineHeight: 1, flexShrink: 0 }}>🏳️</span>
+                      }
                       <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
                         <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 3 }}>{outcome.label}</div>
                         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>
@@ -355,7 +359,10 @@ export function WorldCupHubPage() {
                               marginBottom: 6,
                             }}
                           >
-                            <span style={{ fontSize: 28, flexShrink: 0 }}>{flag}</span>
+                            {flag
+                              ? <img src={flag} alt={outcome.label} style={{ width: 36, height: 36, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />
+                              : <span style={{ fontSize: 28, flexShrink: 0 }}>🏳️</span>
+                            }
                             <span style={{ flex: 1, fontWeight: 700, fontSize: 15, color: "var(--text-main, #fff)", textAlign: "left" }}>
                               {outcome.label}
                             </span>
@@ -408,14 +415,20 @@ export function WorldCupHubPage() {
                       }}
                     >
                       <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 38 }}>{flag1}</div>
+                        {flag1
+                          ? <img src={flag1} alt={team1} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }} />
+                          : <div style={{ fontSize: 38 }}>🏳️</div>
+                        }
                         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main, #fff)", marginTop: 4 }}>{team1}</div>
                       </div>
                       <div style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted, #888)", background: "rgba(255,255,255,0.06)", borderRadius: 8, padding: "4px 10px" }}>
                         VS
                       </div>
                       <div style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 38 }}>{flag2}</div>
+                        {flag2
+                          ? <img src={flag2} alt={team2} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }} />
+                          : <div style={{ fontSize: 38 }}>🏳️</div>
+                        }
                         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main, #fff)", marginTop: 4 }}>{team2}</div>
                       </div>
                     </div>
