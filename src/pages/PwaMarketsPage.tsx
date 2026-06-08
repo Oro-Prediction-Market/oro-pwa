@@ -111,7 +111,7 @@ export function PwaMarketsPage() {
       .then((data) => {
         const active = data.filter((m) => m.status === "open" || m.status === "upcoming");
         setMarkets(active);
-        const cats = ["All", ...Array.from(new Set(active.map((m) => m.category).filter(Boolean))) as string[]];
+        const cats = ["All", ...Array.from(new Set(active.map((m) => m.category || "other"))) as string[]];
         setAvailableCategories(cats);
       })
       .catch(console.error)
@@ -156,7 +156,7 @@ export function PwaMarketsPage() {
 
   const byCat = (m: Market) =>
     selectedCategory === "All" ||
-    (m.category ?? "").toLowerCase() === selectedCategory.toLowerCase();
+    (m.category ?? "other").toLowerCase() === selectedCategory.toLowerCase();
 
   const openMarkets = markets.filter((m) => m.status === "open" && byCat(m));
   const upcomingMarkets = markets.filter((m) => m.status === "upcoming" && byCat(m));

@@ -275,7 +275,7 @@ export function PwaFeedPage({
           const cats = [
             "All",
             ...(Array.from(
-              new Set(active.map((m) => m.category).filter(Boolean)),
+              new Set(active.map((m) => m.category || "other")),
             ) as string[]),
           ];
           setAvailableCategories(cats);
@@ -399,8 +399,7 @@ export function PwaFeedPage({
       .includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategory === "All" ||
-      (m.category &&
-        m.category.toLowerCase() === selectedCategory.toLowerCase());
+      (m.category ?? "other").toLowerCase() === selectedCategory.toLowerCase();
     const matchesSubcategory =
       selectedSubcategory === "All" ||
       (m.subcategory &&
