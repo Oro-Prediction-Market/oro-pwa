@@ -754,7 +754,7 @@ export function PwaFeedPage({
                 position: "relative",
                 backgroundImage: "url('/background.svg')",
                 backgroundSize: "cover",
-                backgroundPosition: "center",
+                backgroundPosition: "right bottom",
                 outline: "none",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
@@ -787,7 +787,7 @@ export function PwaFeedPage({
                     ))}
                   </div>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", flexShrink: 0 }}>Enter Hub »</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", flexShrink: 0 }}>Click Here »</span>
               </div>
             </div>
             </div>
