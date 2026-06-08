@@ -399,7 +399,7 @@ export function PwaFeedPage({
       .includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategory === "All" ||
-      (m.category ?? "other").toLowerCase() === selectedCategory.toLowerCase();
+      (m.category || "other").toLowerCase() === selectedCategory.toLowerCase();
     const matchesSubcategory =
       selectedSubcategory === "All" ||
       (m.subcategory &&
@@ -418,7 +418,7 @@ export function PwaFeedPage({
               markets
                 .filter(
                   (m) =>
-                    m.category?.toLowerCase() ===
+                    (m.category || "other").toLowerCase() ===
                       selectedCategory.toLowerCase() && m.subcategory,
                 )
                 .map((m) => m.subcategory!),

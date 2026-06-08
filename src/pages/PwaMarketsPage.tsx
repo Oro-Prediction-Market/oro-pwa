@@ -156,7 +156,7 @@ export function PwaMarketsPage() {
 
   const byCat = (m: Market) =>
     selectedCategory === "All" ||
-    (m.category ?? "other").toLowerCase() === selectedCategory.toLowerCase();
+    (m.category || "other").toLowerCase() === selectedCategory.toLowerCase();
 
   const openMarkets = markets.filter((m) => m.status === "open" && byCat(m));
   const upcomingMarkets = markets.filter((m) => m.status === "upcoming" && byCat(m));
