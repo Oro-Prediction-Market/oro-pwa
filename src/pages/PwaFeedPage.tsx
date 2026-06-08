@@ -25,7 +25,7 @@ import { BtcMarketCard } from "../components/BtcMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { Flame, TrendingUp } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
-import { isWCMarket, getWCFlag, parseWinnerCountry, calcProb } from "./WorldCupHubPage";
+import { isWCMarket, getWCFlag, calcProb } from "./WorldCupHubPage";
 
 interface FormattedEvent {
   userName: string;
@@ -206,7 +206,6 @@ export function PwaFeedPage({
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
-  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingBet, setPendingBet] = useState<ActiveBet | null>(null);
   const [me, setMe] = useState<AuthUser | null>(null);
@@ -408,11 +407,7 @@ export function PwaFeedPage({
       selectedSubcategory === "All" ||
       (m.subcategory &&
         m.subcategory.toLowerCase() === selectedSubcategory.toLowerCase());
-    const matchesCountry =
-      selectedCountries.length === 0 ||
-      !isWCMarket(m) ||
-      selectedCountries.includes(parseWinnerCountry(m.title));
-    return matchesSearch && matchesCategory && matchesSubcategory && matchesCountry;
+    return matchesSearch && matchesCategory && matchesSubcategory;
   });
 
   // Subcategory pills: dynamically derived from markets in the selected category
@@ -799,57 +794,6 @@ export function PwaFeedPage({
         </section>
       )}
 
-      {/* ── Country multi-select pills ── */}
-      {wcWinnerItems.length > 0 && !searchQuery.trim() && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
-            {wcWinnerItems.filter((item) => item.flag !== "").map((item) => {
-              const active = selectedCountries.includes(item.country);
-              return (
-                <button
-                  key={item.country}
-                  onClick={() =>
-                    setSelectedCountries((prev) =>
-                      active ? prev.filter((c) => c !== item.country) : [...prev, item.country]
-                    )
-                  }
-                  style={{
-                    flexShrink: 0,
-                    display: "flex", alignItems: "center", gap: 5,
-                    padding: "5px 10px",
-                    borderRadius: 20,
-                    fontSize: "0.72rem", fontWeight: 700,
-                    border: `1px solid ${active ? "#A78BFA" : "rgba(255,255,255,0.1)"}`,
-                    background: active ? "rgba(167,139,250,0.12)" : "var(--bg-card)",
-                    color: active ? "#A78BFA" : "var(--text-muted)",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {item.flag && <img src={item.flag} alt="" style={{ width: 16, height: 16, borderRadius: 2, objectFit: "cover" }} />}
-                  {item.country}
-                </button>
-              );
-            })}
-            {selectedCountries.length > 0 && (
-              <button
-                onClick={() => setSelectedCountries([])}
-                style={{
-                  flexShrink: 0, padding: "5px 10px", borderRadius: 20,
-                  fontSize: "0.72rem", fontWeight: 700,
-                  border: "1px solid rgba(255,100,100,0.3)",
-                  background: "rgba(255,100,100,0.08)",
-                  color: "rgba(255,100,100,0.7)",
-                  cursor: "pointer", whiteSpace: "nowrap",
-                }}
-              >
-                ✕ Clear
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {resolvingMarkets.length > 0 && (
         <section style={{ marginBottom: "var(--space-xl)" }}>
