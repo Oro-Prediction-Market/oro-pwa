@@ -207,7 +207,7 @@ export function WorldCupHubPage() {
                 border: "1px solid rgba(167,139,250,0.15)",
               }}
             >
-              <div style={{ fontSize: 22, fontWeight: 900, color: "#A78BFA" }}>{val}</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: "#fff" }}>{val}</div>
               <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>{label}</div>
             </div>
           ))}
