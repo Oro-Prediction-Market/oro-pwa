@@ -1,6 +1,7 @@
 import { useState, useEffect, memo, type FC } from "react";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { isWCMarket, getWCFlag } from "../pages/WorldCupHubPage";
 
 function outcomeColor(rank: number, total: number, resolved: boolean): string {
   if (resolved) {
@@ -263,8 +264,10 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   {(() => {
                     return displayOutcomes.map((s, idx) => {
                       const barWidth = Math.max(4, Math.min(100, s.pct));
+                      // WC flag > explicit imageUrl > market images
+                      const wcFlag = isWCMarket(market) ? getWCFlag(s.label) : "";
                       const avatarUrl = !imgError
-                        ? (s as any).imageUrl ||
+                        ? (s as any).imageUrl || wcFlag ||
                           (idx === 0
                             ? market.imageUrl
                             : idx === 1
@@ -359,46 +362,43 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                             }}
                           >
                             {/* Avatar */}
-                            <div
-                              style={{
-                                flexShrink: 0,
-                                width: 26,
-                                height: 26,
-                                borderRadius: "var(--radius-full)",
-                                overflow: "hidden",
-                                background: vis.gradient,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                border: "1.5px solid rgba(255,255,255,0.15)",
-                                boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
-                              }}
-                            >
-                              {avatarUrl ? (
-                                <img
-                                  src={avatarUrl}
-                                  alt=""
-                                  onError={() => setImgError(true)}
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                    display: "block",
-                                  }}
-                                />
-                              ) : (
-                                <span
-                                  style={{
-                                    fontSize: 11,
-                                    fontWeight: 900,
-                                    color: "#fff",
-                                    textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-                                  }}
-                                >
-                                  {s.label.charAt(0).toUpperCase()}
-                                </span>
-                              )}
-                            </div>
+                            {wcFlag ? (
+                              <img
+                                src={wcFlag}
+                                alt={s.label}
+                                onError={() => setImgError(true)}
+                                style={{ flexShrink: 0, width: 26, height: 26, objectFit: "cover", display: "block", borderRadius: 4 }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  flexShrink: 0,
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: "var(--radius-full)",
+                                  overflow: "hidden",
+                                  background: vis.gradient,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  border: "1.5px solid rgba(255,255,255,0.15)",
+                                  boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+                                }}
+                              >
+                                {avatarUrl ? (
+                                  <img
+                                    src={avatarUrl}
+                                    alt=""
+                                    onError={() => setImgError(true)}
+                                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                                  />
+                                ) : (
+                                  <span style={{ fontSize: 11, fontWeight: 900, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
+                                    {s.label.charAt(0).toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                            )}
 
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <span
