@@ -134,6 +134,11 @@ const PwaResolvedPage = lazy(() =>
     default: m.ResolvedMarketsPage,
   })),
 );
+const PwaWorldCupPage = lazy(() =>
+  import("./pages/WorldCupHubPage").then((m) => ({
+    default: m.WorldCupHubPage,
+  })),
+);
 const PwaWalletTmaPage = lazy(() =>
   import("@/pages/TmaWalletPage").then((m) => ({
     default: () => <m.TmaWalletPage isPwa />,
@@ -1947,6 +1952,26 @@ function PwaLayout({
                 }
               >
                 <PwaResolvedPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/world-cup"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaWorldCupPage />
               </Suspense>
             }
           />
