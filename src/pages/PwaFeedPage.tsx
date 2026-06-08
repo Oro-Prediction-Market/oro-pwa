@@ -391,7 +391,8 @@ export function PwaFeedPage({
   const filteredMarkets = markets.filter((m) => {
     if (
       selectedCategory === "All" &&
-      ["ter", "btc"].includes(m.externalSource ?? "")
+      ["ter", "btc"].includes(m.externalSource ?? "") &&
+      (m.category || "other") === "economy"
     )
       return false;
     const matchesSearch = m.title
