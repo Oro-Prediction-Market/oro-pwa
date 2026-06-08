@@ -410,7 +410,8 @@ export function PwaFeedPage({
     return matchesSearch && matchesCategory && matchesSubcategory;
   });
 
-  // Subcategory pills: dynamically derived from markets in the selected category
+  // Subcategory pills: dynamically derived from markets in the selected category.
+  // Exclude wc-* subcategories — those are internal WC tags, not user-facing filters.
   const availableSubcategories =
     selectedCategory === "All"
       ? []
@@ -422,7 +423,9 @@ export function PwaFeedPage({
                 .filter(
                   (m) =>
                     (m.category || "other").toLowerCase() ===
-                      selectedCategory.toLowerCase() && m.subcategory,
+                      selectedCategory.toLowerCase() &&
+                    m.subcategory &&
+                    !m.subcategory.startsWith("wc-"),
                 )
                 .map((m) => m.subcategory!),
             ),
