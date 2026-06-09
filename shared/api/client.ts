@@ -27,7 +27,7 @@ export function clearToken() {
  */
 export async function refreshAuth(): Promise<{ token: string; user: any } | null> {
   try {
-    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
       method: "GET",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -52,7 +52,7 @@ export async function logoutApi(): Promise<void> {
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (_token) headers["Authorization"] = `Bearer ${_token}`;
-    await fetch(`${API_URL}/api/auth/logout`, {
+    await fetch(`${API_URL}/auth/logout`, {
       method: "POST",
       credentials: "include",
       headers,
@@ -153,9 +153,12 @@ export async function request<T>(
       if (hit.expiresAt > Date.now()) return hit.data as T;
       // Stale — serve cached value but revalidate in background
       if (!hit.inflight) {
-        hit.inflight = fetchAndCache<T>(path, options, cacheKey).catch(
-          () => undefined,
-        );
+        hit.inflight = fetchAndCache<T>(path, options, cacheKey)
+          .catch(() => undefined)
+          .finally(() => {
+            const entry = _cache.get(cacheKey);
+            if (entry) entry.inflight = undefined;
+          });
       }
       return hit.data as T;
     }

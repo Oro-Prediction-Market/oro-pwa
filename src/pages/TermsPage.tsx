@@ -193,7 +193,7 @@ const SECTIONS = [
       },
       {
         heading: "9.2 Voluntary Limits",
-        text: "We encourage users to set personal limits on their spending. If you believe you may have a problem with compulsive betting, please seek assistance from a qualified support service before using this platform.",
+        text: "We encourage users to set personal limits on their spending. If you believe you may have a problem with compulsive prediction, please seek assistance from a qualified support service before using this platform.",
       },
       {
         heading: "9.3 Self-Exclusion",
@@ -215,7 +215,7 @@ const SECTIONS = [
     subsections: [
       {
         heading: "11.1 Data We Collect",
-        text: "Telegram user ID, display name, and username; a hashed (one-way HMAC) representation of your phone number; your 11-digit CID and DK Bank account number; in-app transaction and bet history; device and session data for security purposes.",
+        text: "Telegram user ID, display name, and username; a hashed (one-way HMAC) representation of your phone number; your 11-digit CID and DK Bank account number; in-app transaction and prediction history; device and session data for security purposes.",
       },
       {
         heading: "11.2 How We Use Your Data",
@@ -267,7 +267,7 @@ const SECTIONS = [
       },
       {
         heading: "13.3 Termination by User",
-        text: "You may request account closure at any time by contacting us via the official Telegram channel. Pending bets will be settled before closure is processed.",
+        text: "You may request account closure at any time by contacting us via the official Telegram channel. Pending prediction will be settled before closure is processed.",
       },
     ],
   },

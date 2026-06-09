@@ -46,7 +46,7 @@ const SECTIONS = [
       },
       {
         purpose: "Calculating and settling bets",
-        data: "Bet history, market data, balances",
+        data: "Prediction history, market data, balances",
       },
       {
         purpose: "Fraud detection and compliance",
@@ -67,7 +67,7 @@ const SECTIONS = [
     number: "4",
     title: "Legal Basis for Processing",
     list: [
-      "Contractual necessity — to provide the prediction market service, process bets, and settle payments.",
+      "Contractual necessity — to provide the prediction market service, process predictions, and settle payments.",
       "Legal obligation — to comply with applicable Bhutanese financial regulations and identity verification requirements.",
       "Legitimate interests — to detect fraud, maintain platform security, and improve our services.",
       "Consent — for any optional data collection beyond the above (you may withdraw consent at any time).",
@@ -95,7 +95,7 @@ const SECTIONS = [
         purpose: "Transaction and payment records",
         data: "7 years (financial compliance)",
       },
-      { purpose: "Bet history", data: "5 years" },
+      { purpose: "Prediction history", data: "5 years" },
       { purpose: "Session tokens", data: "Until logout or expiry" },
       { purpose: "Usage logs", data: "90 days" },
     ],
