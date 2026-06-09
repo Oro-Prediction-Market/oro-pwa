@@ -196,7 +196,7 @@ const LazyTonConnectProvider = lazy(() =>
   })),
 );
 import React from "react";
-import { isTokenValid, clearToken, logoutApi } from "@shared/api/client";
+import { isTokenValid, clearToken, logoutApi, refreshAuth } from "@shared/api/client";
 
 // ── Page title map ───────────────────────────────────────────────────────────
 
@@ -2307,6 +2307,21 @@ function FooterLink({
 
 export function PwaApp() {
   const [authed, setAuthed] = useState(() => isTokenValid());
+  const [bootstrapping, setBootstrapping] = useState(!isTokenValid());
+
+  // On mount, attempt to restore session from the httpOnly cookie.
+  // The in-memory token is wiped on every page refresh, but the cookie
+  // persists for 7 days — calling /auth/refresh hands us a fresh JWT.
+  useEffect(() => {
+    if (isTokenValid()) {
+      setBootstrapping(false);
+      return;
+    }
+    refreshAuth().then((data) => {
+      if (data?.token) setAuthed(true);
+      setBootstrapping(false);
+    });
+  }, []);
 
   // Connect to SSE for real-time server push (balance updates, market changes)
   useSSE();
@@ -2332,6 +2347,8 @@ export function PwaApp() {
     }, 60_000);
     return () => clearInterval(interval);
   }, [authed]);
+
+  if (bootstrapping) return null;
 
   return (
     <HelmetProvider>
