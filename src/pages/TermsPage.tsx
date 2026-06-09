@@ -141,7 +141,7 @@ const SECTIONS = [
       },
       {
         heading: "6.2 Referral Programme",
-        text: "When a referred user places their first bet, you receive a Nu 25 flat bonus plus 5% of their first bet (up to Nu 75 total per referral). A milestone reward of Nu 500 is granted on 10 converted referrals. Self-referrals are rejected. Any abuse of the referral programme will result in forfeiture and account suspension.",
+        text: "When a referred user places their first bet, you receive a Nu 25 flat bonus plus 5% of their first prediction (up to Nu 75 total per referral). A milestone reward of Nu 500 is granted on 10 converted referrals. Self-referrals are rejected. Any abuse of the referral programme will result in forfeiture and account suspension.",
       },
     ],
   },
