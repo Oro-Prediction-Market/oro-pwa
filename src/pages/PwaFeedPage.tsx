@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useTransition } from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import {
@@ -208,6 +208,7 @@ export function PwaFeedPage({
   const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingBet, setPendingBet] = useState<ActiveBet | null>(null);
+  const [, startTransition] = useTransition();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [myBets, setMyBets] = useState<Bet[]>([]);
 
@@ -216,15 +217,14 @@ export function PwaFeedPage({
       setPendingBet({ marketId, outcomeId });
       setShowAuthModal(true);
     } else {
-      setActiveBet({ marketId, outcomeId });
+      startTransition(() => setActiveBet({ marketId, outcomeId }));
     }
   };
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     if (pendingBet) {
-      setActiveBet(pendingBet);
-      setPendingBet(null);
+      startTransition(() => { setActiveBet(pendingBet); setPendingBet(null); });
     }
     onAuthRequired?.();
   };

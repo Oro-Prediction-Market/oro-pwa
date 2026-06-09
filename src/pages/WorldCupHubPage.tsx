@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, lazy, Suspense, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMarkets, type Market } from "@shared/api/client";
 import { Trophy, LayoutGrid, Swords, Clock } from "lucide-react";
@@ -322,6 +322,7 @@ export function WorldCupHubPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("countries");
   const [activeBet, setActiveBet] = useState<ActiveBet | null>(null);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     getMarkets()
@@ -475,7 +476,7 @@ export function WorldCupHubPage() {
                 <WinnerMarketGroup
                   key={market.id}
                   market={market}
-                  onBet={(marketId, outcomeId) => setActiveBet({ marketId, outcomeId })}
+                  onBet={(marketId, outcomeId) => startTransition(() => setActiveBet({ marketId, outcomeId }))}
                 />
               ))}
             </div>
@@ -503,7 +504,7 @@ export function WorldCupHubPage() {
                       <GroupMarketSection
                         key={market.id}
                         market={market}
-                        onBet={(marketId, outcomeId) => setActiveBet({ marketId, outcomeId })}
+                        onBet={(marketId, outcomeId) => startTransition(() => setActiveBet({ marketId, outcomeId }))}
                       />
                     ))}
                   </div>
@@ -521,7 +522,7 @@ export function WorldCupHubPage() {
                 <MatchMarketCard
                   key={market.id}
                   market={market}
-                  onBet={(marketId, outcomeId) => setActiveBet({ marketId, outcomeId })}
+                  onBet={(marketId, outcomeId) => startTransition(() => setActiveBet({ marketId, outcomeId }))}
                 />
               ))}
             </div>
