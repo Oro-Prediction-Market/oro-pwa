@@ -391,6 +391,7 @@ export function PwaFeedPage({
     );
 
   const filteredMarkets = markets.filter((m) => {
+    if (isWCMarket(m)) return false;
     if (
       selectedCategory === "All" &&
       ["ter", "btc"].includes(m.externalSource ?? "") &&
