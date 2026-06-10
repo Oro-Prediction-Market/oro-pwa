@@ -337,8 +337,6 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
       orange:    "#f7931a",
     } as const;
 
-    const upPool = upOutcome ? Number(upOutcome.totalBetAmount) : 0;
-
     // Live price colour
     const priceColor = direction === "up" ? C.green : direction === "down" ? C.red : C.text;
 
@@ -350,9 +348,6 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
     };
 
     const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-
-    // Pool split percentages
-    const upPct = totalPool > 0 ? Math.round((upPool / totalPool) * 100) : 50;
 
     return (
       <div
