@@ -21,15 +21,15 @@ const SECTIONS = [
       },
       {
         heading: "2.2 Jurisdiction",
-        text: "Oro is operated for users based in Bhutan. Use of the Platform outside Bhutan is subject to your local laws and regulations. You are solely responsible for ensuring that your participation is lawful in your jurisdiction.",
+        text: "Oro operates under a license issued by the GMC Bhutan. Access to and use of the Platform is subject to all applicable laws and regulations. By using Oro, you represent and warrant that your participation is lawful in your jurisdiction. Oro reserves the right to restrict access from jurisdictions where such services are prohibited.",
       },
       {
         heading: "2.3 DK Bank Requirement",
         text: "To deposit or withdraw real money, you must hold a valid DK Bank account and possess an 11-digit Bhutanese Citizenship Identity Number (CID). Browsing markets and using welcome bonus credits does not require a DK Bank account.",
       },
       {
-        heading: "2.4 Telegram Account",
-        text: "A valid Telegram account is required to access the Telegram Mini App version of Oro. Users may alternatively access the Web App using a password set through Settings > Website Access, provided they have previously registered via Telegram.",
+        heading: "2.4 Platform Access",
+        text: "Oro is accessible via two channels: the Telegram Mini App (TMA), which requires a valid Telegram account, and the Progressive Web App (PWA), which can be accessed directly through any modern web browser. New users may register through either channel. PWA users may set a Web App password via Settings > Website Access for direct web login.",
       },
       {
         heading: "2.5 Single Account Policy",
@@ -282,7 +282,7 @@ const SECTIONS = [
     number: "15",
     title: "Governing Law and Jurisdiction",
     content: [
-      "These Terms are governed by and construed in accordance with the laws of the Kingdom of Bhutan. Any dispute arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction of the competent courts of Bhutan.",
+      "These Terms are governed by and construed in accordance with GMC Bhutan. Any dispute arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction.",
     ],
   },
   {
