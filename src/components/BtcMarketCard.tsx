@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, memo, type FC } from "react";
 import { useNavigate } from "react-router-dom";
-import { Market, getBtcPrice, BtcPrice } from "../../shared/api/client";
+import { Market, getBtcPrice, getBtcPriceHistory, BtcPrice } from "../../shared/api/client";
 
 function useCountdown(targetAt: string | null): string {
   const [label, setLabel] = useState("");
@@ -30,6 +30,17 @@ function useLiveBtcPrice(active: boolean) {
   const [history, setHistory] = useState<number[]>([]);
   useEffect(() => {
     if (!active) return;
+    // Seed the chart from the backend's rolling history so it renders on
+    // first paint instead of waiting several polls to accumulate points
+    getBtcPriceHistory()
+      .then((pts) => {
+        if (pts.length === 0) return;
+        setLive((l) => l ?? pts[pts.length - 1]);
+        setHistory((h) =>
+          pts.length > h.length ? pts.slice(-90).map((p) => p.price) : h,
+        );
+      })
+      .catch(() => {});
     const fetch_ = () =>
       getBtcPrice()
         .then((p) => {
@@ -449,7 +460,7 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
         </div>
 
         {/* ── Chart ──────────────────────────────────────── */}
-        {priceHistory.length > 2 && (
+        {priceHistory.length >= 2 && (
           <div style={{ height: 160, background: "rgba(0,0,0,0.18)" }}>
             <BtcSparkline history={priceHistory} refPrice={refPrice} />
           </div>
