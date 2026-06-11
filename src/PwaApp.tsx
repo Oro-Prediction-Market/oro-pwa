@@ -139,6 +139,11 @@ const PwaWorldCupPage = lazy(() =>
     default: m.WorldCupHubPage,
   })),
 );
+const PwaBplPage = lazy(() =>
+  import("./pages/BplHubPage").then((m) => ({
+    default: m.BplHubPage,
+  })),
+);
 const PwaWalletTmaPage = lazy(() =>
   import("@/pages/TmaWalletPage").then((m) => ({
     default: () => <m.TmaWalletPage isPwa />,
@@ -1972,6 +1977,26 @@ function PwaLayout({
                 }
               >
                 <PwaWorldCupPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/bpl"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaBplPage />
               </Suspense>
             }
           />

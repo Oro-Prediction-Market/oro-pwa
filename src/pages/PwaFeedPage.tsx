@@ -26,6 +26,139 @@ import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { Flame, TrendingUp } from "lucide-react";
 import { useFilter } from "@shared/contexts/FilterContext";
 import { isWCMarket, getWCFlag, calcProb } from "./WorldCupHubPage";
+import {
+  isBplMarket,
+  getBplCrest,
+  shortClubName,
+  BPL_CLUBS,
+  Crest,
+} from "./BplHubPage";
+
+interface BplBannerItem {
+  crest: string | null;
+  label: string;
+  prob: number;
+  hasData: boolean;
+}
+
+// Grid-sized BoB Bhutan Premier League banner — sits beside the TER/BTC cards
+// and spans two card slots on tablet/desktop (.bpl-banner-card media query)
+function BplBannerCard({
+  items,
+  onOpen,
+}: {
+  items: BplBannerItem[];
+  onOpen: () => void;
+}) {
+  return (
+    <div
+      className="bpl-banner-card"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === "Enter" && onOpen()}
+      style={{
+        borderRadius: 16,
+        overflow: "hidden",
+        cursor: "pointer",
+        position: "relative",
+        backgroundImage: "url('/bpl-banner.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        outline: "none",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 320,
+      }}
+    >
+        {/* Legibility overlay — dark on the left under the title, clear over the trophy */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(90deg, rgba(5,12,28,0.78) 0%, rgba(5,12,28,0.4) 55%, rgba(5,12,28,0.08) 100%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        />
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            textAlign: "left",
+            padding: "20px 16px 12px",
+            position: "relative",
+            zIndex: 1,
+            textShadow: "0 2px 10px rgba(0,0,0,0.7)",
+          }}
+        >
+          <div style={{ fontSize: 34, fontWeight: 900, color: "#7dd3fc", lineHeight: 1, letterSpacing: "-0.02em" }}>BoB</div>
+          <div style={{ fontSize: 19, fontWeight: 900, color: "#fff", lineHeight: 1.15, letterSpacing: "-0.02em" }}>Bhutan Premier League</div>
+          <div style={{ fontSize: 24, fontWeight: 900, color: "#f87171", lineHeight: 1.1, letterSpacing: "-0.02em" }}>Prediction</div>
+        </div>
+        <div
+          style={{
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            padding: "6px 12px 6px 4px",
+            position: "relative",
+            zIndex: 1,
+            gap: 8,
+          }}
+        >
+          <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: 20,
+                background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent)",
+                zIndex: 1,
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                animation: `wcMarquee ${Math.max(12, items.length * 2)}s linear infinite`,
+                width: "max-content",
+              }}
+            >
+              {[...items, ...items].map((item, i) => (
+                <div
+                  key={i}
+                  title={item.label}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "2px 10px",
+                    gap: 1,
+                    borderRight: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <Crest src={item.crest} label={item.label} size={26} />
+                  <span style={{ fontSize: 10, fontWeight: 800, color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)" }}>
+                    {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", flexShrink: 0 }}>
+            Click Here »
+          </span>
+        </div>
+    </div>
+  );
+}
 
 interface FormattedEvent {
   userName: string;
@@ -392,6 +525,8 @@ export function PwaFeedPage({
 
   const filteredMarkets = markets.filter((m) => {
     if (isWCMarket(m)) return false;
+    // BPL markets live in the /bpl hub — the grid banner card is their entry point
+    if (isBplMarket(m)) return false;
     if (
       selectedCategory === "All" &&
       ["ter", "btc"].includes(m.externalSource ?? "") &&
@@ -494,9 +629,32 @@ export function PwaFeedPage({
       ? wcMarketItems
       : WC_DEFAULT_NATIONS.map((n) => ({ ...n, prob: 0, hasData: false }));
 
-  const renderGrid = (items: Market[]) => (
-    <PwaMarketGrid>
-      {items.map((market) => {
+  // BoB Bhutan Premier League banner strip — live match outcomes, club fallback
+  const bplMarketItems = markets
+    .filter(
+      (m) => m.status === "open" && isBplMarket(m) && /\bvs\b/i.test(m.title),
+    )
+    .flatMap((m) =>
+      (m.outcomes ?? []).map((outcome, idx) => ({
+        crest: getBplCrest(m, idx),
+        label: shortClubName(outcome.label),
+        prob: calcProb(m, outcome.id),
+        hasData: Number(m.totalPool) > 0,
+      })),
+    );
+
+  const bplItems =
+    bplMarketItems.length > 0
+      ? bplMarketItems
+      : BPL_CLUBS.map((c) => ({
+          crest: null as string | null,
+          label: c.short,
+          prob: 0,
+          hasData: false,
+        }));
+
+  const renderGrid = (items: Market[], withBplBanner = false) => {
+    const cards = items.map((market) => {
         if (market.externalSource === "ter") {
           return (
             <TerMarketCard
@@ -530,9 +688,24 @@ export function PwaFeedPage({
             onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
           />
         );
-      })}
-    </PwaMarketGrid>
-  );
+      });
+    if (withBplBanner) {
+      // Slot the BPL banner right after the TER/BTC auto-market cards
+      const autoCount = items.filter((m) =>
+        ["ter", "btc"].includes(m.externalSource ?? ""),
+      ).length;
+      cards.splice(
+        autoCount,
+        0,
+        <BplBannerCard
+          key="bpl-banner"
+          items={bplItems}
+          onOpen={() => navigate("/bpl")}
+        />,
+      );
+    }
+    return <PwaMarketGrid>{cards}</PwaMarketGrid>;
+  };
 
   return (
     <div
@@ -578,6 +751,10 @@ export function PwaFeedPage({
           100% { transform: rotate(360deg); }
         }
         @media (max-width: 767px) { .section-title { display: none; } }
+        /* Mobile: 1 grid column — banner takes the full row */
+        .bpl-banner-card { grid-column: auto; }
+        /* Tablet/desktop (grid is 2 or 4 cols) — banner covers two card slots */
+        @media (min-width: 640px) { .bpl-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
 
@@ -794,7 +971,7 @@ export function PwaFeedPage({
             </div>
           )}
 
-          {renderGrid(openMarkets)}
+          {renderGrid(openMarkets, !searchQuery.trim())}
         </section>
       )}
 
