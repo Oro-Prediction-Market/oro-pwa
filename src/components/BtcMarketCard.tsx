@@ -324,6 +324,8 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
     const upOutcome = market.outcomes.find((o) => o.label === "UP");
     const downOutcome = market.outcomes.find((o) => o.label === "DOWN");
     const totalPool = Number(market.totalPool);
+    const upPool = upOutcome ? Number(upOutcome.totalBetAmount) : 0;
+    const upPct  = totalPool > 0 ? Math.round((upPool / totalPool) * 100) : 50;
 
     const winLabel = isSettled
       ? (market.outcomes.find((o) => o.id === market.resolvedOutcomeId)
@@ -528,6 +530,12 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
             <span style={{ fontSize: 11, color: C.muted }}>
               {totalPool > 0 ? `Nu ${totalPool.toLocaleString()} vol` : "No volume yet"}
             </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: upPct >= 50 ? "#10b981" : "#f43f5e" }} />
+              <span style={{ fontSize: 10, fontWeight: 600, color: C.sub }}>
+                ↑{upPct}% · ↓{100 - upPct}%
+              </span>
+            </div>
             {!isSettled && !isClosed && (
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 5px rgba(239,68,68,0.6)" }} />
