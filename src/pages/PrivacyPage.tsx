@@ -23,8 +23,8 @@ const SECTIONS = [
         text: "Account balances (BTN), payment records (amounts, methods, timestamps, status), DK Bank transaction references and OTP confirmation data. We do not store your full bank credentials or PIN.",
       },
       {
-        heading: "2.3 Betting & Activity Data",
-        text: "Bet history (markets, amounts staked, outcomes, winnings), positions held, and settlement records.",
+        heading: "2.3 Prediction & Activity Data",
+        text: "Prediction history (markets, amounts staked, outcomes, winnings), positions held, and settlement records.",
       },
       {
         heading: "2.4 Technical Data",
@@ -38,14 +38,14 @@ const SECTIONS = [
     table: [
       {
         purpose: "Account creation and authentication",
-        data: "CID, Telegram ID, JWT tokens",
+        data: "CID, Telegram ID, JWT tokens and Bhutan App",
       },
       {
         purpose: "Processing deposits and withdrawals",
         data: "Payment records, bank references",
       },
       {
-        purpose: "Calculating and settling bets",
+        purpose: "Calculating and settling prediction",
         data: "Prediction history, market data, balances",
       },
       {
