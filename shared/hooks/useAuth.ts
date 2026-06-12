@@ -8,6 +8,8 @@ import {
   AuthUser,
 } from "@shared/api/client";
 
+const PENDING_REFERRAL_KEY = "oro_pending_referral";
+
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
@@ -55,11 +57,21 @@ export function useAuth() {
       }
 
       if (telegramInitData) {
-        const { user, token } = await loginWithTelegram(
+        const result = await loginWithTelegram(
           telegramInitData,
           referralCode,
-        );
-        setState({ user, token, loading: false, error: null });
+        ) as any;
+        if (result.requiresKYC) {
+          // New user — PWA has no registration form. Clear the useless preKycToken
+          // that loginWithTelegram stored, and persist the referral code so DK Bank
+          // / BhutanApp registration can pick it up.
+          clearToken();
+          const code = referralCode ?? result.referralCode;
+          if (code) sessionStorage.setItem(PENDING_REFERRAL_KEY, code);
+          setState({ user: null, token: null, loading: false, error: null });
+          return;
+        }
+        setState({ user: result.user, token: result.token, loading: false, error: null });
         return;
       }
 

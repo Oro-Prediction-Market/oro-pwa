@@ -236,10 +236,15 @@ export async function loginWithTelegram(
 export async function loginWithDKBank(
   cid: string,
   password?: string,
+  referralCode?: string,
 ): Promise<AuthResponse> {
   const result = await request<AuthResponse>("/auth/dkbank", {
     method: "POST",
-    body: JSON.stringify({ cid, ...(password ? { password } : {}) }),
+    body: JSON.stringify({
+      cid,
+      ...(password ? { password } : {}),
+      ...(referralCode ? { referralCode } : {}),
+    }),
   });
   setToken(result.token);
   return result;
@@ -252,6 +257,7 @@ export async function loginWithBhutanApp(payload: {
   username?: string;
   phoneNumber?: string;
   email?: string;
+  referralCode?: string;
 }): Promise<AuthResponse> {
   const result = await request<AuthResponse>("/auth/bhutanapp", {
     method: "POST",

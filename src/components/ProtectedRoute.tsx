@@ -47,7 +47,9 @@ export function ProtectedRoute({ onLogin }: Props) {
     setLoading(true);
     setError(null);
     try {
-      await loginWithDKBank(cid.trim(), hasPassword ? password : undefined);
+      const referralCode = sessionStorage.getItem("oro_pending_referral") ?? undefined;
+      await loginWithDKBank(cid.trim(), hasPassword ? password : undefined, referralCode);
+      if (referralCode) sessionStorage.removeItem("oro_pending_referral");
       onLogin();
     } catch (err: any) {
       setError(err.message || "Login failed");

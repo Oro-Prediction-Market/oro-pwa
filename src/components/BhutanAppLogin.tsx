@@ -238,6 +238,7 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
           const bhutanAppUuid = (data.user?.id || "").trim();
 
           try {
+            const referralCode = sessionStorage.getItem("oro_pending_referral") ?? undefined;
             await loginWithBhutanApp({
               token: extractToken(data.token),
               externalUserId: bhutanAppUuid || cid,
@@ -245,7 +246,9 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
               username: data.user?.username,
               phoneNumber: data.user?.phoneNumber?.phoneNumber,
               email: data.user?.email?.emailAddress,
+              ...(referralCode ? { referralCode } : {}),
             });
+            if (referralCode) sessionStorage.removeItem("oro_pending_referral");
             localStorage.removeItem("bhutan_auth_session_id");
             localStorage.removeItem("bhutan_auth_session_type");
             sessionIdRef.current = null; // prevent cancel-on-unmount
