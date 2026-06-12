@@ -95,6 +95,7 @@ function WinnerMarketGroup({
   market: Market;
   onBet: (marketId: string, outcomeId: string) => void;
 }) {
+  const navigate = useNavigate();
   const closes = useClosesAt(market.bettingClosesAt ?? market.closesAt);
   const resolving = market.status === "resolving";
   const locked = resolving || market.status === "closed";
@@ -132,6 +133,7 @@ function WinnerMarketGroup({
           return (
             <div
               key={outcome.id}
+              onClick={() => navigate(`/market/${market.id}`)}
               style={{
                 background: "linear-gradient(135deg, rgba(167,139,250,0.04) 0%, var(--bg-card, #1a1a1a) 60%)",
                 border: "1px solid rgba(167,139,250,0.12)",
@@ -140,6 +142,7 @@ function WinnerMarketGroup({
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
+                cursor: "pointer",
               }}
             >
               {flag
@@ -167,7 +170,7 @@ function WinnerMarketGroup({
                 </div>
               ) : (
                 <button
-                  onClick={() => onBet(market.id, outcome.id)}
+                  onClick={(e) => { e.stopPropagation(); onBet(market.id, outcome.id); }}
                   style={{ background: "#A78BFA", color: "#000", border: "none", borderRadius: 9, padding: "7px 12px", fontSize: 12, fontWeight: 900, cursor: "pointer", flexShrink: 0 }}
                 >
                   Predict
@@ -217,6 +220,7 @@ function GroupMarketSection({
   market: Market;
   onBet: (marketId: string, outcomeId: string) => void;
 }) {
+  const navigate = useNavigate();
   const closes = useClosesAt(market.bettingClosesAt ?? market.closesAt);
   const resolving = market.status === "resolving";
   const locked = resolving || market.status === "closed";
@@ -254,6 +258,7 @@ function GroupMarketSection({
           return (
             <div
               key={outcome.id}
+              onClick={() => navigate(`/market/${market.id}`)}
               style={{
                 background: "linear-gradient(135deg, rgba(167,139,250,0.04) 0%, var(--bg-card, #1a1a1a) 60%)",
                 border: "1px solid rgba(167,139,250,0.12)",
@@ -262,6 +267,7 @@ function GroupMarketSection({
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
+                cursor: "pointer",
               }}
             >
               {flag
@@ -289,7 +295,7 @@ function GroupMarketSection({
                 </div>
               ) : (
                 <button
-                  onClick={() => onBet(market.id, outcome.id)}
+                  onClick={(e) => { e.stopPropagation(); onBet(market.id, outcome.id); }}
                   style={{ background: "#A78BFA", color: "#000", border: "none", borderRadius: 9, padding: "7px 12px", fontSize: 12, fontWeight: 900, cursor: "pointer", flexShrink: 0 }}
                 >
                   Predict
@@ -310,6 +316,7 @@ function MatchMarketCard({
   market: Market;
   onBet: (marketId: string, outcomeId: string) => void;
 }) {
+  const navigate = useNavigate();
   const closes = useClosesAt(market.bettingClosesAt ?? market.closesAt);
   const resolving = market.status === "resolving";
   const locked = resolving || market.status === "closed";
@@ -320,7 +327,7 @@ function MatchMarketCard({
   const flag1 = getWCFlag(team1);
   const flag2 = getWCFlag(team2);
   return (
-    <div style={{ background: "var(--bg-card, #1a1a1a)", border: "1px solid var(--glass-border, rgba(255,255,255,0.08))", borderRadius: 16, overflow: "hidden" }}>
+    <div onClick={() => navigate(`/market/${market.id}`)} style={{ background: "var(--bg-card, #1a1a1a)", border: "1px solid var(--glass-border, rgba(255,255,255,0.08))", borderRadius: 16, overflow: "hidden", cursor: "pointer" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px 0" }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-main, #fff)", lineHeight: 1.35, flex: 1, minWidth: 0, marginRight: 8 }}>
           {market.title}
@@ -369,7 +376,7 @@ function MatchMarketCard({
             <button
               key={outcome.id}
               disabled={locked}
-              onClick={() => onBet(market.id, outcome.id)}
+              onClick={(e) => { e.stopPropagation(); onBet(market.id, outcome.id); }}
               style={{ flex: 1, padding: "9px 4px", background: "rgba(167,139,250,0.07)", border: "1px solid rgba(167,139,250,0.22)", borderRadius: 10, cursor: locked ? "default" : "pointer", textAlign: "center" }}
             >
               <div style={{ fontSize: 14, fontWeight: 900, color: "#A78BFA" }}>{Math.round(prob * 100)}%</div>
