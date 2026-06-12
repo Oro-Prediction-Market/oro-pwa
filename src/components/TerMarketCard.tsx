@@ -419,17 +419,11 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
           <div style={{ width: 1, background: C.divider, margin: "0 14px", alignSelf: "stretch" }} />
 
           <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
               <span style={{ ...label }}>Current</span>
               {pips != null && direction !== "flat" && direction != null && (
-                <span style={{
-                  fontSize: 9, fontWeight: 700, letterSpacing: "0.03em",
-                  color: priceColor,
-                  background: direction === "up" ? "rgba(16,185,129,0.12)" : "rgba(244,63,94,0.12)",
-                  border: `1px solid ${direction === "up" ? "rgba(16,185,129,0.2)" : "rgba(244,63,94,0.2)"}`,
-                  borderRadius: 4, padding: "1px 4px",
-                }}>
-                  {pips > 0 ? "▲" : "▼"} {Math.abs(pips)} pips
+                <span style={{ fontSize: 10, fontWeight: 700, color: priceColor, letterSpacing: "0.02em" }}>
+                  {pips > 0 ? "▲" : "▼"} {Math.abs(pips)}
                 </span>
               )}
             </div>
