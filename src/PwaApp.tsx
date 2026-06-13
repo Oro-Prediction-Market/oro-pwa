@@ -2006,72 +2006,24 @@ function PwaLayout({
         {isMobile && (
           <div
             style={{
-              padding: "32px 20px 16px",
+              padding: "12px 20px",
               borderTop: "1px solid var(--glass-border)",
-              marginTop: 40,
               display: "flex",
-              flexDirection: "column",
               alignItems: "center",
+              justifyContent: "center",
               gap: 16,
+              flexWrap: "wrap",
             }}
           >
-            <a
-              href="https://t.me/OroPredictBot"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "10px 20px",
-                borderRadius: 12,
-                background: "rgba(39,117,208,0.08)",
-                border: "1px solid rgba(39,117,208,0.2)",
-                color: "var(--color-primary)",
-                fontSize: "0.88rem",
-                fontWeight: 700,
-                textDecoration: "none",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-              </svg>
-              Open in Telegram
-            </a>
-            <div style={{ display: "flex", gap: 24 }}>
-              <NavLink
-                to="/terms"
-                style={{
-                  color: "var(--text-subtle)",
-                  textDecoration: "none",
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                }}
-              >
-                Terms
-              </NavLink>
-              <NavLink
-                to="/privacy"
-                style={{
-                  color: "var(--text-subtle)",
-                  textDecoration: "none",
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                }}
-              >
-                Privacy
-              </NavLink>
-            </div>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.75rem",
-                color: "var(--text-subtle)",
-                fontWeight: 500,
-              }}
-            >
+            <p style={{ margin: 0, fontSize: "0.72rem", color: "var(--text-subtle)", fontWeight: 500 }}>
               © {new Date().getFullYear()} Oro Markets
             </p>
+            <span style={{ color: "var(--glass-border)", fontSize: "0.72rem" }}>·</span>
+            <NavLink to="/terms" style={{ color: "var(--text-subtle)", textDecoration: "none", fontSize: "0.72rem", fontWeight: 600 }}>Terms</NavLink>
+            <span style={{ color: "var(--glass-border)", fontSize: "0.72rem" }}>·</span>
+            <NavLink to="/privacy" style={{ color: "var(--text-subtle)", textDecoration: "none", fontSize: "0.72rem", fontWeight: 600 }}>Privacy</NavLink>
+            <span style={{ color: "var(--glass-border)", fontSize: "0.72rem" }}>·</span>
+            <a href="https://t.me/OroPredictBot" target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-primary)", textDecoration: "none", fontSize: "0.72rem", fontWeight: 700 }}>Telegram</a>
           </div>
         )}
       </main>
