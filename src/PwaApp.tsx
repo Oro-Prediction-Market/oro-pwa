@@ -2003,7 +2003,7 @@ function PwaLayout({
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
-        {isMobile && (
+        {isMobile && !authed && (
           <div
             style={{
               padding: "12px 20px",
