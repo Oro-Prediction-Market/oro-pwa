@@ -29,6 +29,7 @@ import { isWCMarket, getWCFlag, calcProb } from "./WorldCupHubPage";
 import {
   isBplMarket,
   getBplCrest,
+  isDrawOutcome,
   shortClubName,
   BPL_CLUBS,
   Crest,
@@ -636,7 +637,7 @@ export function PwaFeedPage({
     )
     .flatMap((m) => {
       const teamOutcomes = (m.outcomes ?? []).filter(
-        (o) => (o.label ?? "").toLowerCase().trim() !== "draw",
+        (o) => !isDrawOutcome(o.label ?? ""),
       );
       return teamOutcomes.map((outcome, idx) => ({
         crest: getBplCrest(m, idx),

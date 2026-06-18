@@ -267,7 +267,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                       // WC flag > explicit imageUrl > market images
                       const wcFlag = isWCMarket(market) ? getWCFlag(s.label) : "";
                       const avatarUrl = !imgError
-                        ? (s as any).imageUrl || wcFlag ||
+                        ? s.imageUrl || wcFlag ||
                           (idx === 0
                             ? market.imageUrl
                             : idx === 1

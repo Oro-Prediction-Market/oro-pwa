@@ -409,6 +409,7 @@ export interface Outcome {
   intelligenceProb?: number | null;
   isWinner: boolean;
   marketId: string;
+  imageUrl?: string | null;
 }
 
 export interface SignalMeta {
