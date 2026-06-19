@@ -146,7 +146,7 @@ function WinnerMarketGroup({
               }}
             >
               {flag
-                ? <img src={flag} alt={outcome.label} style={{ width: 38, height: 38, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                ? <img src={flag} alt={outcome.label} loading="lazy" decoding="async" style={{ width: 38, height: 38, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
                 : <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>🏳️</span>
               }
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -165,7 +165,7 @@ function WinnerMarketGroup({
                     {odds ? `${odds.toFixed(2)}x` : "—"}
                   </div>
                   <div style={{ fontSize: 9, color: "rgba(251,191,36,0.7)", fontWeight: 700, marginTop: 3 }}>
-                    {odds ? `Nu 100 → ${Math.floor(100 * odds)}` : "no bets"}
+                    {odds ? `Nu 100 → ${Math.floor(100 * odds)}` : "no predictions"}
                   </div>
                 </div>
               ) : (
@@ -271,7 +271,7 @@ function GroupMarketSection({
               }}
             >
               {flag
-                ? <img src={flag} alt={outcome.label} style={{ width: 38, height: 38, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                ? <img src={flag} alt={outcome.label} loading="lazy" decoding="async" style={{ width: 38, height: 38, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
                 : <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>🏳️</span>
               }
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -290,7 +290,7 @@ function GroupMarketSection({
                     {odds ? `${odds.toFixed(2)}x` : "—"}
                   </div>
                   <div style={{ fontSize: 9, color: "rgba(251,191,36,0.7)", fontWeight: 700, marginTop: 3 }}>
-                    {odds ? `Nu 100 → ${Math.floor(100 * odds)}` : "no bets"}
+                    {odds ? `Nu 100 → ${Math.floor(100 * odds)}` : "no predictions"}
                   </div>
                 </div>
               ) : (
@@ -354,7 +354,7 @@ function MatchMarketCard({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", padding: "18px 16px 12px", background: "linear-gradient(135deg, rgba(13,31,13,0.5) 0%, rgba(30,44,10,0.5) 100%)" }}>
         <div style={{ textAlign: "center" }}>
           {flag1
-            ? <img src={flag1} alt={team1} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }} />
+            ? <img src={flag1} alt={team1} loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }} />
             : <div style={{ fontSize: 38 }}>🏳️</div>
           }
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main, #fff)", marginTop: 4 }}>{team1}</div>
@@ -362,7 +362,7 @@ function MatchMarketCard({
         <div style={{ fontSize: 13, fontWeight: 900, color: "var(--text-muted, #888)", background: "rgba(255,255,255,0.06)", borderRadius: 8, padding: "4px 10px" }}>VS</div>
         <div style={{ textAlign: "center" }}>
           {flag2
-            ? <img src={flag2} alt={team2} style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }} />
+            ? <img src={flag2} alt={team2} loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: 6, objectFit: "cover" }} />
             : <div style={{ fontSize: 38 }}>🏳️</div>
           }
           <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main, #fff)", marginTop: 4 }}>{team2}</div>
@@ -383,7 +383,7 @@ function MatchMarketCard({
               <div style={{ fontSize: 11, color: "var(--text-muted, #888)", fontWeight: 600, marginTop: 2 }}>{outcome.label}</div>
               {locked && (
                 <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 2 }}>
-                  {odds ? `${odds.toFixed(2)}x · Nu 100 → ${Math.floor(100 * odds)}` : "no bets"}
+                  {odds ? `${odds.toFixed(2)}x · Nu 100 → ${Math.floor(100 * odds)}` : "no predictions"}
                 </div>
               )}
             </button>

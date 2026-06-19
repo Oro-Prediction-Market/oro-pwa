@@ -964,7 +964,7 @@ export function PwaMarketDetailPage() {
                           border: `1px solid ${color}30`,
                         }}
                       >
-                        {pct.toFixed(0)}%
+                        {Math.min(99, 100 / Math.max(pct, 1)).toFixed(1)}x
                       </div>
                     </div>
                     <div

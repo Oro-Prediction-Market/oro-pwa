@@ -447,7 +447,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                 boxShadow: `inset 0 0 0 1px ${s.color}30`,
                               }}
                             >
-                              {s.pct.toFixed(0)}%
+                              {Math.min(99, 100 / Math.max(s.pct, 1)).toFixed(1)}x
                             </div>
                           </div>
                         </button>
