@@ -21,7 +21,7 @@ const SECTIONS = [
       },
       {
         heading: "2.2 Jurisdiction",
-        text: "Oro operates under a license issued by the GMC Bhutan. Access to and use of the Platform is subject to all applicable laws and regulations. By using Oro, you represent and warrant that your participation is lawful in your jurisdiction. Oro reserves the right to restrict access from jurisdictions where such services are prohibited.",
+        text: "Oro operates under a license issued by the GMC Gelephu. Access to and use of the Platform is subject to all applicable laws and regulations. By using Oro, you represent and warrant that your participation is lawful in your jurisdiction. Oro reserves the right to restrict access from jurisdictions where such services are prohibited.",
       },
       {
         heading: "2.3 DK Bank Requirement",
@@ -282,7 +282,7 @@ const SECTIONS = [
     number: "15",
     title: "Governing Law and Jurisdiction",
     content: [
-      "These Terms are governed by and construed in accordance with GMC Bhutan. Any dispute arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction.",
+      "These Terms are governed by and construed in accordance with GMC Gelephu. Any dispute arising out of or in connection with these Terms shall be subject to the exclusive jurisdiction.",
     ],
   },
   {
