@@ -6,6 +6,7 @@ import {
   getMe,
   getMyBets,
   getRecentActivity,
+  feedHeartbeat,
   type Market,
   type ActivityEvent,
   type AuthUser,
@@ -345,6 +346,19 @@ export function PwaFeedPage({
   const [, startTransition] = useTransition();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [myBets, setMyBets] = useState<Bet[]>([]);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let sid = sessionStorage.getItem("oro_feed_sid");
+    if (!sid) {
+      sid = crypto.randomUUID();
+      sessionStorage.setItem("oro_feed_sid", sid);
+    }
+    const ping = () => feedHeartbeat(sid!).then(({ count }) => setOnlineCount(count)).catch(() => {});
+    ping();
+    const id = setInterval(ping, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   const handleBetClick = (marketId: string, outcomeId: string) => {
     if (!authed) {
@@ -761,6 +775,16 @@ export function PwaFeedPage({
         @media (min-width: 640px) { .bpl-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
+
+      {/* ── Online viewers badge — always visible when count is known ── */}
+      {onlineCount !== null && onlineCount > 0 && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 20, padding: "3px 10px" }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 6px #22c55e" }} />
+            <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#22c55e" }}>{onlineCount} online</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Personalized greeting ── */}
       {me && (
