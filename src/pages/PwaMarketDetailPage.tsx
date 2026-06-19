@@ -956,15 +956,18 @@ export function PwaMarketDetailPage() {
                         style={{
                           background: `${color}15`,
                           color: color,
-                          fontSize: "0.8rem",
-                          fontWeight: 900,
                           padding: "4px 12px",
                           borderRadius: "var(--radius-full)",
                           flexShrink: 0,
                           border: `1px solid ${color}30`,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          lineHeight: 1.15,
                         }}
                       >
-                        {Math.min(99, 100 / Math.max(pct, 1)).toFixed(1)}x
+                        <span style={{ fontSize: "0.8rem", fontWeight: 900 }}>{Math.min(99, 100 / Math.max(pct, 1)).toFixed(1)}x</span>
+                        <span style={{ fontSize: "0.62rem", fontWeight: 700, opacity: 0.75 }}>{pct.toFixed(0)}%</span>
                       </div>
                     </div>
                     <div

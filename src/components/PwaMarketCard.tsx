@@ -438,16 +438,19 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                               style={{
                                 background: `${s.color}20`,
                                 color: s.color,
-                                fontSize: "0.7rem",
-                                fontWeight: 900,
                                 padding: "3px 8px",
                                 borderRadius: "var(--radius-full)",
                                 flexShrink: 0,
                                 marginLeft: "auto",
                                 boxShadow: `inset 0 0 0 1px ${s.color}30`,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                lineHeight: 1.1,
                               }}
                             >
-                              {Math.min(99, 100 / Math.max(s.pct, 1)).toFixed(1)}x
+                              <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{Math.min(99, 100 / Math.max(s.pct, 1)).toFixed(1)}x</span>
+                              <span style={{ fontSize: "0.58rem", fontWeight: 700, opacity: 0.75 }}>{s.pct.toFixed(0)}%</span>
                             </div>
                           </div>
                         </button>
