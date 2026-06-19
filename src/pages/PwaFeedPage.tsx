@@ -941,7 +941,7 @@ export function PwaFeedPage({
                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
             >
-              <img src="/football.svg" alt="" aria-hidden="true" style={{ position: "absolute", top: "50%", left: -60, marginTop: -75, width: 120, height: 120, opacity: 0.7, animation: "wcSpin 6s linear infinite", pointerEvents: "none", zIndex: 0 }} />
+              <img src="/football.svg" alt="" aria-hidden="true" decoding="async" style={{ position: "absolute", top: "50%", left: -60, marginTop: -75, width: 120, height: 120, opacity: 0.7, animation: "wcSpin 6s linear infinite", pointerEvents: "none", zIndex: 0 }} />
               <div style={{ display: "flex", alignItems: "stretch", minHeight: 148, position: "relative", zIndex: 1 }}>
                 <div style={{ flex: 1, padding: "22px 0 14px 20px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <div style={{ fontSize: 38, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: "-0.02em" }}>FIFA</div>
@@ -949,7 +949,7 @@ export function PwaFeedPage({
                   <div style={{ fontSize: 26, fontWeight: 900, color: "#84cc16", lineHeight: 1.1, letterSpacing: "-0.02em" }}>Prediction</div>
                 </div>
                 <div style={{ width: 160, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                  <img src="/worldcup.svg" alt="FIFA World Cup 2026" style={{ width: 160, height: 148, objectFit: "contain", display: "block" }} />
+                  <img src="/worldcup.svg" alt="FIFA World Cup 2026" decoding="async" width={160} height={148} style={{ width: 160, height: 148, objectFit: "contain", display: "block" }} />
                 </div>
               </div>
               <div style={{ background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", padding: "6px 12px 6px 4px", position: "relative", zIndex: 1, gap: 8 }}>
@@ -959,7 +959,7 @@ export function PwaFeedPage({
                     {[...wcWinnerItems, ...wcWinnerItems].map((item, i) => (
                       <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "2px 10px", gap: 1, borderRight: "1px solid rgba(255,255,255,0.08)" }}>
                         {item.flag
-                          ? <img src={item.flag} alt="" style={{ width: 26, height: 26, borderRadius: 3, objectFit: "cover" }} />
+                          ? <img src={item.flag} alt="" loading="lazy" decoding="async" width={26} height={26} style={{ width: 26, height: 26, borderRadius: 3, objectFit: "cover" }} />
                           : null
                         }
                         <span style={{ fontSize: 10, fontWeight: 800, color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)" }}>
