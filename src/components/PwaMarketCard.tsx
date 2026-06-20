@@ -51,7 +51,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
     const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
     const isUpcoming = market.status === "upcoming";
-    const isResolving = market.status === "resolving";
+    const isResolving = market.status === "resolving" || market.status === "closed";
     const countdown = useCountdown(
       isUpcoming ? (market.opensAt ?? null) : market.closesAt,
     );

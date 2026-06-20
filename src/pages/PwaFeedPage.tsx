@@ -403,10 +403,10 @@ export function PwaFeedPage({
           const now = Date.now();
           const cutoff48h = 48 * 60 * 60 * 1000;
 
-          // Only show live/upcoming + resolving within last 48h
+          // Only show live/upcoming + closed/resolving within last 48h
           const active = d.filter((m) => {
             if (m.status === "open" || m.status === "upcoming") return true;
-            if (m.status === "resolving") {
+            if (m.status === "closed" || m.status === "resolving") {
               // Use closesAt to determine age; hide if closed more than 48h ago
               const closedAt = m.closesAt
                 ? new Date(m.closesAt).getTime()
@@ -456,7 +456,7 @@ export function PwaFeedPage({
         setMarkets(
           d.filter((m) => {
             if (m.status === "open" || m.status === "upcoming") return true;
-            if (m.status === "resolving") {
+            if (m.status === "closed" || m.status === "resolving") {
               const closedAt = m.closesAt
                 ? new Date(m.closesAt).getTime()
                 : null;
@@ -598,7 +598,7 @@ export function PwaFeedPage({
       return 0;
     });
   const resolvingMarkets = filteredMarkets.filter(
-    (m) => m.status === "resolving",
+    (m) => m.status === "resolving" || m.status === "closed",
   );
   const upcomingMarkets = filteredMarkets.filter(
     (m) => m.status === "upcoming",
