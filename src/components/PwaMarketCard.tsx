@@ -154,7 +154,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   borderRadius: 4,
                 }}
               >
-                {isUpcoming ? "SOON" : "WAIT"}
+                {isUpcoming ? "SOON" : "RESOLVING"}
               </span>
             )}
           </div>
