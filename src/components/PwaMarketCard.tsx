@@ -51,7 +51,8 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
     const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
     const isUpcoming = market.status === "upcoming";
-    const isResolving = market.status === "resolving" || market.status === "closed";
+    const isClosed = market.status === "closed";
+    const isResolving = market.status === "resolving";
     const countdown = useCountdown(
       isUpcoming ? (market.opensAt ?? null) : market.closesAt,
     );
@@ -143,7 +144,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   </span>
                 );
               })()}
-            {(isUpcoming || isResolving) && (
+            {(isUpcoming || isResolving || isClosed) && (
               <span
                 style={{
                   fontSize: "0.58rem",
@@ -154,7 +155,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   borderRadius: 4,
                 }}
               >
-                {isUpcoming ? "SOON" : "RESOLVING"}
+                {isUpcoming ? "SOON" : isResolving ? "RESOLVING" : "CLOSED"}
               </span>
             )}
           </div>
@@ -185,7 +186,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               flexDirection: "column",
               gap: 6,
               justifyContent:
-                isUpcoming || isResolving ? "center" : "flex-start",
+                isUpcoming || isResolving || isClosed ? "center" : "flex-start",
             }}
           >
             {isResolving ? (
@@ -219,6 +220,39 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
                 Resolving...
+              </div>
+            ) : isClosed ? (
+              <div
+                style={{
+                  padding: "20px",
+                  borderRadius: "var(--radius-md)",
+                  background: "rgba(245,158,11,0.08)",
+                  border: "1.5px dashed rgba(245,158,11,0.4)",
+                  fontSize: "0.85rem",
+                  color: "#f59e0b",
+                  fontWeight: 800,
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Awaiting Resolution
               </div>
             ) : isUpcoming ? (
               <div
@@ -581,7 +615,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                {!isUpcoming && !isResolving ? countdown : "Closed"}
+                {!isUpcoming && !isResolving && !isClosed ? countdown : "Closed"}
               </div>
 
               <button
