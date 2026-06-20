@@ -2403,7 +2403,7 @@ export function PwaApp() {
     <HelmetProvider>
       <ThemeProvider>
         <FilterProvider>
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true }}>
             <PwaLayout authed={authed} onAuthSuccess={() => setAuthed(true)} />
           </BrowserRouter>
         </FilterProvider>
