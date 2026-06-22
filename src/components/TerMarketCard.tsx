@@ -312,12 +312,10 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
     );
     const livePrice = useLiveTerPrice(!isSettled && !isClosed);
 
-    // For settled markets use midPrice (matches settlement logic); live markets use buyPrice (TER portal convention)
-    const refPrice: number = isSettled
-      ? (meta.referenceTerPrice ?? meta.referenceBuyPrice ?? 0)
-      : (meta.referenceBuyPrice ?? meta.referenceTerPrice ?? 0);
+    // Buy price — matches the TER portal's display convention
+    const refPrice: number = meta.referenceBuyPrice ?? meta.referenceTerPrice ?? 0;
     const liveDisplayPrice: number | undefined = isSettled
-      ? (meta.settlementTerPrice ?? meta.settlementBuyPrice)
+      ? (meta.settlementBuyPrice ?? meta.settlementTerPrice)
       : (livePrice.live?.buyPrice ?? livePrice.live?.midPrice);
     const priceHistory = livePrice.history;
 

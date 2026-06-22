@@ -24,8 +24,8 @@ import {
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
   const meta = market.metadata || {};
-  const refPrice = meta.referenceTerPrice ?? meta.referenceBuyPrice ?? 0;
-  const settlementPrice = meta.settlementTerPrice ?? meta.settlementBuyPrice;
+  const refPrice = meta.referenceBuyPrice ?? meta.referenceTerPrice ?? 0;
+  const settlementPrice = meta.settlementBuyPrice ?? meta.settlementTerPrice;
   const isSettled = market.status === "settled" || market.status === "resolved";
   const isClosed = market.status === "closed" || market.status === "resolving";
 
@@ -184,7 +184,7 @@ function TerPricePanel({ market }: { market: Market }) {
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span style={{ color: "#94a3b8" }}>Price resolved at</span>
             <span>
-              {(meta.settlementTerPrice ?? meta.settlementBuyPrice ?? 0).toFixed(4)}
+              {(meta.settlementBuyPrice ?? meta.settlementTerPrice ?? 0).toFixed(4)}
             </span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
