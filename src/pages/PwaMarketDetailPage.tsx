@@ -20,6 +20,7 @@ import {
   UnderdogBanner,
   getUnderdogLabel,
 } from "../../shared/components/UnderdogBanner";
+import { getWCFlag, isWCMarket } from "./WorldCupHubPage";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -875,14 +876,15 @@ export function PwaMarketDetailPage() {
                   : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
                 const color = colors[idx % colors.length];
 
-                const avatarUrl = !imgError
+                const wcFlag = isWCMarket(market) ? getWCFlag(outcome.label) : "";
+                const avatarUrl = wcFlag || (!imgError
                   ? (outcome as any).imageUrl ||
                     (idx === 0
                       ? market.imageUrl
                       : idx === 1
                         ? market.imageUrlAlt || market.imageUrl
                         : null)
-                  : null;
+                  : null);
                 const vis = getCategoryVisual(market.category);
 
                 return (
@@ -908,14 +910,14 @@ export function PwaMarketDetailPage() {
                             flexShrink: 0,
                             width: 36,
                             height: 36,
-                            borderRadius: "var(--radius-full)",
+                            borderRadius: wcFlag ? 6 : "var(--radius-full)",
                             overflow: "hidden",
-                            background: vis.gradient,
+                            background: wcFlag ? "transparent" : vis.gradient,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            border: "2px solid #fff",
-                            boxShadow: "var(--shadow-sm)",
+                            border: wcFlag ? "none" : "2px solid #fff",
+                            boxShadow: wcFlag ? "none" : "var(--shadow-sm)",
                           }}
                         >
                           {avatarUrl ? (
