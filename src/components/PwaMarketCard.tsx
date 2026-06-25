@@ -483,7 +483,14 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                 lineHeight: 1.1,
                               }}
                             >
-                              <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{Math.min(99, 100 / Math.max(s.pct, 1)).toFixed(1)}x</span>
+                              <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{(() => {
+                                const outcomePool = Number(s.totalBetAmount) || 0;
+                                const edge = Number(market.houseEdgePct) || 0;
+                                const odds = totalPool > 0 && outcomePool > 0
+                                  ? (totalPool * (1 - edge / 100)) / outcomePool
+                                  : 100 / Math.max(s.pct, 1);
+                                return Math.min(99, odds).toFixed(2);
+                              })()}x</span>
                               <span style={{ fontSize: "0.58rem", fontWeight: 700, opacity: 0.75 }}>{s.pct.toFixed(0)}%</span>
                             </div>
                           </div>
