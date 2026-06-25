@@ -599,7 +599,7 @@ export function WorldCupHubPage() {
       </div>
 
       {/* ── Tab content ────────────────────────────────────────────── */}
-      <div style={{ padding: "20px 16px 100px", maxWidth: 860, margin: "0 auto" }}>
+      <div style={{ padding: "20px 16px 100px", maxWidth: tab === "knockout" ? "none" : 860, margin: tab === "knockout" ? "0" : "0 auto" }}>
 
         {/* Countries */}
         {tab === "countries" &&
