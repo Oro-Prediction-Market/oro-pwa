@@ -81,7 +81,7 @@ const SECTIONS = [
       },
       {
         heading: "4.4 Dynamic Odds & Payout Display",
-        text: "Odds in a parimutuel market are not fixed — the multiplier shown next to each outcome changes in real time as bets are placed. The more people agree with you and back the same outcome, the larger its share of the pool becomes, the lower its multiplier falls, and the smaller your potential payout. Backing an outcome that fewer others agree with carries a higher multiplier and a larger potential payout. The multiplier shown when you place a bet is therefore only an estimate; your final payout depends on the total pool composition at market close, less the platform fee. Oro does not guarantee any specific return.",
+        text: "Odds in a parimutuel market are not fixed — the multiplier shown next to each outcome changes in real time as predictions are placed. The more people agree with you and back the same outcome, the larger its share of the pool becomes, the lower its multiplier falls, and the smaller your potential payout. Backing an outcome that fewer others agree with carries a higher multiplier and a larger potential payout. The multiplier shown when you place a prediction is therefore only an estimate; your final payout depends on the total pool composition at market close, less the platform fee. Oro does not guarantee any specific return.",
       },
       {
         heading: "4.5 Minimum Bet",
