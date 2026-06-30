@@ -562,13 +562,17 @@ export function WorldCupHubPage() {
   }, []);
 
   const wcMarkets = markets.filter(isWCMarket);
-  // Countries & Stats show only actively-bettable markets. A market qualifies
-  // only when it is open/upcoming AND its betting deadline is still in the
-  // future. This hides closed, resolving, resolved and settled markets — the
-  // latter two otherwise render a misleading "Closed" countdown with an active
-  // Predict button, because the card's `locked` flag only covers closed/resolving.
+  // Countries & Stats show markets that are still part of the live tournament:
+  // open/upcoming ones whose betting deadline is still in the future, plus
+  // closed/resolving ones (a market awaiting resolution shouldn't just vanish —
+  // the card renders these locked with a "Closed"/"Resolving" badge and no
+  // Predict button). We still hide resolved/settled markets: those would render
+  // a misleading "Closed" countdown with an active Predict button, because the
+  // card's `locked` flag only covers closed/resolving.
   const visibleInHub = (m: Market) =>
-    (m.status === "open" || m.status === "upcoming") && wcCloseMs(m) > Date.now();
+    ((m.status === "open" || m.status === "upcoming") && wcCloseMs(m) > Date.now()) ||
+    m.status === "closed" ||
+    m.status === "resolving";
   const winnerMarkets = wcMarkets.filter((m) => m.subcategory === "wc-winner" && visibleInHub(m));
   const groupMarkets = wcMarkets.filter((m) => m.subcategory === "wc-group" && visibleInHub(m));
   const playerMarkets = wcMarkets.filter((m) => m.subcategory === "wc-player" && visibleInHub(m));
