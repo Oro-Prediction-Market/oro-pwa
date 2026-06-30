@@ -408,6 +408,8 @@ export interface Outcome {
   reputationSignal?: number | null;
   intelligenceProb?: number | null;
   isWinner: boolean;
+  /** True once this outcome is eliminated (e.g. a team knocked out). No new bets accepted. */
+  isEliminated?: boolean;
   marketId: string;
   imageUrl?: string | null;
 }

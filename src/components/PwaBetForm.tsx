@@ -238,6 +238,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         >
           {market.outcomes.map((outcome, idx) => {
             const isSelected = selectedOutcomeId === outcome.id;
+            const eliminated = !!outcome.isEliminated;
             const colors = [
               "#3b82f6",
               "#8b5cf6",
@@ -250,7 +251,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             return (
               <button
                 key={outcome.id}
+                disabled={eliminated}
                 onClick={() => {
+                  if (eliminated) return;
                   const newId = isSelected ? null : outcome.id;
                   setSelectedOutcomeId(newId);
                   if (newId) {
@@ -273,7 +276,8 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
                   color: isSelected ? baseColor : "var(--text-main)",
                   fontWeight: 900,
                   fontSize: "1.05rem",
-                  cursor: "pointer",
+                  cursor: eliminated ? "not-allowed" : "pointer",
+                  opacity: eliminated ? 0.45 : 1,
                   transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
                   lineHeight: 1.1,
                   boxShadow: isSelected
@@ -287,6 +291,11 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
                 }}
               >
                 {outcome.label}
+                {eliminated && (
+                  <span style={{ fontSize: "0.7rem", fontWeight: 800, marginLeft: 6, opacity: 0.8 }}>
+                    · Out
+                  </span>
+                )}
               </button>
             );
           })}
