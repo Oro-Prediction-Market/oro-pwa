@@ -29,6 +29,22 @@ export function useAuth() {
     setState((s) => ({ ...s, loading: true, error: null }));
 
     try {
+      // Browser (non-Telegram) referral capture: a shared web link looks like
+      // https://oro.fun/?ref=<telegramId> (or ?startapp=ref_<id>). Telegram's
+      // start_param is absent here, so read the code off the URL and persist it
+      // for the DK Bank / BhutanApp login handlers, which read this same key.
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRefRaw = urlParams.get("ref") ?? urlParams.get("startapp");
+      if (urlRefRaw) {
+        const urlRef = urlRefRaw.startsWith("ref_")
+          ? urlRefRaw
+          : `ref_${urlRefRaw}`;
+        // Don't clobber an existing pending referral captured earlier this session.
+        if (!sessionStorage.getItem(PENDING_REFERRAL_KEY)) {
+          sessionStorage.setItem(PENDING_REFERRAL_KEY, urlRef);
+        }
+      }
+
       const telegramInitData = (window as any).Telegram?.WebApp?.initData;
       const startParam: string | undefined = (window as any).Telegram?.WebApp
         ?.initDataUnsafe?.start_param;
