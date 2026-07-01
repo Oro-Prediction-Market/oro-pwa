@@ -14,6 +14,7 @@ const ACCENT = "#A78BFA";
 const CARD_MIN_H = 76;
 const BLOCK_H = 128; // Round-of-32 cell height = card (~110px) + vertical gap
 const COL_W = 188;
+const MOBILE_COL_W = "min(80vw, 300px)";
 const GAP = 44; // horizontal space between rounds (room for connector elbows)
 const STRIP_W = 44; // width of a collapsed round (thin strip)
 const HEADER_H = 16; // round-label line height (kept fixed so card rows align)
@@ -142,9 +143,6 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
   const gap = isMobile ? 12 : GAP;
   const stripW = isMobile ? 40 : STRIP_W;
 
-  // Spacing is relative to the FIRST expanded round, so collapsing earlier
-  // rounds compresses the bracket vertically (the remaining cards pack up into
-  // view instead of staying spread across the full Round-of-32 height).
   const bodyHeight = WC_KNOCKOUT[collapsedCount].slots.length * BLOCK_H;
 
   useLayoutEffect(() => {
@@ -184,8 +182,6 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
     };
   }, [markets, collapsedCount, isMobile]);
 
-  // Winner of each settled slot, so we can auto-advance teams into the next
-  // round's TBD positions (slots 2i & 2i+1 → slot i, same as the connectors).
   const slotWinner = new Map<string, string>();
   WC_KNOCKOUT.forEach((round) => {
     round.slots.forEach((slot) => {
@@ -361,7 +357,7 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
         className="wc-bracket-scroll"
         style={{ flex: 1, overflowX: "auto", paddingBottom: 12, WebkitOverflowScrolling: "touch", display: "flex", justifyContent: "safe center" }}
       >
-        <div ref={innerRef} style={{ display: "flex", gap, minWidth: isMobile ? 0 : "min-content", width: isMobile ? "100%" : undefined, position: "relative" }}>
+        <div ref={innerRef} style={{ display: "flex", gap, minWidth: "min-content", position: "relative" }}>
         {/* Connector lines (drawn behind the cards) */}
         <svg
           style={{
@@ -386,14 +382,11 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
           ))}
         </svg>
         {WC_KNOCKOUT.map((round, ri) => {
-          // On mobile only the active round (collapsedCount) is expanded; the
-          // round right after it becomes a thin strip and everything else is
-          // hidden. On desktop every round from collapsedCount onward stays
-          // expanded and only earlier rounds fold into strips.
-          if (isMobile && ri !== collapsedCount && ri !== collapsedCount + 1) {
-            return null;
-          }
-          const asStrip = isMobile ? ri !== collapsedCount : ri < collapsedCount;
+          // Earlier (already-played) rounds fold into thin strips; every round
+          // from collapsedCount onward stays expanded as real cards. On mobile
+          // those expanded columns are ~peek width and scroll-snap, so the next
+          // round peeks at the right edge and you can swipe between rounds.
+          const asStrip = ri < collapsedCount;
           // Rounds fold into a thin clickable strip. Tap a strip to make that
           // round the active (expanded) one.
           if (asStrip) {
@@ -442,7 +435,7 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
             <div
               key={round.key}
               className="wc-bracket-round"
-              style={{ flexShrink: 0, flex: isMobile ? 1 : undefined, minWidth: isMobile ? 0 : undefined }}
+              style={{ flexShrink: 0, width: isMobile ? MOBILE_COL_W : undefined }}
             >
               {/* Round header */}
               <div
