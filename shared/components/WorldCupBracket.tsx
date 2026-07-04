@@ -1,4 +1,11 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Check } from "lucide-react";
 import type { Market } from "@shared/api/client";
 import {
@@ -16,7 +23,6 @@ const BLOCK_H = 128; // Round-of-32 cell height = card (~110px) + vertical gap
 const COL_W = 188;
 const MOBILE_COL_W = "min(80vw, 300px)";
 const GAP = 44; // horizontal space between rounds (room for connector elbows)
-const STRIP_W = 44; // width of a collapsed round (thin strip)
 const HEADER_H = 16; // round-label line height (kept fixed so card rows align)
 const HEADER_MB = 10; // gap below the round label
 
@@ -141,7 +147,6 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
   }, []);
 
   const gap = isMobile ? 12 : GAP;
-  const stripW = isMobile ? 40 : STRIP_W;
 
  
   const [viewportW, setViewportW] = useState(0);
@@ -157,44 +162,67 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
   const mobileColW =
     viewportW > 0 ? `${Math.max(220, viewportW - PEEK)}px` : MOBILE_COL_W;
 
-  const bodyHeight = WC_KNOCKOUT[collapsedCount].slots.length * BLOCK_H;
+  // Recompute the connector elbows from live card positions. Kept stable so the
+  // per-frame animation loop below can reuse it while a transition is running.
+  const computePaths = useCallback(() => {
+    const inner = innerRef.current;
+    if (!inner) return;
+    const base = inner.getBoundingClientRect();
+    const next: string[] = [];
+    for (let ri = 0; ri < WC_KNOCKOUT.length - 1; ri++) {
+      const round = WC_KNOCKOUT[ri];
+      const nextRound = WC_KNOCKOUT[ri + 1];
+      round.slots.forEach((slot, i) => {
+        const fromEl = cardRefs.current.get(slot.id);
+        const toSlot = nextRound.slots[Math.floor(i / 2)];
+        const toEl = toSlot && cardRefs.current.get(toSlot.id);
+        if (!fromEl || !toEl) return;
+        const f = fromEl.getBoundingClientRect();
+        const t = toEl.getBoundingClientRect();
+        const x1 = f.right - base.left;
+        const y1 = f.top - base.top + f.height / 2;
+        const x2 = t.left - base.left;
+        const y2 = t.top - base.top + t.height / 2;
+        const mx = (x1 + x2) / 2;
+        // horizontal out → vertical → horizontal into the next card (elbow)
+        next.push(`M ${x1} ${y1} H ${mx} V ${y2} H ${x2}`);
+      });
+    }
+    setPaths(next);
+  }, []);
 
   useLayoutEffect(() => {
-    const compute = () => {
-      const inner = innerRef.current;
-      if (!inner) return;
-      const base = inner.getBoundingClientRect();
-      const next: string[] = [];
-      for (let ri = 0; ri < WC_KNOCKOUT.length - 1; ri++) {
-        const round = WC_KNOCKOUT[ri];
-        const nextRound = WC_KNOCKOUT[ri + 1];
-        round.slots.forEach((slot, i) => {
-          const fromEl = cardRefs.current.get(slot.id);
-          const toSlot = nextRound.slots[Math.floor(i / 2)];
-          const toEl = toSlot && cardRefs.current.get(toSlot.id);
-          if (!fromEl || !toEl) return;
-          const f = fromEl.getBoundingClientRect();
-          const t = toEl.getBoundingClientRect();
-          const x1 = f.right - base.left;
-          const y1 = f.top - base.top + f.height / 2;
-          const x2 = t.left - base.left;
-          const y2 = t.top - base.top + t.height / 2;
-          const mx = (x1 + x2) / 2;
-          // horizontal out → vertical → horizontal into the next card (elbow)
-          next.push(`M ${x1} ${y1} H ${mx} V ${y2} H ${x2}`);
-        });
-      }
-      setPaths(next);
-    };
-    compute();
-    const ro = new ResizeObserver(compute);
+    computePaths();
+    const ro = new ResizeObserver(computePaths);
     if (innerRef.current) ro.observe(innerRef.current);
-    window.addEventListener("resize", compute);
+    window.addEventListener("resize", computePaths);
     return () => {
       ro.disconnect();
-      window.removeEventListener("resize", compute);
+      window.removeEventListener("resize", computePaths);
     };
-  }, [markets, collapsedCount, isMobile, viewportW]);
+  }, [computePaths, markets, collapsedCount, isMobile, viewportW]);
+
+  // While a collapse/expand transition plays, the cards move via CSS (width and
+  // height easing) — layout the browser drives, not React. Re-measure the elbow
+  // paths every frame for the transition window so the connectors track the
+  // cards smoothly, then stop (no idle rAF loop = cheap).
+  const ANIM_MS = 460;
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    let raf = 0;
+    let start = 0;
+    const tick = (ts: number) => {
+      if (!start) start = ts;
+      computePaths();
+      if (ts - start < ANIM_MS) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [collapsedCount, computePaths]);
+
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+  }, [collapsedCount]);
 
   const slotWinner = new Map<string, string>();
   WC_KNOCKOUT.forEach((round) => {
@@ -327,6 +355,26 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
     );
   };
 
+  // Swipe = chevron. A horizontal drag advances (‹›) one round, matching the
+  // buttons exactly, so dragging the bracket left/right pages through the rounds.
+  // Pointer events (not touch) so it works for touch, mouse-drag and pen alike.
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
+  const SWIPE_MIN = 40; // px of horizontal travel needed to count as a page swipe
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    dragStart.current = { x: e.clientX, y: e.clientY };
+  };
+  const onPointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const start = dragStart.current;
+    dragStart.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    // Ignore taps and mostly-vertical drags (let the page scroll normally).
+    if (Math.abs(dx) < SWIPE_MIN || Math.abs(dx) <= Math.abs(dy)) return;
+    if (dx < 0) setCollapsedCount((c) => Math.min(maxCollapsed, c + 1)); // ← next
+    else setCollapsedCount((c) => Math.max(0, c - 1)); // → previous
+  };
+
   const chevronStyle: CSSProperties = {
     flexShrink: 0,
     marginTop: 2,
@@ -350,8 +398,25 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
       {/* Snap one round per scroll. scroll-snap-stop:always means even a fast
           flick / momentum scroll settles on the very next round — never skips. */}
       <style>{`
-        .wc-bracket-scroll { scroll-snap-type: x mandatory; scroll-padding-left: 0; }
-        .wc-bracket-round { scroll-snap-align: start; scroll-snap-stop: always; }
+        .wc-bracket-scroll { scroll-snap-type: x mandatory; scroll-padding-left: 0; scroll-behavior: smooth; }
+        .wc-bracket-round {
+          scroll-snap-align: start;
+          scroll-snap-stop: always;
+          overflow: hidden;
+          /* width eases as a round folds to a strip / unfolds to full cards */
+          transition: width 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+          will-change: width;
+        }
+        /* per-slot cell height eases when the tree re-spaces (heights halve/double) */
+        .wc-h-anim { transition: height 420ms cubic-bezier(0.22, 0.61, 0.36, 1); }
+        /* the vertical strip label fades in as its round collapses */
+        .wc-fade-in { animation: wcFadeIn 360ms ease both; }
+        @keyframes wcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) {
+          .wc-bracket-scroll { scroll-behavior: auto; }
+          .wc-bracket-round, .wc-h-anim { transition: none; }
+          .wc-fade-in { animation: none; }
+        }
       `}</style>
       <button
         type="button"
@@ -369,7 +434,18 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
       <div
         ref={scrollRef}
         className="wc-bracket-scroll"
-        style={{ flex: 1, overflowX: "auto", paddingBottom: 12, WebkitOverflowScrolling: "touch", display: "flex", justifyContent: "safe center" }}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        style={{
+          flex: 1,
+          // The whole bracket is a pager (swipe/drag = chevron), so free
+          // horizontal scroll is off; vertical page scroll still passes through.
+          overflowX: "hidden",
+          paddingBottom: 12,
+          touchAction: "pan-y",
+          display: "flex",
+          justifyContent: isMobile ? "flex-start" : "safe center",
+        }}
       >
         <div ref={innerRef} style={{ display: "flex", gap, minWidth: "min-content", position: "relative" }}>
         {/* Connector lines (drawn behind the cards) */}
@@ -401,46 +477,9 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
           // those expanded columns are ~peek width and scroll-snap, so the next
           // round peeks at the right edge and you can swipe between rounds.
           const asStrip = ri < collapsedCount;
-          // Rounds fold into a thin clickable strip. Tap a strip to make that
-          // round the active (expanded) one.
-          if (asStrip) {
-            return (
-              <div
-                key={round.key}
-                className="wc-bracket-round"
-                onClick={() => setCollapsedCount(ri)}
-                title={`Expand ${round.label}`}
-                style={{ flexShrink: 0, width: stripW, cursor: "pointer" }}
-              >
-                <div style={{ height: HEADER_H, marginBottom: HEADER_MB }} />
-                <div
-                  style={{
-                    height: bodyHeight,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "var(--bg-card, #1a1a1a)",
-                    border: "1px solid var(--glass-border, rgba(255,255,255,0.08))",
-                    borderRadius: 12,
-                  }}
-                >
-                  <span
-                    style={{
-                      writingMode: "vertical-rl",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      color: ACCENT,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {round.label}
-                  </span>
-                </div>
-              </div>
-            );
-          }
+          // Rounds you've advanced past are hidden entirely (no thin strip) — the
+          // ‹ button brings them back. The remaining rounds shift left to fill.
+          if (asStrip) return null;
           // Cell height doubles each round RELATIVE to the first expanded round,
           // so the leftmost visible round packs its cards tightly (BLOCK_H) and
           // every expanded column shares the same total height (= bodyHeight).
@@ -449,10 +488,11 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
             <div
               key={round.key}
               className="wc-bracket-round"
-              style={{ flexShrink: 0, width: isMobile ? mobileColW : undefined }}
+              style={{ flexShrink: 0, width: isMobile ? mobileColW : COL_W }}
             >
               {/* Round header */}
               <div
+                key="header"
                 style={{
                   height: HEADER_H,
                   fontSize: 12,
@@ -468,10 +508,11 @@ export function WorldCupBracket({ markets, onBet, getFlag }: Props) {
                 {round.label}
               </div>
               {/* Slots */}
-              <div style={{ display: "flex", flexDirection: "column" }}>
+              <div key="cols" style={{ display: "flex", flexDirection: "column" }}>
                 {round.slots.map((slot) => (
                   <div
                     key={slot.id}
+                    className="wc-h-anim"
                     style={{
                       height: cellHeight,
                       display: "flex",
