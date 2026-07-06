@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMarkets, type Market } from "@shared/api/client";
+import { getMarkets, getMyBets, type Market } from "@shared/api/client";
 import { Trophy, BarChart3, Clock, CalendarDays, Network } from "lucide-react";
 import { WorldCupBracket } from "@shared/components/WorldCupBracket";
 
@@ -584,6 +584,14 @@ export function WorldCupHubPage() {
     const id = setInterval(loadMarkets, 30_000);
     return () => clearInterval(id);
   }, [loadMarkets]);
+
+  // Seed picks from the user's real bets so the revealed percentages persist
+  // across refreshes (in-session state alone would reset on reload).
+  useEffect(() => {
+    getMyBets()
+      .then((bets) => setPickedOutcomeIds(new Set(bets.map((b) => b.outcomeId))))
+      .catch(() => {}); // signed-out / no bets — leave the poll bars hidden
+  }, []);
 
   const wcMarkets = markets.filter(isWCMarket);
   // Countries & Stats show markets that are still part of the live tournament:
