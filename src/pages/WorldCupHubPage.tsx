@@ -147,7 +147,10 @@ function WinnerMarketGroup({
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {(market.outcomes ?? []).map((outcome) => {
+        {(market.outcomes ?? [])
+          .slice()
+          .sort((a, b) => Number(!!a.isEliminated) - Number(!!b.isEliminated))
+          .map((outcome) => {
           const flag = outcome.imageUrl || getWCFlag(outcome.label);
           const prob = calcProb(market, outcome.id);
           const odds = calcOdds(market, outcome.id);
@@ -276,7 +279,10 @@ function GroupMarketSection({
         )}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {(market.outcomes ?? []).map((outcome) => {
+        {(market.outcomes ?? [])
+          .slice()
+          .sort((a, b) => Number(!!a.isEliminated) - Number(!!b.isEliminated))
+          .map((outcome) => {
           const flag = outcome.imageUrl || getWCFlag(outcome.label);
           const prob = calcProb(market, outcome.id);
           const odds = calcOdds(market, outcome.id);
