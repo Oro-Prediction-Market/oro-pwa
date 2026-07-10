@@ -2108,7 +2108,7 @@ function PwaFooter({
                 maxWidth: 280,
               }}
             >
-              Premier prediction market platform. Compete on sports, economics,
+              Parimutuel prediction market platform. Compete on sports, economics,
               and local events with Ngultrum.
             </p>
           </div>
