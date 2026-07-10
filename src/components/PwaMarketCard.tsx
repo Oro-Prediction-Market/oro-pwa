@@ -403,6 +403,25 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                 onError={() => setImgError(true)}
                                 style={{ flexShrink: 0, width: 26, height: 26, objectFit: "cover", display: "block", borderRadius: 4 }}
                               />
+                            ) : avatarUrl ? (
+                              <div
+                                style={{
+                                  flexShrink: 0,
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 7,
+                                  overflow: "hidden",
+                                  background: "rgba(255,255,255,0.06)",
+                                  border: "1px solid rgba(255,255,255,0.12)",
+                                }}
+                              >
+                                <img
+                                  src={avatarUrl}
+                                  alt=""
+                                  onError={() => setImgError(true)}
+                                  style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", display: "block" }}
+                                />
+                              </div>
                             ) : (
                               <div
                                 style={{
@@ -410,7 +429,6 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                   width: 26,
                                   height: 26,
                                   borderRadius: "var(--radius-full)",
-                                  overflow: "hidden",
                                   background: vis.gradient,
                                   display: "flex",
                                   alignItems: "center",
@@ -419,18 +437,9 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                   boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
                                 }}
                               >
-                                {avatarUrl ? (
-                                  <img
-                                    src={avatarUrl}
-                                    alt=""
-                                    onError={() => setImgError(true)}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                                  />
-                                ) : (
-                                  <span style={{ fontSize: 11, fontWeight: 900, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
-                                    {s.label.charAt(0).toUpperCase()}
-                                  </span>
-                                )}
+                                <span style={{ fontSize: 11, fontWeight: 900, color: "#fff", textShadow: "0 1px 2px rgba(0,0,0,0.2)" }}>
+                                  {s.label.charAt(0).toUpperCase()}
+                                </span>
                               </div>
                             )}
 
