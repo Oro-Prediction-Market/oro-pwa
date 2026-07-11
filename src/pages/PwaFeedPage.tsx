@@ -1,4 +1,11 @@
-import { useState, useEffect, lazy, Suspense, useTransition } from "react";
+import {
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+  useTransition,
+  type ReactElement,
+} from "react";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,6 +28,7 @@ const TmaBetModal = lazy(() =>
 );
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { PwaMarketCard } from "../components/PwaMarketCard";
+import { GroupedMarketCard } from "../components/GroupedMarketCard";
 import { TerMarketCard } from "../components/TerMarketCard";
 import { BtcMarketCard } from "../components/BtcMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
@@ -674,7 +682,23 @@ export function PwaFeedPage({
         }));
 
   const renderGrid = (items: Market[], withBplBanner = false) => {
-    const cards = items.map((market) => {
+    // Grouped multi-binary events (shared groupId): the first sibling in the
+    // list renders one GroupedMarketCard for the whole group; the rest skip.
+    const seenGroups = new Set<string>();
+    const cards = items
+      .map((market) => {
+        if (market.groupId) {
+          if (seenGroups.has(market.groupId)) return null;
+          seenGroups.add(market.groupId);
+          const siblings = items.filter((m) => m.groupId === market.groupId);
+          return (
+            <GroupedMarketCard
+              key={`group-${market.groupId}`}
+              markets={siblings}
+              onBet={handleBetClick}
+            />
+          );
+        }
         if (market.externalSource === "ter") {
           return (
             <TerMarketCard
@@ -708,7 +732,8 @@ export function PwaFeedPage({
             onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
           />
         );
-      });
+      })
+      .filter((c): c is ReactElement => c !== null);
     if (withBplBanner) {
       // Slot the BPL banner right after the TER/BTC auto-market cards
       const autoCount = items.filter((m) =>
