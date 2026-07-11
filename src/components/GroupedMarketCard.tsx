@@ -295,7 +295,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
                         flexShrink: 0,
                         width: 30,
                         height: 30,
-                        borderRadius: "var(--radius-full)",
+                        borderRadius: 7,
                         overflow: "hidden",
                         background: "rgba(255,255,255,0.06)",
                         border: "1px solid rgba(255,255,255,0.12)",
