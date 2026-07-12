@@ -550,6 +550,15 @@ export function PwaFeedPage({
     if (isWCMarket(m)) return false;
     // BPL markets live in the /bpl hub — the grid banner card is their entry point
     if (isBplMarket(m)) return false;
+    // TER/BTC rounds that locked with zero bets: nothing for anyone to watch,
+    // so hide the card (the backend still settles the round on its own)
+    if (
+      ["ter", "btc"].includes(m.externalSource ?? "") &&
+      Number(m.totalPool) === 0 &&
+      m.bettingClosesAt &&
+      new Date(m.bettingClosesAt).getTime() <= Date.now()
+    )
+      return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
