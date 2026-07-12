@@ -550,12 +550,6 @@ export function PwaFeedPage({
     if (isWCMarket(m)) return false;
     // BPL markets live in the /bpl hub — the grid banner card is their entry point
     if (isBplMarket(m)) return false;
-    if (
-      selectedCategory === "All" &&
-      ["ter", "btc"].includes(m.externalSource ?? "") &&
-      (m.category || "other") === "economy"
-    )
-      return false;
     const matchesSearch = m.title
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
