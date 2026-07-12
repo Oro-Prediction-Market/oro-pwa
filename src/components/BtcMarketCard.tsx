@@ -296,14 +296,21 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
       market.bettingClosesAt && new Date() > new Date(market.bettingClosesAt)
     );
 
+    // Betting phase counts down to the price lock; measuring phase counts
+    // down to settlement.
     const countdown = useCountdown(
       isClosed || isSettled
         ? null
-        : (market.bettingClosesAt ?? market.closesAt),
+        : bettingClosed
+          ? (market.closesAt ?? null)
+          : (market.bettingClosesAt ?? market.closesAt),
     );
     const livePrice = useLiveBtcPrice(!isSettled && !isClosed);
 
     const refPrice: number = meta.referencePrice ?? 0;
+    // Bet-first-then-measure: the reference price only exists once betting
+    // has closed. Before that there is nothing to compare against.
+    const refLocked = refPrice > 0;
     const liveDisplayPrice: number | undefined = isSettled
       ? meta.settlementPrice
       : livePrice.live?.price;
@@ -311,7 +318,9 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
     const priceHistory = livePrice.history;
 
     const priceDiff =
-      liveDisplayPrice != null ? liveDisplayPrice - refPrice : null;
+      liveDisplayPrice != null && refLocked
+        ? liveDisplayPrice - refPrice
+        : null;
     const direction =
       priceDiff == null
         ? null
@@ -410,7 +419,7 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
                 fontSize: 12, fontWeight: 700, fontVariantNumeric: "tabular-nums",
                 color: bettingClosed ? "#f59e0b" : "#f43f5e",
               }}>
-                {bettingClosed ? "Soon" : countdown || "--"}
+                {bettingClosed ? `${countdown || "Soon"}` : countdown || "--"}
               </span>
             </div>
           ) : (
@@ -428,12 +437,18 @@ export const BtcMarketCard: FC<BtcMarketCardProps> = memo(
 
         {/* ── Price row ──────────────────────────────────── */}
         <div style={{ padding: "2px 16px 12px", display: "flex", gap: 0 }}>
-          {/* Price to Beat */}
+          {/* Price to Beat — locked when betting closes, unknown before that */}
           <div style={{ flex: 1 }}>
             <div style={{ ...label, marginBottom: 5 }}>Price to Beat</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: C.text, fontVariantNumeric: "tabular-nums", lineHeight: 1, letterSpacing: "-0.02em" }}>
-              {refPrice > 0 ? fmtUsd(refPrice) : "—"}
-            </div>
+            {refLocked ? (
+              <div style={{ fontSize: 20, fontWeight: 700, color: C.text, fontVariantNumeric: "tabular-nums", lineHeight: 1, letterSpacing: "-0.02em" }}>
+                {fmtUsd(refPrice)}
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.sub, lineHeight: "20px" }}>
+                Locks when prediction ends
+              </div>
+            )}
           </div>
 
           {/* Vertical divider */}
