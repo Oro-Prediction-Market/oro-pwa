@@ -750,7 +750,8 @@ export function PwaFeedPage({
         );
       })
       .filter((c): c is ReactElement => c !== null);
-    if (withBplBanner) {
+    // BPL card hidden for now — remove `false &&` to bring it back
+    if (false && withBplBanner) {
       // Slot the BPL banner right after the TER/BTC auto-market cards
       const autoCount = items.filter((m) =>
         ["ter", "btc"].includes(m.externalSource ?? ""),
