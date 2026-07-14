@@ -50,46 +50,46 @@ const SECTIONS = [
     content: [
       "A glossary so the rest of the document doesn't have to keep re-explaining itself.",
     ],
-    subsections: [
+    table: [
       {
-        heading: "Account",
-        text: "The registered ORO profile through which a User accesses the Platform.",
+        term: "Account",
+        def: "The registered ORO profile through which a User accesses the Platform.",
       },
       {
-        heading: "Market",
-        text: "A structured question on ORO with defined possible Outcomes on which Users may take positions.",
+        term: "Market",
+        def: "A structured question on ORO with defined possible Outcomes on which Users may take positions.",
       },
       {
-        heading: "Outcome",
-        text: "A possible resolution value of a Market, as defined in the Market's published rules.",
+        term: "Outcome",
+        def: "A possible resolution value of a Market, as defined in the Market's published rules.",
       },
       {
-        heading: "Wallet",
-        text: "The in-Platform ledger reflecting a User's balance of BTN and/or supported Digital Assets.",
+        term: "Wallet",
+        def: "The in-Platform ledger reflecting a User's balance of BTN and/or supported Digital Assets.",
       },
       {
-        heading: "BTN",
-        text: "The initial native unit of value supported for transactions on ORO, as further described in the Digital Asset Policy.",
+        term: "BTN",
+        def: "The initial native unit of value supported for transactions on ORO, as further described in the Digital Asset Policy.",
       },
       {
-        heading: "Digital Assets",
-        text: "BTN, stablecoins, or other blockchain-based assets ORO supports for deposits, withdrawals, or in-Platform use from time to time.",
+        term: "Digital Assets",
+        def: "BTN, stablecoins, or other blockchain-based assets ORO supports for deposits, withdrawals, or in-Platform use from time to time.",
       },
       {
-        heading: "Platform",
-        text: "The ORO website, mobile applications, APIs, and related services.",
+        term: "Platform",
+        def: "The ORO website, mobile applications, APIs, and related services.",
       },
       {
-        heading: "GMCA",
-        text: "The Gelephu Mindfulness City Authority, the regulatory authority under which ORO operates.",
+        term: "GMCA",
+        def: "The Gelephu Mindfulness City Authority, the regulatory authority under which ORO operates.",
       },
       {
-        heading: "Collective Intelligence",
-        text: "The aggregation of individual User predictions into consensus forecasts.",
+        term: "Collective Intelligence",
+        def: "The aggregation of individual User predictions into consensus forecasts.",
       },
       {
-        heading: "Prediction Market",
-        text: "A Market structured so that prices or aggregated positions reflect the collective probability Users assign to an Outcome.",
+        term: "Prediction Market",
+        def: "A Market structured so that prices or aggregated positions reflect the collective probability Users assign to an Outcome.",
       },
     ],
   },
@@ -584,9 +584,60 @@ export function TermsPage() {
           </p>
         </div>
 
+        {/* Table of Contents */}
+        <div
+          style={{
+            background: "var(--glass-bg)",
+            border: "1px solid var(--glass-border)",
+            borderRadius: 14,
+            padding: "20px 22px",
+            marginBottom: 32,
+          }}
+        >
+          <h2
+            style={{
+              margin: "0 0 12px",
+              fontSize: "0.95rem",
+              fontWeight: 800,
+              color: "var(--text-main)",
+            }}
+          >
+            Table of Contents
+          </h2>
+          <ol
+            style={{
+              margin: 0,
+              paddingLeft: 22,
+              columns: 2,
+              columnGap: 24,
+              fontSize: "0.85rem",
+              lineHeight: 1.9,
+            }}
+          >
+            {[...SECTIONS.map((s) => s.title), "Contact"].map((title, i) => (
+              <li key={title} style={{ breakInside: "avoid" }}>
+                <a
+                  href={`#terms-section-${i + 1}`}
+                  style={{
+                    color: "var(--color-primary, #2563eb)",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                  }}
+                >
+                  {title}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </div>
+
         {/* Sections */}
         {SECTIONS.map((section) => (
-          <div key={section.number} style={{ marginBottom: 36 }}>
+          <div
+            key={section.number}
+            id={`terms-section-${section.number}`}
+            style={{ marginBottom: 36, scrollMarginTop: 16 }}
+          >
             {/* Section heading */}
             <div
               style={{
@@ -640,6 +691,79 @@ export function TermsPage() {
                 </p>
               ))}
 
+            {/* Definitions table */}
+            {"table" in section && section.table && (
+              <div style={{ overflowX: "auto" }}>
+                <table
+                  style={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: "0.83rem",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "10px 14px",
+                          color: "var(--text-main)",
+                          fontSize: "0.75rem",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          borderBottom: "2px solid var(--glass-border)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        Term
+                      </th>
+                      <th
+                        style={{
+                          textAlign: "left",
+                          padding: "10px 14px",
+                          color: "var(--text-main)",
+                          fontSize: "0.75rem",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          borderBottom: "2px solid var(--glass-border)",
+                        }}
+                      >
+                        Definition
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.table.map((row) => (
+                      <tr key={row.term}>
+                        <td
+                          style={{
+                            padding: "10px 14px",
+                            fontWeight: 700,
+                            color: "var(--text-main)",
+                            borderBottom: "1px solid var(--glass-border)",
+                            whiteSpace: "nowrap",
+                            verticalAlign: "top",
+                          }}
+                        >
+                          {row.term}
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px 14px",
+                            color: "var(--text-muted)",
+                            borderBottom: "1px solid var(--glass-border)",
+                          }}
+                        >
+                          {row.def}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {/* Subsections */}
             {"subsections" in section && section.subsections && (
               <div
@@ -683,12 +807,14 @@ export function TermsPage() {
 
         {/* Contact */}
         <div
+          id="terms-section-22"
           style={{
             background: "rgba(37,99,235,0.06)",
             border: "1px solid rgba(37,99,235,0.2)",
             borderRadius: 14,
             padding: "20px 22px",
             marginBottom: 24,
+            scrollMarginTop: 16,
           }}
         >
           <h3
