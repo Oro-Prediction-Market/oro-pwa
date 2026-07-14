@@ -20,7 +20,7 @@ import {
   UnderdogBanner,
   getUnderdogLabel,
 } from "../../shared/components/UnderdogBanner";
-import { getWCFlag, isWCMarket } from "./WorldCupHubPage";
+import { getWCFlag, isWCMarket, calcProb } from "./WorldCupHubPage";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -379,11 +379,6 @@ export function PwaMarketDetailPage() {
 
   // Use live-merged market for rendering so odds/pool update in real time
   const displayMarket = liveMarket!;
-
-  const totalBets = displayMarket.outcomes.reduce(
-    (sum, o) => sum + parseFloat(o.totalBetAmount),
-    0,
-  );
 
   const isOpen = market.status === "open";
   const isResolving = market.status === "resolving";
@@ -861,17 +856,10 @@ export function PwaMarketDetailPage() {
                   return ul ? <UnderdogBanner underdogLabel={ul} /> : null;
                 })()}
               {displayMarket.outcomes.map((outcome, idx) => {
-                // Laplace-smoothed probability — avoids misleading 100%/0% at thin liquidity
-                const prior = 1000; // virtual BTN spread evenly across outcomes
-                const n = displayMarket.outcomes.length || 1;
-                const smoothedAmount =
-                  parseFloat(outcome.totalBetAmount) + prior / n;
-                const smoothedTotal = totalBets + prior;
-                const pct =
-                  (outcome as any).lmsrProbability != null &&
-                  (outcome as any).lmsrProbability > 0
-                    ? (outcome as any).lmsrProbability * 100
-                    : (smoothedAmount / smoothedTotal) * 100;
+                // calcProb uses LMSR only when every outcome has a value
+                // (mixed LMSR/pool sources don't sum to 100), else the
+                // Laplace-smoothed pool ratio.
+                const pct = calcProb(displayMarket, outcome.id) * 100;
 
                 const isResolved = market.status === "resolved" || market.status === "settled";
                 const colors = isResolved
