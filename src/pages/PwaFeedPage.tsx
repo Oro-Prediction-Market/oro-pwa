@@ -43,13 +43,7 @@ import {
   BPL_CLUBS,
   Crest,
 } from "./BplHubPage";
-import {
-  isUfcMarket,
-  getUfcAvatar,
-  shortFighterName,
-  UFC_FIGHTERS,
-  FighterAvatar,
-} from "./UfcHubPage";
+import { isUfcMarket } from "./UfcHubPage";
 
 interface BplBannerItem {
   crest: string | null;
@@ -223,20 +217,7 @@ function BplBannerCard({
   );
 }
 
-interface UfcBannerItem {
-  crest: string | null;
-  label: string;
-  prob: number;
-  hasData: boolean;
-}
-
-function UfcBannerCard({
-  items,
-  onOpen,
-}: {
-  items: UfcBannerItem[];
-  onOpen: () => void;
-}) {
+function UfcBannerCard({ onOpen }: { onOpen: () => void }) {
   return (
     <div
       className="ufc-banner-card"
@@ -266,59 +247,12 @@ function UfcBannerCard({
           background: "rgba(0,0,0,0.5)",
           display: "flex",
           alignItems: "center",
-          padding: "6px 12px 6px 4px",
+          justifyContent: "flex-end",
+          padding: "10px 12px",
           position: "relative",
           zIndex: 1,
-          gap: 8,
         }}
       >
-        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: 20,
-              background:
-                "linear-gradient(to right, rgba(0,0,0,0.5), transparent)",
-              zIndex: 1,
-              pointerEvents: "none",
-            }}
-          />
-          <div
-            style={{
-              display: "flex",
-              width: "max-content",
-            }}
-          >
-            {items.map((item, i) => (
-              <div
-                key={i}
-                title={item.label}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  padding: "2px 10px",
-                  gap: 1,
-                  borderRight: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <FighterAvatar src={item.crest} label={item.label} size={26} />
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)",
-                  }}
-                >
-                  {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
         <span
           style={{
             fontSize: 12,
@@ -869,33 +803,6 @@ export function PwaFeedPage({
           hasData: false,
         }));
 
-  // UFC banner strip — live fight outcomes, headline-fighter fallback
-  const ufcMarketItems = markets
-    .filter(
-      (m) => m.status === "open" && isUfcMarket(m) && /\bvs\b/i.test(m.title),
-    )
-    .flatMap((m) => {
-      const fighterOutcomes = (m.outcomes ?? []).filter(
-        (o) => !isDrawOutcome(o.label ?? ""),
-      );
-      return fighterOutcomes.map((outcome, idx) => ({
-        crest: getUfcAvatar(m, idx),
-        label: shortFighterName(outcome.label),
-        prob: calcProb(m, outcome.id),
-        hasData: Number(m.totalPool) > 0,
-      }));
-    });
-
-  const ufcItems =
-    ufcMarketItems.length > 0
-      ? ufcMarketItems
-      : UFC_FIGHTERS.map((f) => ({
-          crest: null as string | null,
-          label: f.short,
-          prob: 0,
-          hasData: false,
-        }));
-
   const renderGrid = (items: Market[], withBplBanner = false) => {
     // Grouped multi-binary events (shared groupId): the first sibling in the
     // list renders one GroupedMarketCard for the whole group; the rest skip.
@@ -954,11 +861,7 @@ export function PwaFeedPage({
       cards.splice(
         0,
         0,
-        <UfcBannerCard
-          key="ufc-banner"
-          items={ufcItems}
-          onOpen={() => navigate("/ufc")}
-        />,
+        <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
     // BPL card hidden for now — remove `false &&` to bring it back
