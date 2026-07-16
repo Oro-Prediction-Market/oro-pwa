@@ -289,11 +289,10 @@ function UfcBannerCard({
           <div
             style={{
               display: "flex",
-              animation: `wcMarquee ${Math.max(12, items.length * 2)}s linear infinite`,
               width: "max-content",
             }}
           >
-            {[...items, ...items].map((item, i) => (
+            {items.map((item, i) => (
               <div
                 key={i}
                 title={item.label}
