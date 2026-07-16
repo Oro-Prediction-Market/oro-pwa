@@ -43,6 +43,13 @@ import {
   BPL_CLUBS,
   Crest,
 } from "./BplHubPage";
+import {
+  isUfcMarket,
+  getUfcAvatar,
+  shortFighterName,
+  UFC_FIGHTERS,
+  FighterAvatar,
+} from "./UfcHubPage";
 
 interface BplBannerItem {
   crest: string | null;
@@ -82,90 +89,249 @@ function BplBannerCard({
         minHeight: 320,
       }}
     >
-        {/* Legibility overlay — dark on the left under the title, clear over the trophy */}
+      {/* Legibility overlay — dark on the left under the title, clear over the trophy */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(90deg, rgba(5,12,28,0.78) 0%, rgba(5,12,28,0.4) 55%, rgba(5,12,28,0.08) 100%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          textAlign: "left",
+          padding: "20px 16px 12px",
+          position: "relative",
+          zIndex: 1,
+          textShadow: "0 2px 10px rgba(0,0,0,0.7)",
+        }}
+      >
         <div
           style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(90deg, rgba(5,12,28,0.78) 0%, rgba(5,12,28,0.4) 55%, rgba(5,12,28,0.08) 100%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-start",
-            justifyContent: "center",
-            textAlign: "left",
-            padding: "20px 16px 12px",
-            position: "relative",
-            zIndex: 1,
-            textShadow: "0 2px 10px rgba(0,0,0,0.7)",
+            fontSize: 34,
+            fontWeight: 900,
+            color: "#7dd3fc",
+            lineHeight: 1,
+            letterSpacing: "-0.02em",
           }}
         >
-          <div style={{ fontSize: 34, fontWeight: 900, color: "#7dd3fc", lineHeight: 1, letterSpacing: "-0.02em" }}>BoB</div>
-          <div style={{ fontSize: 19, fontWeight: 900, color: "#fff", lineHeight: 1.15, letterSpacing: "-0.02em" }}>Bhutan Premier League</div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: "#f87171", lineHeight: 1.1, letterSpacing: "-0.02em" }}>Prediction</div>
+          BoB
         </div>
         <div
           style={{
-            background: "rgba(0,0,0,0.5)",
-            display: "flex",
-            alignItems: "center",
-            padding: "6px 12px 6px 4px",
-            position: "relative",
-            zIndex: 1,
-            gap: 8,
+            fontSize: 19,
+            fontWeight: 900,
+            color: "#fff",
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
           }}
         >
-          <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-            <div
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 20,
-                background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent)",
-                zIndex: 1,
-                pointerEvents: "none",
-              }}
-            />
-            <div
-              style={{
-                display: "flex",
-                animation: `wcMarquee ${Math.max(12, items.length * 2)}s linear infinite`,
-                width: "max-content",
-              }}
-            >
-              {[...items, ...items].map((item, i) => (
-                <div
-                  key={i}
-                  title={item.label}
+          Bhutan Premier League
+        </div>
+        <div
+          style={{
+            fontSize: 24,
+            fontWeight: 900,
+            color: "#f87171",
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Prediction
+        </div>
+      </div>
+      <div
+        style={{
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          padding: "6px 12px 6px 4px",
+          position: "relative",
+          zIndex: 1,
+          gap: 8,
+        }}
+      >
+        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 20,
+              background:
+                "linear-gradient(to right, rgba(0,0,0,0.5), transparent)",
+              zIndex: 1,
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              animation: `wcMarquee ${Math.max(12, items.length * 2)}s linear infinite`,
+              width: "max-content",
+            }}
+          >
+            {[...items, ...items].map((item, i) => (
+              <div
+                key={i}
+                title={item.label}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "2px 10px",
+                  gap: 1,
+                  borderRight: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Crest src={item.crest} label={item.label} size={26} />
+                <span
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    padding: "2px 10px",
-                    gap: 1,
-                    borderRight: "1px solid rgba(255,255,255,0.08)",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)",
                   }}
                 >
-                  <Crest src={item.crest} label={item.label} size={26} />
-                  <span style={{ fontSize: 10, fontWeight: 800, color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)" }}>
-                    {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
-                  </span>
-                </div>
-              ))}
-            </div>
+                  {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
+                </span>
+              </div>
+            ))}
           </div>
-          <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", flexShrink: 0 }}>
-            Click Here »
-          </span>
         </div>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.75)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          Click Here »
+        </span>
+      </div>
+    </div>
+  );
+}
+
+interface UfcBannerItem {
+  crest: string | null;
+  label: string;
+  prob: number;
+  hasData: boolean;
+}
+
+function UfcBannerCard({
+  items,
+  onOpen,
+}: {
+  items: UfcBannerItem[];
+  onOpen: () => void;
+}) {
+  return (
+    <div
+      className="ufc-banner-card"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === "Enter" && onOpen()}
+      style={{
+        borderRadius: 16,
+        overflow: "hidden",
+        cursor: "pointer",
+        position: "relative",
+        backgroundImage: "url('/ufc-banner.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center 25%",
+        outline: "none",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 320,
+      }}
+    >
+      {/* Cover art carries the branding — spacer pushes the strip to the bottom */}
+      <div style={{ flex: 1 }} />
+      <div
+        style={{
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          padding: "6px 12px 6px 4px",
+          position: "relative",
+          zIndex: 1,
+          gap: 8,
+        }}
+      >
+        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 20,
+              background:
+                "linear-gradient(to right, rgba(0,0,0,0.5), transparent)",
+              zIndex: 1,
+              pointerEvents: "none",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              animation: `wcMarquee ${Math.max(12, items.length * 2)}s linear infinite`,
+              width: "max-content",
+            }}
+          >
+            {[...items, ...items].map((item, i) => (
+              <div
+                key={i}
+                title={item.label}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "2px 10px",
+                  gap: 1,
+                  borderRight: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <FighterAvatar src={item.crest} label={item.label} size={26} />
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)",
+                  }}
+                >
+                  {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.75)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          Click Here »
+        </span>
+      </div>
     </div>
   );
 }
@@ -362,7 +528,10 @@ export function PwaFeedPage({
       sid = crypto.randomUUID();
       sessionStorage.setItem("oro_feed_sid", sid);
     }
-    const ping = () => feedHeartbeat(sid!).then(({ count }) => setOnlineCount(count)).catch(() => {});
+    const ping = () =>
+      feedHeartbeat(sid!)
+        .then(({ count }) => setOnlineCount(count))
+        .catch(() => {});
     ping();
     const id = setInterval(ping, 30_000);
     return () => clearInterval(id);
@@ -380,7 +549,10 @@ export function PwaFeedPage({
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     if (pendingBet) {
-      startTransition(() => { setActiveBet(pendingBet); setPendingBet(null); });
+      startTransition(() => {
+        setActiveBet(pendingBet);
+        setPendingBet(null);
+      });
     }
     onAuthRequired?.();
   };
@@ -550,6 +722,8 @@ export function PwaFeedPage({
     if (isWCMarket(m)) return false;
     // BPL markets live in the /bpl hub — the grid banner card is their entry point
     if (isBplMarket(m)) return false;
+    // UFC markets live in the /ufc hub — the grid banner card is their entry point
+    if (isUfcMarket(m)) return false;
     // TER/BTC rounds that locked with zero bets: nothing for anyone to watch,
     // so hide the card (the backend still settles the round on its own)
     if (
@@ -661,7 +835,7 @@ export function PwaFeedPage({
           prob: calcProb(m, outcome.id),
           hasData: Number(m.totalPool) > 0,
         }))
-        .filter((item) => item.flag)
+        .filter((item) => item.flag),
     );
 
   const wcWinnerItems =
@@ -692,6 +866,33 @@ export function PwaFeedPage({
       : BPL_CLUBS.map((c) => ({
           crest: null as string | null,
           label: c.short,
+          prob: 0,
+          hasData: false,
+        }));
+
+  // UFC banner strip — live fight outcomes, headline-fighter fallback
+  const ufcMarketItems = markets
+    .filter(
+      (m) => m.status === "open" && isUfcMarket(m) && /\bvs\b/i.test(m.title),
+    )
+    .flatMap((m) => {
+      const fighterOutcomes = (m.outcomes ?? []).filter(
+        (o) => !isDrawOutcome(o.label ?? ""),
+      );
+      return fighterOutcomes.map((outcome, idx) => ({
+        crest: getUfcAvatar(m, idx),
+        label: shortFighterName(outcome.label),
+        prob: calcProb(m, outcome.id),
+        hasData: Number(m.totalPool) > 0,
+      }));
+    });
+
+  const ufcItems =
+    ufcMarketItems.length > 0
+      ? ufcMarketItems
+      : UFC_FIGHTERS.map((f) => ({
+          crest: null as string | null,
+          label: f.short,
           prob: 0,
           hasData: false,
         }));
@@ -749,6 +950,18 @@ export function PwaFeedPage({
         );
       })
       .filter((c): c is ReactElement => c !== null);
+    // UFC banner leads the grid (TER/BTC auto-markets sort to the bottom)
+    if (withBplBanner) {
+      cards.splice(
+        0,
+        0,
+        <UfcBannerCard
+          key="ufc-banner"
+          items={ufcItems}
+          onOpen={() => navigate("/ufc")}
+        />,
+      );
+    }
     // BPL card hidden for now — remove `false &&` to bring it back
     if (false && withBplBanner) {
       // Slot the BPL banner right after the TER/BTC auto-market cards
@@ -779,11 +992,20 @@ export function PwaFeedPage({
     >
       <Helmet>
         <title>Live Markets | Oro Prediction Market</title>
-        <meta name="description" content="Browse live prediction markets on Oro. Predict sports, crypto, politics and more. Win real money with yes/no predictions on Telegram." />
+        <meta
+          name="description"
+          content="Browse live prediction markets on Oro. Predict sports, crypto, politics and more. Win real money with yes/no predictions on Telegram."
+        />
         <link rel="canonical" href="https://oro.fun/" />
         <meta property="og:url" content="https://oro.fun/" />
-        <meta property="og:title" content="Live Markets | Oro Prediction Market" />
-        <meta property="og:description" content="Browse live prediction markets on Oro. Predict sports, crypto, politics and more." />
+        <meta
+          property="og:title"
+          content="Live Markets | Oro Prediction Market"
+        />
+        <meta
+          property="og:description"
+          content="Browse live prediction markets on Oro. Predict sports, crypto, politics and more."
+        />
       </Helmet>
       <style>{`
         @keyframes livePing {
@@ -813,18 +1035,47 @@ export function PwaFeedPage({
         }
         @media (max-width: 767px) { .section-title { display: none; } }
         /* Mobile: 1 grid column — banner takes the full row */
-        .bpl-banner-card { grid-column: auto; }
+        .bpl-banner-card, .ufc-banner-card { grid-column: auto; }
         /* Tablet/desktop (grid is 2 or 4 cols) — banner covers two card slots */
-        @media (min-width: 640px) { .bpl-banner-card { grid-column: span 2; } }
+        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
 
       {/* ── Online viewers badge — always visible when count is known ── */}
       {onlineCount !== null && onlineCount > 0 && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 20, padding: "3px 10px" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22c55e", display: "inline-block", boxShadow: "0 0 6px #22c55e" }} />
-            <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#22c55e" }}>{onlineCount} online</span>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              background: "rgba(34,197,94,0.12)",
+              border: "1px solid rgba(34,197,94,0.25)",
+              borderRadius: 20,
+              padding: "3px 10px",
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#22c55e",
+                display: "inline-block",
+                boxShadow: "0 0 6px #22c55e",
+              }}
+            />
+            <span
+              style={{ fontSize: "0.7rem", fontWeight: 700, color: "#22c55e" }}
+            >
+              {onlineCount} online
+            </span>
           </div>
         </div>
       )}
@@ -983,69 +1234,229 @@ export function PwaFeedPage({
 
           {/* ── World Cup Banner Card ── */}
           {!searchQuery.trim() && (
-            <div style={{
-              marginBottom: 16,
-              borderRadius: 18,
-              padding: 2,
-              background: "radial-gradient(circle at top left, #22c55e 0%, transparent 55%), radial-gradient(circle at bottom left, #7f1d1d 0%, transparent 55%), radial-gradient(circle at top right, #ef4444 0%, transparent 55%), radial-gradient(circle at bottom right, #7c3aed 0%, transparent 55%)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-            }}>
             <div
-              role="button"
-              tabIndex={0}
-              onClick={() => navigate("/world-cup")}
-              onKeyDown={(e) => e.key === "Enter" && navigate("/world-cup")}
               style={{
-                marginBottom: 0,
-                borderRadius: 16,
-                overflow: "hidden",
-                cursor: "pointer",
-                position: "relative",
-                backgroundImage: "url('/background.svg')",
-                backgroundSize: "cover",
-                backgroundPosition: "right bottom",
-                outline: "none",
+                marginBottom: 16,
+                borderRadius: 18,
+                padding: 2,
+                background:
+                  "radial-gradient(circle at top left, #22c55e 0%, transparent 55%), radial-gradient(circle at bottom left, #7f1d1d 0%, transparent 55%), radial-gradient(circle at top right, #ef4444 0%, transparent 55%), radial-gradient(circle at bottom right, #7c3aed 0%, transparent 55%)",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
             >
-              <img src="/football.svg" alt="" aria-hidden="true" decoding="async" style={{ position: "absolute", top: "50%", left: -60, marginTop: -75, width: 120, height: 120, opacity: 0.7, animation: "wcSpin 6s linear infinite", pointerEvents: "none", zIndex: 0 }} />
-              <div style={{ display: "flex", alignItems: "stretch", minHeight: 148, position: "relative", zIndex: 1 }}>
-                <div style={{ flex: 1, padding: "22px 0 14px 20px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <div style={{ fontSize: 38, fontWeight: 900, color: "#fff", lineHeight: 1, letterSpacing: "-0.02em" }}>FIFA</div>
-                  <div style={{ fontSize: 26, fontWeight: 900, color: "#fff", lineHeight: 1.1, letterSpacing: "-0.02em" }}>World Cup</div>
-                  <div style={{ fontSize: 26, fontWeight: 900, color: "#84cc16", lineHeight: 1.1, letterSpacing: "-0.02em" }}>Prediction</div>
-                </div>
-                <div style={{ width: 160, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-                  <img src="/worldcup.svg" alt="FIFA World Cup 2026" decoding="async" width={160} height={148} style={{ width: 160, height: 148, objectFit: "contain", display: "block" }} />
-                </div>
-              </div>
-              <div style={{ background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", padding: "6px 12px 6px 4px", position: "relative", zIndex: 1, gap: 8 }}>
-                <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 20, background: "linear-gradient(to right, rgba(0,0,0,0.5), transparent)", zIndex: 1, pointerEvents: "none" }} />
-                  <div style={{ display: "flex", animation: `wcMarquee ${Math.max(12, wcWinnerItems.length * 2)}s linear infinite`, width: "max-content" }}>
-                    {[...wcWinnerItems, ...wcWinnerItems].map((item, i) => (
-                      <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "2px 10px", gap: 1, borderRight: "1px solid rgba(255,255,255,0.08)" }}>
-                        {item.flag
-                          ? <img src={item.flag} alt="" loading="lazy" decoding="async" width={26} height={26} style={{ width: 26, height: 26, borderRadius: 3, objectFit: "cover" }} />
-                          : null
-                        }
-                        <span style={{ fontSize: 10, fontWeight: 800, color: item.hasData ? "#ffffff" : "rgba(255,255,255,0.4)" }}>
-                          {item.hasData ? `${Math.round(item.prob * 100)}%` : "—"}
-                        </span>
-                      </div>
-                    ))}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => navigate("/world-cup")}
+                onKeyDown={(e) => e.key === "Enter" && navigate("/world-cup")}
+                style={{
+                  marginBottom: 0,
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  position: "relative",
+                  backgroundImage: "url('/background.svg')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "right bottom",
+                  outline: "none",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                }}
+              >
+                <img
+                  src="/football.svg"
+                  alt=""
+                  aria-hidden="true"
+                  decoding="async"
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: -60,
+                    marginTop: -75,
+                    width: 120,
+                    height: 120,
+                    opacity: 0.7,
+                    animation: "wcSpin 6s linear infinite",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                  }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "stretch",
+                    minHeight: 148,
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
+                  <div
+                    style={{
+                      flex: 1,
+                      padding: "22px 0 14px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 38,
+                        fontWeight: 900,
+                        color: "#fff",
+                        lineHeight: 1,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      FIFA
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 26,
+                        fontWeight: 900,
+                        color: "#fff",
+                        lineHeight: 1.1,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      World Cup
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 26,
+                        fontWeight: 900,
+                        color: "#84cc16",
+                        lineHeight: 1.1,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      Prediction
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      width: 160,
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <img
+                      src="/worldcup.svg"
+                      alt="FIFA World Cup 2026"
+                      decoding="async"
+                      width={160}
+                      height={148}
+                      style={{
+                        width: 160,
+                        height: 148,
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
                   </div>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", flexShrink: 0 }}>Click Here »</span>
+                <div
+                  style={{
+                    background: "rgba(0,0,0,0.5)",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "6px 12px 6px 4px",
+                    position: "relative",
+                    zIndex: 1,
+                    gap: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      flex: 1,
+                      overflow: "hidden",
+                      position: "relative",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 20,
+                        background:
+                          "linear-gradient(to right, rgba(0,0,0,0.5), transparent)",
+                        zIndex: 1,
+                        pointerEvents: "none",
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        animation: `wcMarquee ${Math.max(12, wcWinnerItems.length * 2)}s linear infinite`,
+                        width: "max-content",
+                      }}
+                    >
+                      {[...wcWinnerItems, ...wcWinnerItems].map((item, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            padding: "2px 10px",
+                            gap: 1,
+                            borderRight: "1px solid rgba(255,255,255,0.08)",
+                          }}
+                        >
+                          {item.flag ? (
+                            <img
+                              src={item.flag}
+                              alt=""
+                              loading="lazy"
+                              decoding="async"
+                              width={26}
+                              height={26}
+                              style={{
+                                width: 26,
+                                height: 26,
+                                borderRadius: 3,
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : null}
+                          <span
+                            style={{
+                              fontSize: 10,
+                              fontWeight: 800,
+                              color: item.hasData
+                                ? "#ffffff"
+                                : "rgba(255,255,255,0.4)",
+                            }}
+                          >
+                            {item.hasData
+                              ? `${Math.round(item.prob * 100)}%`
+                              : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: "rgba(255,255,255,0.75)",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Click Here »
+                  </span>
+                </div>
               </div>
-            </div>
             </div>
           )}
 
           {renderGrid(openMarkets, !searchQuery.trim())}
         </section>
       )}
-
 
       {resolvingMarkets.length > 0 && (
         <section style={{ marginBottom: "var(--space-xl)" }}>
