@@ -597,11 +597,10 @@ export function PwaFeedPage({
   const openMarkets = filteredMarkets
     .filter((m) => m.status === "open")
     .sort((a, b) => {
-      // TER then BTC markets appear first in the economy category
       const autoA = ["ter", "btc"].includes(a.externalSource ?? "");
       const autoB = ["ter", "btc"].includes(b.externalSource ?? "");
-      if (autoA && !autoB) return -1;
-      if (autoB && !autoA) return 1;
+      if (autoA && !autoB) return 1;
+      if (autoB && !autoA) return -1;
       if (autoA && autoB) {
         if (a.externalSource !== b.externalSource) {
           if (a.externalSource === "ter") return -1;
