@@ -1,7 +1,7 @@
 import { useState, useEffect, memo, type FC } from "react";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
-import { isWCMarket, getWCFlag } from "../pages/WorldCupHubPage";
+import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
 
 function outcomeColor(rank: number, total: number, resolved: boolean): string {
   if (resolved) {
@@ -59,20 +59,11 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
     const totalPool = Number(market.totalPool);
 
     const sentiment = (() => {
-      const n = market.outcomes.length || 1;
-      // Use Laplace smoothing (virtual prior = 1000 BTN spread evenly)
-      // so thin liquidity doesn't show a misleading 100%/0% split.
-      const prior = 1000;
+      // calcProb: normalized LMSR when every outcome has one (mixed LMSR/pool
+      // sources don't sum to 100), else Laplace-smoothed pool share.
       const raw = market.outcomes.map((o) => ({
         ...o,
-        pct:
-          o.lmsrProbability != null && o.lmsrProbability > 0
-            ? o.lmsrProbability * 100
-            : (() => {
-                const smoothedAmount = Number(o.totalBetAmount) + prior / n;
-                const smoothedTotal = totalPool + prior;
-                return (smoothedAmount / smoothedTotal) * 100;
-              })(),
+        pct: calcProb(market, o.id) * 100,
       }));
       const sorted = [...raw].sort((a, b) => b.pct - a.pct);
       return raw.map((o) => {

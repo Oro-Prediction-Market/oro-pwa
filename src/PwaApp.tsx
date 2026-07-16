@@ -139,6 +139,11 @@ const PwaWorldCupPage = lazy(() =>
     default: m.WorldCupHubPage,
   })),
 );
+const PwaUfcPage = lazy(() =>
+  import("./pages/UfcHubPage").then((m) => ({
+    default: m.UfcHubPage,
+  })),
+);
 const PwaBplPage = lazy(() =>
   import("./pages/BplHubPage").then((m) => ({
     default: m.BplHubPage,
@@ -1977,6 +1982,26 @@ function PwaLayout({
                 }
               >
                 <PwaWorldCupPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/ufc"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaUfcPage />
               </Suspense>
             }
           />
