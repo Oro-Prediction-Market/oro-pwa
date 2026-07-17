@@ -409,6 +409,9 @@ export function WorldCupBracket({ markets, onBet, getFlag, pickedOutcomeIds }: P
   const PEEK = 44;
   const mobileColW =
     viewportW > 0 ? `${Math.max(220, viewportW - PEEK)}px` : MOBILE_COL_W;
+  // The Final is the last column — nothing peeks in after it, so it takes the
+  // full viewport width instead of leaving the peek gap empty on the right.
+  const mobileFinalColW = viewportW > 0 ? `${viewportW}px` : "100%";
 
   // Recompute the connector elbows from live card positions. Kept stable so the
   // per-frame animation loop below can reuse it while a transition is running.
@@ -968,7 +971,13 @@ export function WorldCupBracket({ markets, onBet, getFlag, pickedOutcomeIds }: P
           // every expanded column shares the same total height (= bodyHeight).
           const cellHeight = BLOCK_H * Math.pow(2, ri - collapsedCount);
           const isFinal = round.key === "final";
-          const colW = isMobile ? mobileColW : isFinal ? 280 : COL_W;
+          const colW = isMobile
+            ? isFinal
+              ? mobileFinalColW
+              : mobileColW
+            : isFinal
+              ? 380
+              : COL_W;
           return (
             <div
               key={round.key}
