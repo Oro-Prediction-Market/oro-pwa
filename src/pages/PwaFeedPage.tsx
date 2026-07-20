@@ -737,6 +737,8 @@ export function PwaFeedPage({
     ? markets.find((m) => m.id === activeBet.marketId)
     : null;
 
+  // World Cup banner strip data — the banner itself is disabled below via
+  // `false &&`, but this stays live so the JSX still typechecks.
   const wcEntryMarkets = markets.filter(isWCMarket);
 
   const WC_DEFAULT_NATIONS = [
@@ -1135,7 +1137,8 @@ export function PwaFeedPage({
           </div>
 
           {/* ── World Cup Banner Card ── */}
-          {!searchQuery.trim() && (
+          {/* Hidden for now — remove `false &&` to bring it back */}
+          {false && !searchQuery.trim() && (
             <div
               style={{
                 marginBottom: 16,
