@@ -110,6 +110,9 @@ export default defineConfig(async (): Promise<UserConfig> => {
       proxy: {
         "/api": { target: "http://localhost:3000", changeOrigin: true },
       },
+      hmr: {
+        overlay: false,
+      },
     },
   };
 });
