@@ -1025,7 +1025,20 @@ export function PwaFeedPage({
           hasData: false,
         }));
 
-  const renderGrid = (items: Market[], withBplBanner = false) => {
+  // Hub banners follow their own category: those markets live in the hubs, not
+  // in the grid, so when a hub's category is filtered the banner is the only
+  // thing left to show (and must not be hidden by an empty grid).
+  const activeCategory = selectedCategory.toLowerCase();
+  const bannersAllowed = !searchQuery.trim();
+  const showEsportsBanner =
+    bannersAllowed && (activeCategory === "all" || activeCategory === "gaming");
+  const showSportsBanners =
+    bannersAllowed && (activeCategory === "all" || activeCategory === "sports");
+
+  const renderGrid = (
+    items: Market[],
+    banners: { esports?: boolean; sports?: boolean } = {},
+  ) => {
     // Grouped multi-binary events (shared groupId): the first sibling in the
     // list renders one GroupedMarketCard for the whole group; the rest skip.
     const seenGroups = new Set<string>();
@@ -1079,7 +1092,7 @@ export function PwaFeedPage({
       })
       .filter((c): c is ReactElement => c !== null);
     // Esports + UFC + EPL banners lead the grid (TER/BTC auto-markets sort to the bottom)
-    if (withBplBanner) {
+    if (banners.esports) {
       cards.splice(
         0,
         0,
@@ -1090,7 +1103,7 @@ export function PwaFeedPage({
         />,
       );
     }
-    if (withBplBanner) {
+    if (banners.sports) {
       cards.splice(
         0,
         0,
@@ -1098,7 +1111,7 @@ export function PwaFeedPage({
       );
     }
     // EPL banner hidden until the 2026/27 season starts — remove `false &&` to re-enable
-    if (false && withBplBanner) {
+    if (false && banners.sports) {
       cards.splice(
         0,
         0,
@@ -1106,7 +1119,7 @@ export function PwaFeedPage({
       );
     }
     // BPL card hidden for now — remove `false &&` to bring it back
-    if (false && withBplBanner) {
+    if (false && banners.sports) {
       // Slot the BPL banner right after the TER/BTC auto-market cards
       const autoCount = items.filter((m) =>
         ["ter", "btc"].includes(m.externalSource ?? ""),
@@ -1304,7 +1317,7 @@ export function PwaFeedPage({
         </div>
       )}
 
-      {openMarkets.length > 0 && (
+      {(openMarkets.length > 0 || showEsportsBanner || showSportsBanners) && (
         <section style={{ marginBottom: "var(--space-xl)" }}>
           <div
             style={{
@@ -1603,7 +1616,10 @@ export function PwaFeedPage({
             </div>
           )}
 
-          {renderGrid(openMarkets, !searchQuery.trim())}
+          {renderGrid(openMarkets, {
+            esports: showEsportsBanner,
+            sports: showSportsBanners,
+          })}
         </section>
       )}
 

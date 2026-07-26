@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMarkets, type Market } from "@shared/api/client";
+import { getMarkets, type Market, type Outcome } from "@shared/api/client";
 import {
   Clock,
   Swords,
@@ -384,6 +384,17 @@ function getSideImage(market: Market, idx: number): string | null {
   if (outcome?.imageUrl) return outcome.imageUrl;
   if (idx === 0) return market.imageUrl;
   if (idx === 1) return market.imageUrlAlt;
+  return null;
+}
+
+function outcomeImage(market: Market, outcome: Outcome): string | null {
+  if (outcome.imageUrl) return outcome.imageUrl;
+  const sides = (market.outcomes ?? []).filter(
+    (o) => !isDrawOutcome(o.label ?? ""),
+  );
+  const i = sides.findIndex((o) => o.id === outcome.id);
+  if (i === 0) return market.imageUrl;
+  if (i === 1) return market.imageUrlAlt;
   return null;
 }
 
@@ -875,15 +886,17 @@ function EsportsEventMarket({
   onBet: (marketId: string, outcomeId: string) => void;
 }) {
   const navigate = useNavigate();
+  const [expanded, setExpanded] = useState(false);
   const locked = market.status === "resolving" || market.status === "closed";
   const totalPool = Number(market.totalPool ?? 0);
   const outcomes = market.outcomes ?? [];
-  // Field markets can run long — show the strongest few, then a tail count
+  // Field markets can run long — show the strongest few until expanded
+  const COLLAPSED_COUNT = 4;
   const ranked = [...outcomes].sort(
     (a, b) => calcProb(market, b.id) - calcProb(market, a.id),
   );
-  const shown = ranked.slice(0, 4);
-  const hidden = ranked.length - shown.length;
+  const shown = expanded ? ranked : ranked.slice(0, COLLAPSED_COUNT);
+  const hidden = ranked.length - COLLAPSED_COUNT;
 
   return (
     <CardShell market={market} categoryKey={categoryKey}>
@@ -927,7 +940,7 @@ function EsportsEventMarket({
               }}
             >
               <TeamAvatar
-                src={getSideImage(market, idx)}
+                src={outcomeImage(market, outcome)}
                 label={outcome.label}
                 size={30}
               />
@@ -1004,15 +1017,30 @@ function EsportsEventMarket({
         })}
         {hidden > 0 && (
           <div
-            onClick={() => navigate(`/market/${market.id}`)}
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded((v) => !v);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                setExpanded((v) => !v);
+              }
+            }}
             style={{
               borderTop: `1px solid ${EWC.border}`,
               paddingTop: 9,
               cursor: "pointer",
               textAlign: "center",
+              outline: "none",
             }}
           >
-            <Label color={EWC.gold}>+{hidden} more outcomes »</Label>
+            <Label color={EWC.gold}>
+              {expanded ? "Show less «" : `+${hidden} more outcomes »`}
+            </Label>
           </div>
         )}
       </div>
