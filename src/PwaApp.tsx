@@ -144,6 +144,11 @@ const PwaUfcPage = lazy(() =>
     default: m.UfcHubPage,
   })),
 );
+const PwaEsportsPage = lazy(() =>
+  import("./pages/EsportsHubPage").then((m) => ({
+    default: m.EsportsHubPage,
+  })),
+);
 const PwaBplPage = lazy(() =>
   import("./pages/BplHubPage").then((m) => ({
     default: m.BplHubPage,
@@ -2008,6 +2013,26 @@ function PwaLayout({
                 }
               >
                 <PwaUfcPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/esports"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaEsportsPage />
               </Suspense>
             }
           />

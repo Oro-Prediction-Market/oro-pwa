@@ -44,6 +44,8 @@ import {
   Crest,
 } from "./BplHubPage";
 import { isUfcMarket } from "./UfcHubPage";
+import { isEsportsMarket } from "./EsportsHubPage";
+import { EsportsBanner } from "@shared/components/EsportsBanner";
 import { isEplMarket, EPL_CLUBS } from "./EplHubPage";
 
 interface BplBannerItem {
@@ -873,6 +875,8 @@ export function PwaFeedPage({
     if (isUfcMarket(m)) return false;
     // EPL markets live in the /epl hub — the grid banner card is their entry point
     if (isEplMarket(m)) return false;
+    // Esports/gaming markets live in the /esports hub — same deal
+    if (isEsportsMarket(m)) return false;
     // TER/BTC rounds that locked with zero bets: nothing for anyone to watch,
     // so hide the card (the backend still settles the round on its own)
     if (
@@ -1074,7 +1078,18 @@ export function PwaFeedPage({
         );
       })
       .filter((c): c is ReactElement => c !== null);
-    // UFC + EPL banners lead the grid (TER/BTC auto-markets sort to the bottom)
+    // Esports + UFC + EPL banners lead the grid (TER/BTC auto-markets sort to the bottom)
+    if (withBplBanner) {
+      cards.splice(
+        0,
+        0,
+        <EsportsBanner
+          key="esports-banner"
+          className="esports-banner-card"
+          onClick={() => navigate("/esports")}
+        />,
+      );
+    }
     if (withBplBanner) {
       cards.splice(
         0,
@@ -1168,9 +1183,9 @@ export function PwaFeedPage({
         }
         @media (max-width: 767px) { .section-title { display: none; } }
         /* Mobile: 1 grid column — banner takes the full row */
-        .bpl-banner-card, .ufc-banner-card, .epl-banner-card { grid-column: auto; }
+        .bpl-banner-card, .ufc-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
         /* Tablet/desktop (grid is 2 or 4 cols) — banner covers two card slots */
-        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .epl-banner-card { grid-column: span 2; } }
+        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
 
