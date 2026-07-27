@@ -21,6 +21,8 @@ import {
   getUnderdogLabel,
 } from "../../shared/components/UnderdogBanner";
 import { getWCFlag, isWCMarket, calcProb } from "./WorldCupHubPage";
+import { isEsportsMarket } from "./EsportsHubPage";
+import { EsportsMarketDetail } from "../components/EsportsMarketDetail";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -402,6 +404,25 @@ export function PwaMarketDetailPage() {
     displayMarket.description ||
     `Predict the outcome of "${displayMarket.title}" and win real money on Oro.`;
   const pageUrl = `https://oro.fun/markets/${displayMarket.id}`;
+
+  // Esports markets get the dedicated /esports-styled detail view
+  if (isEsportsMarket(displayMarket)) {
+    return (
+      <EsportsMarketDetail
+        market={displayMarket}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+      />
+    );
+  }
 
   return (
     <div
