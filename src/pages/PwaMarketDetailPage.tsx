@@ -23,6 +23,8 @@ import {
 import { getWCFlag, isWCMarket, calcProb } from "./WorldCupHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsMarketDetail } from "../components/EsportsMarketDetail";
+import { isUfcMarket } from "./UfcHubPage";
+import { UfcMarketDetail } from "../components/UfcMarketDetail";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -404,6 +406,25 @@ export function PwaMarketDetailPage() {
     displayMarket.description ||
     `Predict the outcome of "${displayMarket.title}" and win real money on Oro.`;
   const pageUrl = `https://oro.fun/markets/${displayMarket.id}`;
+
+  // UFC markets get the dedicated /ufc-styled detail view
+  if (isUfcMarket(displayMarket)) {
+    return (
+      <UfcMarketDetail
+        market={displayMarket}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+      />
+    );
+  }
 
   // Esports markets get the dedicated /esports-styled detail view
   if (isEsportsMarket(displayMarket)) {

@@ -46,6 +46,7 @@ import {
 import { isUfcMarket } from "./UfcHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsBanner } from "@shared/components/EsportsBanner";
+import { UfcBanner } from "@shared/components/UfcBanner";
 import { isEplMarket, EPL_CLUBS } from "./EplHubPage";
 
 interface BplBannerItem {
@@ -221,55 +222,7 @@ function BplBannerCard({
 }
 
 function UfcBannerCard({ onOpen }: { onOpen: () => void }) {
-  return (
-    <div
-      className="ufc-banner-card"
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => e.key === "Enter" && onOpen()}
-      style={{
-        borderRadius: 16,
-        overflow: "hidden",
-        cursor: "pointer",
-        position: "relative",
-        backgroundImage: "url('/ufc-banner.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center 25%",
-        outline: "none",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 320,
-      }}
-    >
-      {/* Cover art carries the branding — spacer pushes the strip to the bottom */}
-      <div style={{ flex: 1 }} />
-      <div
-        style={{
-          background: "rgba(0,0,0,0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          padding: "10px 12px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "rgba(255,255,255,0.75)",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          Click Here »
-        </span>
-      </div>
-    </div>
-  );
+  return <UfcBanner className="ufc-banner-card" onClick={onOpen} />;
 }
 
 const EPL_TICKER = EPL_CLUBS.map((c) => c.short.toUpperCase());
