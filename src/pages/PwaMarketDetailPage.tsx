@@ -27,6 +27,8 @@ import { isUfcMarket } from "./UfcHubPage";
 import { UfcMarketDetail } from "../components/UfcMarketDetail";
 import { isEplMarket } from "./EplHubPage";
 import { EplMarketDetail } from "../components/EplMarketDetail";
+import { isUclMarket } from "./UclHubPage";
+import { UclMarketDetail } from "../components/UclMarketDetail";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -432,6 +434,25 @@ export function PwaMarketDetailPage() {
   if (isEsportsMarket(displayMarket)) {
     return (
       <EsportsMarketDetail
+        market={displayMarket}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+      />
+    );
+  }
+
+  // Champions League markets get the dedicated /ucl-styled detail view
+  if (isUclMarket(displayMarket)) {
+    return (
+      <UclMarketDetail
         market={displayMarket}
         onBetPlaced={refreshMarket}
         isResolving={isResolving}

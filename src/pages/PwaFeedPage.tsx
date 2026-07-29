@@ -47,7 +47,9 @@ import { isUfcMarket } from "./UfcHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsBanner } from "@shared/components/EsportsBanner";
 import { UfcBanner } from "@shared/components/UfcBanner";
+import { UclBanner } from "@shared/components/UclBanner";
 import { isEplMarket, EPL_CLUBS } from "./EplHubPage";
+import { isUclMarket } from "./UclHubPage";
 
 interface BplBannerItem {
   crest: string | null;
@@ -223,6 +225,10 @@ function BplBannerCard({
 
 function UfcBannerCard({ onOpen }: { onOpen: () => void }) {
   return <UfcBanner className="ufc-banner-card" onClick={onOpen} />;
+}
+
+function UclBannerCard({ onOpen }: { onOpen: () => void }) {
+  return <UclBanner className="ucl-banner-card" onClick={onOpen} />;
 }
 
 const EPL_TICKER = EPL_CLUBS.map((c) => c.short.toUpperCase());
@@ -828,6 +834,8 @@ export function PwaFeedPage({
     if (isUfcMarket(m)) return false;
     // EPL markets live in the /epl hub — the grid banner card is their entry point
     if (isEplMarket(m)) return false;
+    // UCL markets live in the /ucl hub — the grid banner card is their entry point
+    if (isUclMarket(m)) return false;
     // Esports/gaming markets live in the /esports hub — same deal
     if (isEsportsMarket(m)) return false;
     // TER/BTC rounds that locked with zero bets: nothing for anyone to watch,
@@ -1063,6 +1071,14 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
+    // UCL banner hidden until the 2026/27 season starts — remove `false &&` to re-enable
+    if (false && banners.sports) {
+      cards.splice(
+        0,
+        0,
+        <UclBannerCard key="ucl-banner" onOpen={() => navigate("/ucl")} />,
+      );
+    }
     // EPL banner hidden until the 2026/27 season starts — remove `false &&` to re-enable
     if (false && banners.sports) {
       cards.splice(
@@ -1149,9 +1165,9 @@ export function PwaFeedPage({
         }
         @media (max-width: 767px) { .section-title { display: none; } }
         /* Mobile: 1 grid column — banner takes the full row */
-        .bpl-banner-card, .ufc-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
+        .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
         /* Tablet/desktop (grid is 2 or 4 cols) — banner covers two card slots */
-        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
+        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
 

@@ -149,6 +149,12 @@ const PwaEsportsPage = lazy(() =>
     default: m.EsportsHubPage,
   })),
 );
+// UCL hidden until the 2026/27 season starts — uncomment to re-enable
+// const PwaUclPage = lazy(() =>
+//   import("./pages/UclHubPage").then((m) => ({
+//     default: m.UclHubPage,
+//   })),
+// );
 const PwaBplPage = lazy(() =>
   import("./pages/BplHubPage").then((m) => ({
     default: m.BplHubPage,
@@ -2036,6 +2042,7 @@ function PwaLayout({
               </Suspense>
             }
           />
+          {/* UCL hidden until the 2026/27 season starts — restore the <Route path="/ucl"> block to re-enable */}
           <Route
             path="/bpl"
             element={
