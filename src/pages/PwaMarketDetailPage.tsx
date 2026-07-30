@@ -29,6 +29,7 @@ import { isEplMarket } from "./EplHubPage";
 import { EplMarketDetail } from "../components/EplMarketDetail";
 import { isUclMarket } from "./UclHubPage";
 import { UclMarketDetail } from "../components/UclMarketDetail";
+import { PriceMarketDetail } from "../components/PriceMarketDetail";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -224,6 +225,11 @@ export function PwaMarketDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [_disputes, setDisputes] = useState<Dispute[]>([]);
 
+  // Open the detail view at the top, not at the feed's scroll position
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [disputeError, setDisputeError] = useState<string | null>(null);
@@ -410,6 +416,29 @@ export function PwaMarketDetailPage() {
     displayMarket.description ||
     `Predict the outcome of "${displayMarket.title}" and win real money on Oro.`;
   const pageUrl = `https://oro.fun/markets/${displayMarket.id}`;
+
+  // TER / BTC price markets get the dedicated trading-styled detail view with
+  // the live chart, price-to-beat and Higher/Lower.
+  if (
+    displayMarket.externalSource === "ter" ||
+    displayMarket.externalSource === "btc"
+  ) {
+    return (
+      <PriceMarketDetail
+        market={displayMarket}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+      />
+    );
+  }
 
   // UFC markets get the dedicated /ufc-styled detail view
   if (isUfcMarket(displayMarket)) {

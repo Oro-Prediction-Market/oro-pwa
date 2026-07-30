@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, type FC } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
@@ -48,6 +49,7 @@ interface PwaMarketCardProps {
 
 export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
   ({ market, onBet, userPickedOutcomeId }) => {
+    const navigate = useNavigate();
     const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
     const isUpcoming = market.status === "upcoming";
@@ -151,8 +153,9 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
             )}
           </div>
 
-          {/* Title */}
+          {/* Title — tappable → open market detail */}
           <h3
+            onClick={() => navigate(`/market/${market.id}`)}
             style={{
               fontSize: "0.95rem",
               fontWeight: 800,
@@ -165,6 +168,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               WebkitBoxOrient: "vertical",
               fontFamily: "var(--font-display)",
               letterSpacing: "-0.01em",
+              cursor: "pointer",
             }}
           >
             {market.title}
