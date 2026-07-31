@@ -33,7 +33,9 @@ function calcWin(market: Market, outcomeId: string, bet: number): number {
   const newTotalPool = totalPool + bet;
   const houseEdge = Number(market.houseEdgePct) / 100;
   if (newOutcomePool <= 0) return 0;
-  return (bet / newOutcomePool) * newTotalPool * (1 - houseEdge);
+  const parimutuel = (bet / newOutcomePool) * newTotalPool * (1 - houseEdge);
+  // Winners are guaranteed a 1.05x floor (funded by the house edge at settlement).
+  return Math.max(parimutuel, bet * 1.05);
 }
 
 export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
