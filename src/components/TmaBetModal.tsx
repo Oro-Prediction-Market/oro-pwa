@@ -967,7 +967,7 @@ export function TmaBetModal({
                         letterSpacing: "0.06em",
                       }}
                     >
-                      You'll win
+                      Est. payout
                     </div>
                     <div
                       style={{
@@ -1016,6 +1016,21 @@ export function TmaBetModal({
                   </div>
                 </div>
               ) : null}
+
+              {isValidAmount && !poolEmpty && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-subtle)",
+                    marginTop: -8,
+                    marginBottom: 8,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Estimate only — the winning pool is shared among all winners, so
+                  your payout changes as more people bet and is final at close.
+                </div>
+              )}
 
               {isValidAmount && (
                 <PayoutBreakdown
