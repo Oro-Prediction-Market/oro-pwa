@@ -6,13 +6,18 @@ import {
   getMarket,
   getDisputes,
   submitDispute,
+  getDisputeInfo,
   bustCache,
   getTerPrice,
   Market,
   Dispute,
+  DisputeInfo,
+  DisputeSide,
+  SubmitDisputePayload,
   TerPrice,
 } from "@shared/api/client";
 import { PwaBetForm } from "../components/PwaBetForm";
+import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { useMarketSocket } from "../hooks/useMarketSocket";
@@ -230,7 +235,10 @@ export function PwaMarketDetailPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
+  const [disputeInfo, setDisputeInfo] = useState<DisputeInfo | null>(null);
   const [disputeReason, setDisputeReason] = useState("");
+  const [disputeBond, setDisputeBond] = useState(10);
+  const [disputeSide, setDisputeSide] = useState<DisputeSide>("object");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [disputeError, setDisputeError] = useState<string | null>(null);
   const [disputeSuccess, setDisputeSuccess] = useState(false);
@@ -313,27 +321,61 @@ export function PwaMarketDetailPage() {
     getDisputes(id)
       .then(setDisputes)
       .catch(() => {});
+    getDisputeInfo(id)
+      .then((info) => {
+        setDisputeInfo(info);
+        if (!info.bondFixed)
+          setDisputeBond((b) => (b < info.minBond ? info.minBond : b));
+      })
+      .catch(() => {});
   }, [id, market?.status]);
 
   const handleSubmitDispute = async () => {
     if (!id) return;
     if (!disputeReason.trim()) {
-      setDisputeError("Please explain why the proposed outcome is incorrect.");
+      setDisputeError(
+        disputeSide === "support"
+          ? "Please explain why the proposed outcome is correct."
+          : "Please explain why the proposed outcome is incorrect.",
+      );
+      return;
+    }
+    const bondFixed = !!disputeInfo?.bondFixed;
+    if (!bondFixed && disputeBond < (disputeInfo?.minBond ?? 10)) {
+      setDisputeError(`The minimum bond is Nu ${disputeInfo?.minBond ?? 10}.`);
       return;
     }
     setDisputeSubmitting(true);
     setDisputeError(null);
     try {
-      await submitDispute(id, { reason: disputeReason });
+      const payload: SubmitDisputePayload = {
+        reason: disputeReason,
+        side: disputeSide,
+      };
+      if (!bondFixed && disputeSide === "object")
+        payload.bondAmount = disputeBond;
+      await submitDispute(id, payload);
       setDisputeSuccess(true);
       getDisputes(id)
         .then(setDisputes)
+        .catch(() => {});
+      getDisputeInfo(id)
+        .then(setDisputeInfo)
         .catch(() => {});
     } catch (e: any) {
       setDisputeError(e.message || "Failed to submit dispute");
     } finally {
       setDisputeSubmitting(false);
     }
+  };
+
+  // Bundle the resolution-contest controls for each themed detail form.
+  const disputeContest = {
+    info: disputeInfo,
+    bond: disputeBond,
+    setBond: setDisputeBond,
+    side: disputeSide,
+    setSide: setDisputeSide,
   };
 
   if (loading) return <LoadingScreen message="Syncing market..." />;
@@ -436,6 +478,7 @@ export function PwaMarketDetailPage() {
         disputeSubmitting={disputeSubmitting}
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
       />
     );
   }
@@ -455,6 +498,7 @@ export function PwaMarketDetailPage() {
         disputeSubmitting={disputeSubmitting}
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
       />
     );
   }
@@ -474,6 +518,7 @@ export function PwaMarketDetailPage() {
         disputeSubmitting={disputeSubmitting}
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
       />
     );
   }
@@ -493,6 +538,7 @@ export function PwaMarketDetailPage() {
         disputeSubmitting={disputeSubmitting}
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
       />
     );
   }
@@ -512,6 +558,7 @@ export function PwaMarketDetailPage() {
         disputeSubmitting={disputeSubmitting}
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
       />
     );
   }
@@ -1315,50 +1362,7 @@ export function PwaMarketDetailPage() {
                       gap: "var(--space-md)",
                     }}
                   >
-                    <div
-                      style={{
-                        padding: "12px 16px",
-                        borderRadius: "12px",
-                        background: "rgba(245,158,11,0.08)",
-                        border: "1px solid rgba(245,158,11,0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "var(--color-warning)",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        Dispute Bond
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "1.1rem",
-                          fontWeight: 900,
-                          color: "var(--color-warning)",
-                        }}
-                      >
-                        Nu 10
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      This bond is locked when you raise an objection. You get
-                      it back + a reward if the admin agrees the outcome was
-                      wrong. You lose it if the admin upholds their decision.
-                    </div>
+                    <DisputeContestFields {...disputeContest} light />
                     <div>
                       <label
                         style={{
@@ -1377,7 +1381,11 @@ export function PwaMarketDetailPage() {
                         value={disputeReason}
                         onChange={(e) => setDisputeReason(e.target.value)}
                         rows={4}
-                        placeholder="Explain why the proposed outcome is incorrect..."
+                        placeholder={
+                          disputeSide === "support"
+                            ? "Explain why the proposed outcome is correct..."
+                            : "Explain why the proposed outcome is incorrect..."
+                        }
                         style={{
                           width: "100%",
                           boxSizing: "border-box",
@@ -1440,7 +1448,11 @@ export function PwaMarketDetailPage() {
                         (e.currentTarget.style.transform = "translateY(0)")
                       }
                     >
-                      {disputeSubmitting ? "Submitting..." : "Submit Dispute"}
+                      {disputeSubmitting
+                        ? "Submitting..."
+                        : disputeSide === "support"
+                          ? "Defend Outcome"
+                          : "Submit Objection"}
                     </button>
                     <div
                       style={{
