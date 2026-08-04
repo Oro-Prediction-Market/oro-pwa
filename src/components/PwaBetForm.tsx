@@ -129,6 +129,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const winAmount = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount)
     : 0;
+  // Live parimutuel multiple on this side. Falls as more money backs the same
+  // outcome — the "lock it in now" hook, specific to this stake, no crowd needed.
+  const winMultiple = betAmount > 0 ? winAmount / betAmount : 0;
   const show2Outcomes = market.outcomes.length === 2;
 
   const hasEnoughBalance = balance !== null && balance >= betAmount;
@@ -353,6 +356,28 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
               >
                 {winAmount > 0 ? `Nu ${Math.floor(winAmount)}` : "—"}
               </div>
+              {winMultiple > 0 && (
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: "var(--color-success)",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {winMultiple.toFixed(2)}× now
+                  <span
+                    style={{
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {" "}
+                    · drops as more back this side
+                  </span>
+                </div>
+              )}
             </div>
             <div style={{ textAlign: "right" }}>
               <div
