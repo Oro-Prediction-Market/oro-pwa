@@ -5,17 +5,23 @@ import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   getMarket,
   getDisputes,
+  getMyDispute,
+  getMyBets,
   submitDispute,
   getDisputeInfo,
   bustCache,
   getTerPrice,
   Market,
   Dispute,
+  MyDispute,
+  Bet,
   DisputeInfo,
   DisputeSide,
   SubmitDisputePayload,
   TerPrice,
 } from "@shared/api/client";
+import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
+import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { PwaBetForm } from "../components/PwaBetForm";
 import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
@@ -229,6 +235,8 @@ export function PwaMarketDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_disputes, setDisputes] = useState<Dispute[]>([]);
+  const [myDispute, setMyDispute] = useState<MyDispute | null>(null);
+  const [myBets, setMyBets] = useState<Bet[]>([]);
 
   // Open the detail view at the top, not at the feed's scroll position
   useEffect(() => {
@@ -328,6 +336,25 @@ export function PwaMarketDetailPage() {
           setDisputeBond((b) => (b < info.minBond ? info.minBond : b));
       })
       .catch(() => {});
+  }, [id, market?.status]);
+
+  // Load the caller's OWN dispute result once the market is settled, so we can
+  // show them what they won or lost. No-ops silently when signed out or when no
+  // objection was ever filed (endpoint returns null / 401).
+  useEffect(() => {
+    if (!id || !market) return;
+    const settled = market.status === "settled" || market.status === "resolved";
+    if (!settled) {
+      setMyDispute(null);
+      return;
+    }
+    getMyDispute(id)
+      .then(setMyDispute)
+      .catch(() => setMyDispute(null));
+    // The caller's own bets on this market — powers the "Your position" card.
+    getMyBets()
+      .then((all) => setMyBets(all.filter((b) => b.marketId === id)))
+      .catch(() => setMyBets([]));
   }, [id, market?.status]);
 
   const handleSubmitDispute = async () => {
@@ -479,6 +506,8 @@ export function PwaMarketDetailPage() {
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
       />
     );
   }
@@ -499,6 +528,8 @@ export function PwaMarketDetailPage() {
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
       />
     );
   }
@@ -519,6 +550,8 @@ export function PwaMarketDetailPage() {
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
       />
     );
   }
@@ -539,6 +572,8 @@ export function PwaMarketDetailPage() {
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
       />
     );
   }
@@ -559,6 +594,8 @@ export function PwaMarketDetailPage() {
         disputeError={disputeError}
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
       />
     );
   }
@@ -1693,6 +1730,10 @@ export function PwaMarketDetailPage() {
                   </p>
                 </div>
               </div>
+
+              <YourPositionCard bets={myBets} resolved={true} />
+
+              <DisputeResultBanner dispute={myDispute} />
             </div>
           )}
         </div>
