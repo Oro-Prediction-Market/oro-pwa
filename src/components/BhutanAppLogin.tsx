@@ -13,7 +13,11 @@
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { CheckCircle } from "lucide-react";
-import { loginWithBhutanApp } from "@shared/api/client";
+import {
+  loginWithBhutanApp,
+  verifyBhutanAppMerge,
+  isBhutanAppOtpRequired,
+} from "@shared/api/client";
 import { isMobileDevice } from "@/lib/device-detection";
 
 const BHUTAN_APP_BASE = "https://service.bhutanapp.tech/svc/auth";
@@ -128,9 +132,15 @@ interface Props {
 export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
   const mobile = isMobileDevice();
 
-  type Phase = "init" | "ready" | "polling" | "success" | "error";
+  type Phase = "init" | "ready" | "polling" | "otp" | "success" | "error";
   const [phase, setPhase] = useState<Phase>("init");
   const [error, setError] = useState<string | null>(null);
+  // Protected-account merge: a one-time code was sent to the DK-registered phone.
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [maskedPhone, setMaskedPhone] = useState<string>("");
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSubmitting, setOtpSubmitting] = useState(false);
   const [qrData, setQrData] = useState<string | null>(null);
   const [deepLink, setDeepLink] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -239,7 +249,7 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
 
           try {
             const referralCode = sessionStorage.getItem("oro_pending_referral") ?? undefined;
-            await loginWithBhutanApp({
+            const res = await loginWithBhutanApp({
               token: extractToken(data.token),
               externalUserId: bhutanAppUuid || cid,
               fullName: data.user?.name ?? "",
@@ -252,8 +262,19 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
             localStorage.removeItem("bhutan_auth_session_id");
             localStorage.removeItem("bhutan_auth_session_type");
             sessionIdRef.current = null; // prevent cancel-on-unmount
-            setPhase("success");
-            setTimeout(() => onSuccessRef.current(), 800);
+
+            // Protected existing account — the server sent a one-time code to
+            // the DK-registered phone. Collect it before we're logged in.
+            if (isBhutanAppOtpRequired(res)) {
+              setChallengeId(res.challengeId);
+              setMaskedPhone(res.maskedPhone);
+              setOtpInput("");
+              setOtpError(null);
+              setPhase("otp");
+            } else {
+              setPhase("success");
+              setTimeout(() => onSuccessRef.current(), 800);
+            }
           } catch (e: any) {
             const msg = e.message || "Login failed";
             setError(msg);
@@ -308,6 +329,21 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
     onCancelRef.current();
   }
 
+  async function handleVerifyOtp() {
+    if (!challengeId || otpInput.length < 4 || otpSubmitting) return;
+    setOtpSubmitting(true);
+    setOtpError(null);
+    try {
+      await verifyBhutanAppMerge(challengeId, otpInput.trim());
+      setPhase("success");
+      setTimeout(() => onSuccessRef.current(), 800);
+    } catch (e: any) {
+      setOtpError(e.message || "Invalid code. Please try again.");
+    } finally {
+      setOtpSubmitting(false);
+    }
+  }
+
   function formatTime(s: number) {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
   }
@@ -356,6 +392,65 @@ export function BhutanAppLogin({ onSuccess, onCancel, onError }: Props) {
             style={primaryBtn}
           >
             Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── OTP: protected-account merge (existing verified account) ──────────────
+  if (phase === "otp") {
+    return (
+      <div style={wrap}>
+        <p style={{ fontWeight: 800, fontSize: 15, margin: 0 }}>
+          Confirm it's you
+        </p>
+        <p style={{ ...muted, maxWidth: 300 }}>
+          This CID already has an Oro account. Enter the 6-digit code we sent to
+          your DK Bank phone{maskedPhone ? ` (${maskedPhone})` : ""} to finish
+          signing in.
+        </p>
+        <input
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={6}
+          value={otpInput}
+          onChange={(e) => {
+            setOtpInput(e.target.value.replace(/\D/g, ""));
+            setOtpError(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleVerifyOtp();
+          }}
+          placeholder="______"
+          autoFocus
+          style={{
+            width: 180,
+            textAlign: "center",
+            letterSpacing: "0.5em",
+            fontSize: 22,
+            fontWeight: 800,
+            padding: "10px 12px",
+            borderRadius: 12,
+            border: "1px solid var(--glass-border)",
+            background: "var(--bg-secondary, transparent)",
+            color: "var(--text-main, inherit)",
+          }}
+        />
+        {otpError && <div style={errorBox}>{otpError}</div>}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={handleCancel} style={ghostBtn}>
+            Cancel
+          </button>
+          <button
+            onClick={handleVerifyOtp}
+            disabled={otpInput.length < 4 || otpSubmitting}
+            style={{
+              ...primaryBtn,
+              opacity: otpInput.length < 4 || otpSubmitting ? 0.6 : 1,
+            }}
+          >
+            {otpSubmitting ? "Verifying…" : "Verify & sign in"}
           </button>
         </div>
       </div>

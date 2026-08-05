@@ -250,6 +250,23 @@ export async function loginWithDKBank(
   return result;
 }
 
+/**
+ * A protected first-time merge (an existing verified account) returns this
+ * instead of a token: the server sent a one-time code to the DK-registered
+ * phone, and login completes via {@link verifyBhutanAppMerge}.
+ */
+export interface BhutanAppOtpRequired {
+  requiresOtp: true;
+  challengeId: string;
+  maskedPhone: string;
+}
+
+export function isBhutanAppOtpRequired(
+  r: AuthResponse | BhutanAppOtpRequired,
+): r is BhutanAppOtpRequired {
+  return (r as BhutanAppOtpRequired).requiresOtp === true;
+}
+
 export async function loginWithBhutanApp(payload: {
   token: string;
   externalUserId: string;
@@ -258,10 +275,32 @@ export async function loginWithBhutanApp(payload: {
   phoneNumber?: string;
   email?: string;
   referralCode?: string;
-}): Promise<AuthResponse> {
-  const result = await request<AuthResponse>("/auth/bhutanapp", {
+}): Promise<AuthResponse | BhutanAppOtpRequired> {
+  const result = await request<AuthResponse | BhutanAppOtpRequired>(
+    "/auth/bhutanapp",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  // A protected-account merge returns no token yet — don't store anything.
+  if (!isBhutanAppOtpRequired(result)) {
+    setToken(result.token);
+  }
+  return result;
+}
+
+/**
+ * Complete a protected BhutanApp merge by submitting the one-time code sent to
+ * the DK-registered phone. Returns a normal auth session on success.
+ */
+export async function verifyBhutanAppMerge(
+  challengeId: string,
+  otp: string,
+): Promise<AuthResponse> {
+  const result = await request<AuthResponse>("/auth/bhutanapp/verify-merge", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ challengeId, otp }),
   });
   setToken(result.token);
   return result;
