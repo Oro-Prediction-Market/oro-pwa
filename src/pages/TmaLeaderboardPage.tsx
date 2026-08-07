@@ -18,6 +18,7 @@ import {
   type Transaction,
 } from "@shared/api/client";
 import { BetShareCard } from "@shared/components/BetShareCard";
+import { PublicProfileDialog } from "@/components/PublicProfileDialog";
 import {
   Trophy,
   Flame,
@@ -1401,6 +1402,7 @@ export const TmaLeaderboardPage: FC = () => {
   const [me, setMe] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
   const [showMyStats, setShowMyStats] = useState(false);
   const [showSeasons, setShowSeasons] = useState(false);
   const [visibleCount, setVisibleCount] = useState(20);
@@ -1692,7 +1694,7 @@ export const TmaLeaderboardPage: FC = () => {
                 <TableRow
                   key={entry.id}
                   entry={entry}
-                  onTap={entry.isMe ? () => setShowMyStats(true) : undefined}
+                  onTap={entry.isMe ? () => setShowMyStats(true) : () => { window.location.href = `/profile/${entry.id}`; }}
                 />
               ))}
 
@@ -1852,6 +1854,7 @@ export const TmaLeaderboardPage: FC = () => {
           </div>
         </div>
       )}
+      <PublicProfileDialog userId={profileUserId} onClose={() => setProfileUserId(null)} />
     </Page>
   );
 };

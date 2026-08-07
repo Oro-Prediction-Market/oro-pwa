@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
+import { MarketShareSheet } from "@/components/MarketShareSheet";
 
 function outcomeColor(rank: number, total: number, resolved: boolean): string {
   if (resolved) {
@@ -58,6 +59,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
     const navigate = useNavigate();
     const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
     const isUpcoming = market.status === "upcoming";
     const isClosed = market.status === "closed";
     const isResolving = market.status === "resolving";
@@ -642,16 +644,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const url = `${window.location.origin}/market/${market.id}`;
-                  const text = `Check out this prediction market: ${market.title}`;
-                  if (navigator.share) {
-                    navigator
-                      .share({ title: market.title, text, url })
-                      .catch(() => {});
-                  } else {
-                    navigator.clipboard.writeText(url);
-                    alert("Link copied to clipboard!");
-                  }
+                  setShareOpen(true);
                 }}
                 style={{
                   background: "var(--bg-secondary)",
@@ -697,6 +690,12 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
             </div>
           </div>
         </div>
+        <MarketShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          market={market}
+          accentColor={getCategoryVisual(market.category).accentColor}
+        />
       </div>
     );
   },

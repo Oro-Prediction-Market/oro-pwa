@@ -114,6 +114,7 @@ const PwaLeaderboardPage = lazy(() =>
     default: m.TmaLeaderboardPage,
   })),
 );
+const PublicProfilePage = lazy(() => import("@/pages/PublicProfilePage").then((m) => ({ default: m.PublicProfilePage })));
 const PwaChallengesPage = lazy(() =>
   import("@/pages/TmaChallengesPage").then((m) => ({
     default: m.TmaChallengesPage,
@@ -149,23 +150,21 @@ const PwaEsportsPage = lazy(() =>
     default: m.EsportsHubPage,
   })),
 );
-// UCL hidden until the 2026/27 season starts — uncomment to re-enable
-// const PwaUclPage = lazy(() =>
-//   import("./pages/UclHubPage").then((m) => ({
-//     default: m.UclHubPage,
-//   })),
-// );
+const PwaUclPage = lazy(() =>
+  import("./pages/UclHubPage").then((m) => ({
+    default: m.UclHubPage,
+  })),
+);
 const PwaBplPage = lazy(() =>
   import("./pages/BplHubPage").then((m) => ({
     default: m.BplHubPage,
   })),
 );
-// EPL hidden until the 2026/27 season starts — uncomment to re-enable
-// const PwaEplPage = lazy(() =>
-//   import("./pages/EplHubPage").then((m) => ({
-//     default: m.EplHubPage,
-//   })),
-// );
+const PwaEplPage = lazy(() =>
+  import("./pages/EplHubPage").then((m) => ({
+    default: m.EplHubPage,
+  })),
+);
 const PwaWalletTmaPage = lazy(() =>
   import("@/pages/TmaWalletPage").then((m) => ({
     default: () => <m.TmaWalletPage isPwa />,
@@ -1896,6 +1895,7 @@ function PwaLayout({
               </Suspense>
             }
           />
+          <Route path="/profile/:id" element={<Suspense fallback={<div>Loading…</div>}><PublicProfilePage /></Suspense>} />
           <Route
             path="/challenges"
             element={
@@ -2042,7 +2042,26 @@ function PwaLayout({
               </Suspense>
             }
           />
-          {/* UCL hidden until the 2026/27 season starts — restore the <Route path="/ucl"> block to re-enable */}
+          <Route
+            path="/ucl"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaUclPage />
+              </Suspense>
+            }
+          />
           <Route
             path="/bpl"
             element={
@@ -2063,7 +2082,26 @@ function PwaLayout({
               </Suspense>
             }
           />
-          {/* EPL hidden until the 2026/27 season starts — restore the <Route path="/epl"> block to re-enable */}
+          <Route
+            path="/epl"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaEplPage />
+              </Suspense>
+            }
+          />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 

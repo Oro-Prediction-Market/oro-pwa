@@ -26,7 +26,9 @@ import { PwaBetForm } from "../components/PwaBetForm";
 import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useMarketSocket } from "../hooks/useMarketSocket";
+import { useAuth } from "@shared/hooks/useAuth";
 import {
   UnderdogBanner,
   getUnderdogLabel,
@@ -231,6 +233,9 @@ function TerPricePanel({ market }: { market: Market }) {
 
 export function PwaMarketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const referralId = String(user?.telegramId ?? user?.id ?? "");
+  const [shareOpen, setShareOpen] = useState(false);
   const [market, setMarket] = useState<Market | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -495,6 +500,7 @@ export function PwaMarketDetailPage() {
     return (
       <PriceMarketDetail
         market={displayMarket}
+        referralId={referralId}
         onBetPlaced={refreshMarket}
         isResolving={isResolving}
         proposedOutcome={proposedOutcome}
@@ -517,6 +523,7 @@ export function PwaMarketDetailPage() {
     return (
       <UfcMarketDetail
         market={displayMarket}
+        referralId={referralId}
         onBetPlaced={refreshMarket}
         isResolving={isResolving}
         proposedOutcome={proposedOutcome}
@@ -539,6 +546,7 @@ export function PwaMarketDetailPage() {
     return (
       <EsportsMarketDetail
         market={displayMarket}
+        referralId={referralId}
         onBetPlaced={refreshMarket}
         isResolving={isResolving}
         proposedOutcome={proposedOutcome}
@@ -561,6 +569,7 @@ export function PwaMarketDetailPage() {
     return (
       <UclMarketDetail
         market={displayMarket}
+        referralId={referralId}
         onBetPlaced={refreshMarket}
         isResolving={isResolving}
         proposedOutcome={proposedOutcome}
@@ -583,6 +592,7 @@ export function PwaMarketDetailPage() {
     return (
       <EplMarketDetail
         market={displayMarket}
+        referralId={referralId}
         onBetPlaced={refreshMarket}
         isResolving={isResolving}
         proposedOutcome={proposedOutcome}
@@ -679,18 +689,7 @@ export function PwaMarketDetailPage() {
         </Link>
 
         <button
-          onClick={() => {
-            const url = window.location.href;
-            const text = `Check out this prediction market: ${market.title}`;
-            if (navigator.share) {
-              navigator
-                .share({ title: market.title, text, url })
-                .catch(() => {});
-            } else {
-              navigator.clipboard.writeText(url);
-              alert("Link copied to clipboard!");
-            }
-          }}
+          onClick={() => setShareOpen(true)}
           style={{
             background: "var(--bg-card)",
             border: "1px solid var(--border)",
@@ -734,6 +733,13 @@ export function PwaMarketDetailPage() {
           </svg>
           {bp !== "mobile" && "Share"}
         </button>
+        <MarketShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          market={displayMarket}
+          accentColor={getCategoryVisual(displayMarket.category).accentColor}
+          referralId={referralId}
+        />
       </div>
 
       <div

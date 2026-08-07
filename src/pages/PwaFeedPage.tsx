@@ -1408,6 +1408,7 @@ export function PwaFeedPage({
               key={`group-${market.groupId}`}
               markets={siblings}
               onBet={handleBetClick}
+              referralId={String(me?.telegramId ?? me?.id ?? "")}
             />
           );
         }
@@ -1465,16 +1466,14 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
-    // UCL banner hidden until the 2026/27 season starts — remove `false &&` to re-enable
-    if (false && banners.sports) {
+    if (banners.sports) {
       cards.splice(
         0,
         0,
         <UclBannerCard key="ucl-banner" onOpen={() => navigate("/ucl")} />,
       );
     }
-    // EPL banner hidden until the 2026/27 season starts — remove `false &&` to re-enable
-    if (false && banners.sports) {
+    if (banners.sports) {
       cards.splice(
         0,
         0,
