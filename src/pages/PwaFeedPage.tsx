@@ -1466,14 +1466,16 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
-    if (banners.sports) {
+    // UCL hidden until the 2026/27 season starts — remove `false &&` to re-enable
+    if (false && banners.sports) {
       cards.splice(
         0,
         0,
         <UclBannerCard key="ucl-banner" onOpen={() => navigate("/ucl")} />,
       );
     }
-    if (banners.sports) {
+    // EPL hidden until the 2026/27 season starts — remove `false &&` to re-enable
+    if (false && banners.sports) {
       cards.splice(
         0,
         0,

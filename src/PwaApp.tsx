@@ -150,21 +150,23 @@ const PwaEsportsPage = lazy(() =>
     default: m.EsportsHubPage,
   })),
 );
-const PwaUclPage = lazy(() =>
-  import("./pages/UclHubPage").then((m) => ({
-    default: m.UclHubPage,
-  })),
-);
+// UCL hidden until the 2026/27 season starts — uncomment to re-enable
+// const PwaUclPage = lazy(() =>
+//   import("./pages/UclHubPage").then((m) => ({
+//     default: m.UclHubPage,
+//   })),
+// );
 const PwaBplPage = lazy(() =>
   import("./pages/BplHubPage").then((m) => ({
     default: m.BplHubPage,
   })),
 );
-const PwaEplPage = lazy(() =>
-  import("./pages/EplHubPage").then((m) => ({
-    default: m.EplHubPage,
-  })),
-);
+// EPL hidden until the 2026/27 season starts — uncomment to re-enable
+// const PwaEplPage = lazy(() =>
+//   import("./pages/EplHubPage").then((m) => ({
+//     default: m.EplHubPage,
+//   })),
+// );
 const PwaWalletTmaPage = lazy(() =>
   import("@/pages/TmaWalletPage").then((m) => ({
     default: () => <m.TmaWalletPage isPwa />,
@@ -2042,6 +2044,7 @@ function PwaLayout({
               </Suspense>
             }
           />
+          {/* UCL hidden until the 2026/27 season starts — uncomment to re-enable
           <Route
             path="/ucl"
             element={
@@ -2061,7 +2064,7 @@ function PwaLayout({
                 <PwaUclPage />
               </Suspense>
             }
-          />
+          /> */}
           <Route
             path="/bpl"
             element={
@@ -2082,6 +2085,7 @@ function PwaLayout({
               </Suspense>
             }
           />
+          {/* EPL hidden until the 2026/27 season starts — uncomment to re-enable
           <Route
             path="/epl"
             element={
@@ -2101,7 +2105,7 @@ function PwaLayout({
                 <PwaEplPage />
               </Suspense>
             }
-          />
+          /> */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
