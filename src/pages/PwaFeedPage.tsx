@@ -1408,7 +1408,6 @@ export function PwaFeedPage({
               key={`group-${market.groupId}`}
               markets={siblings}
               onBet={handleBetClick}
-              referralId={String(me?.telegramId ?? me?.id ?? "")}
             />
           );
         }

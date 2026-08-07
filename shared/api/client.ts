@@ -7,7 +7,6 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 // JWT lives only in memory — never persisted to localStorage to prevent XSS token theft.
 // Session is restored on page reload via the httpOnly "oro_auth" cookie + GET /auth/refresh.
 let _token: string | null = null;
-let _refreshInFlight: Promise<{ token: string; user: any } | null> | null = null;
 
 export function setToken(token: string) {
   _token = token;
@@ -27,24 +26,22 @@ export function clearToken() {
  * Returns null if no valid session exists.
  */
 export async function refreshAuth(): Promise<{ token: string; user: any } | null> {
-  // App shell and auth hooks can mount together (and twice in Strict Mode).
-  // Share one request so that never becomes a refresh-request burst.
-  if (_refreshInFlight) return _refreshInFlight;
-  _refreshInFlight = (async () => {
-    try {
-      let res = await fetch(`${API_URL}/auth/refresh`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      if (res.status === 429) {
-        const seconds = Math.max(1, Number(res.headers.get("retry-after")) || 1);
-        await new Promise((resolve) => window.setTimeout(resolve, seconds * 1000));
-        res = await fetch(`${API_URL}/auth/refresh`, { method: "GET", credentials: "include", headers: { "Content-Type": "application/json" } });
-      }
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data?.token) { setToken(data.token); return data; }
-      return null;
-    } catch { return null; }
-  })();
-  try { return await _refreshInFlight; } finally { _refreshInFlight = null; }
+  try {
+    const res = await fetch(`${API_URL}/auth/refresh`, {
+      method: "GET",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data?.token) {
+      setToken(data.token);
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -212,7 +209,6 @@ export interface AuthUser {
   boostReady?: boolean;
   // Referrals
   referralCount?: number;
-  featuredAchievementIds?: string[];
 }
 
 export interface AuthResponse {
@@ -760,21 +756,6 @@ export function getMyResults(): Promise<Bet[]> {
 export function getMe(): Promise<AuthUser> {
   return request<AuthUser>("/users/me");
 }
-export function setFeaturedAchievements(achievementIds: string[]): Promise<{ featuredAchievementIds: string[] }> {
-  return request("/users/me/featured-achievements", { method: "POST", body: JSON.stringify({ achievementIds }) });
-}
-
-export interface PublicProfile {
-  id: string; firstName: string | null; lastName: string | null; username: string | null;
-  photoUrl: string | null; reputationTier: string; reputationScore: number | null;
-  totalPredictions: number; correctPredictions: number; winRate: number; rank: number | null;
-  streak: number; contrarianBadge: string | null; contrarianWins: number; joinedAt: string;
-  featuredAchievementIds?: string[];
-  recentCalls?: Array<{ id: string; marketTitle: string; outcomeLabel: string; status: "won" | "lost" | "refunded"; payout: number | null; placedAt: string }>;
-}
-export function getPublicProfile(id: string): Promise<PublicProfile> {
-  return request<PublicProfile>(`/users/profiles/${encodeURIComponent(id)}`);
-}
 
 export function getMyTransactions(
   type?: Transaction["type"],
@@ -1170,3 +1151,4 @@ export interface UclBracket {
 export function getUclBracket(): Promise<UclBracket> {
   return request<UclBracket>("/ucl/bracket");
 }
+

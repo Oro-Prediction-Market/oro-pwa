@@ -8,7 +8,6 @@ import {
   type AuthUser,
 } from "@shared/api/client";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
-import { PublicProfileDialog } from "@/components/PublicProfileDialog";
 import {
   Medal,
   TrendingUp,
@@ -60,7 +59,6 @@ export function PwaLeaderboardPage() {
   const [currentSeason, setCurrentSeason] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -256,9 +254,9 @@ export function PwaLeaderboardPage() {
                     perspective: "1000px",
                   }}
                 >
-                  <EnhancedPodiumCard entry={top3[1]} rank={2} onTap={() => setProfileUserId(top3[1].id)} />
-                  <EnhancedPodiumCard entry={top3[0]} rank={1} featured onTap={() => setProfileUserId(top3[0].id)} />
-                  <EnhancedPodiumCard entry={top3[2]} rank={3} onTap={() => setProfileUserId(top3[2].id)} />
+                  <EnhancedPodiumCard entry={top3[1]} rank={2} />
+                  <EnhancedPodiumCard entry={top3[0]} rank={1} featured />
+                  <EnhancedPodiumCard entry={top3[2]} rank={3} />
                 </div>
               )}
 
@@ -325,7 +323,6 @@ export function PwaLeaderboardPage() {
                         key={entry.rank}
                         entry={entry}
                         isMe={entry.isMe}
-                        onTap={() => setProfileUserId(entry.id)}
                       />
                     ),
                   )}
@@ -633,7 +630,6 @@ export function PwaLeaderboardPage() {
           </div>
         )}
       </div>
-      <PublicProfileDialog userId={profileUserId} onClose={() => setProfileUserId(null)} />
 
       {/* ── Compact Rank Bar (shown on screens ≤1024px instead of sidebar) ── */}
       {me && !loading && (
@@ -844,19 +840,16 @@ function EnhancedPodiumCard({
   entry,
   rank,
   featured = false,
-  onTap,
 }: {
   entry: LeaderboardEntry;
   rank: number;
   featured?: boolean;
-  onTap: () => void;
 }) {
   const color = rank === 1 ? "#f59e0b" : rank === 2 ? "#94a3b8" : "#b45309";
   const label = rank === 1 ? "ST PLACE" : rank === 2 ? "ND PLACE" : "RD PLACE";
 
   return (
     <div
-      onClick={onTap}
       style={{
         display: "flex",
         flexDirection: "column",
@@ -865,7 +858,6 @@ function EnhancedPodiumCard({
         width: featured ? 220 : 180,
         animation: `podiumEntrance ${0.5 + rank * 0.1}s cubic-bezier(0.34, 1.56, 0.64, 1) forwards`,
         position: "relative",
-        cursor: "pointer",
       }}
     >
       {featured && (
@@ -989,11 +981,9 @@ function EnhancedPodiumCard({
 function PremiumEntryRow({
   entry,
   isMe,
-  onTap,
 }: {
   entry: LeaderboardEntry;
   isMe?: boolean;
-  onTap: () => void;
 }) {
   const color = tierColor(entry.reputationTier);
   const winColor =
@@ -1005,7 +995,6 @@ function PremiumEntryRow({
 
   return (
     <div
-      onClick={onTap}
       style={{
         display: "grid",
         gridTemplateColumns: "50px 1fr 100px 100px 120px",

@@ -114,7 +114,6 @@ const PwaLeaderboardPage = lazy(() =>
     default: m.TmaLeaderboardPage,
   })),
 );
-const PublicProfilePage = lazy(() => import("@/pages/PublicProfilePage").then((m) => ({ default: m.PublicProfilePage })));
 const PwaChallengesPage = lazy(() =>
   import("@/pages/TmaChallengesPage").then((m) => ({
     default: m.TmaChallengesPage,
@@ -1897,7 +1896,6 @@ function PwaLayout({
               </Suspense>
             }
           />
-          <Route path="/profile/:id" element={<Suspense fallback={<div>Loading…</div>}><PublicProfilePage /></Suspense>} />
           <Route
             path="/challenges"
             element={

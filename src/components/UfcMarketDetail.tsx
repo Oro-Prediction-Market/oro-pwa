@@ -11,8 +11,6 @@ import {
 } from "./DisputeContestFields";
 import { calcProb, calcOdds } from "../pages/WorldCupHubPage";
 import { isDrawOutcome } from "../pages/BplHubPage";
-import { MarketShareSheet } from "@/components/MarketShareSheet";
-import { marketOutcomeChances } from "@/components/MarketShareCard";
 import {
   getUfcAvatar,
   shortFighterName,
@@ -126,7 +124,6 @@ export interface UfcMarketDetailProps {
   disputeContest?: DisputeContestControls;
   myDispute?: MyDispute | null;
   myBets?: Bet[];
-  referralId?: string;
 }
 
 export function UfcMarketDetail({
@@ -144,22 +141,9 @@ export function UfcMarketDetail({
   disputeContest,
   myDispute,
   myBets,
-  referralId,
 }: UfcMarketDetailProps) {
   const navigate = useNavigate();
   const [activeBet, setActiveBet] = useState<string | null>(null);
-  const [shareOpen, setShareOpen] = useState(false);
-
-  // Share-card outcomes, themed by corner (red / blue), draw greyed.
-  const shareOutcomes = (() => {
-    let nd = 0;
-    return marketOutcomeChances(market).map((o) => {
-      if (isDrawOutcome(o.label)) return { ...o, label: "Draw", color: "#8a8f98" };
-      const color = nd === 0 ? RED : BLUE;
-      nd += 1;
-      return { ...o, color };
-    });
-  })();
 
   // Open the detail view at the top, not at the feed's scroll position
   useEffect(() => {
@@ -230,19 +214,20 @@ export function UfcMarketDetail({
             <ArrowLeft size={15} />
             Back
           </button>
-          <button onClick={() => setShareOpen(true)} style={iconBtn}>
+          <button
+            onClick={() => {
+              const url = window.location.href;
+              if (navigator.share) {
+                navigator.share({ title: market.title, url }).catch(() => {});
+              } else {
+                navigator.clipboard?.writeText(url);
+              }
+            }}
+            style={iconBtn}
+          >
             <Share2 size={15} />
             Share
           </button>
-          <MarketShareSheet
-            open={shareOpen}
-            onClose={() => setShareOpen(false)}
-            market={market}
-            accentColor={RED}
-            theme="ufc"
-            outcomes={shareOutcomes}
-            referralId={referralId}
-          />
         </div>
 
         {/* ── Masthead ── */}
