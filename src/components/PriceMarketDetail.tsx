@@ -22,6 +22,7 @@ import {
 import { TerMarketCard } from "./TerMarketCard";
 import { BtcMarketCard } from "./BtcMarketCard";
 import { useBreakpoint } from "../hooks/useBreakpoint";
+import { MarketShareSheet } from "@/components/MarketShareSheet";
 
 // Shared "trading" palette lifted straight from the TER / BTC price cards so the
 // whole detail page reads as one surface with the chart card.
@@ -51,6 +52,7 @@ interface Props {
   disputeContest?: DisputeContestControls;
   myDispute?: MyDispute | null;
   myBets?: Bet[];
+  referralId?: string;
 }
 
 const fmtDate = (d: string) =>
@@ -109,11 +111,13 @@ export const PriceMarketDetail: FC<Props> = ({
   disputeContest,
   myDispute,
   myBets,
+  referralId,
 }) => {
   const navigate = useNavigate();
   const bp = useBreakpoint();
   const isDesktop = bp === "desktop";
   const [activeBet, setActiveBet] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const isBtc = market.externalSource === "btc";
   const onBet = (_marketId: string, outcomeId: string) => setActiveBet(outcomeId);
 
@@ -426,20 +430,22 @@ export const PriceMarketDetail: FC<Props> = ({
             <ArrowLeft size={15} />
             Back
           </button>
-          <button
-            onClick={() => {
-              const url = window.location.href;
-              if (navigator.share) {
-                navigator.share({ title: market.title, url }).catch(() => {});
-              } else {
-                navigator.clipboard?.writeText(url);
-              }
-            }}
-            style={barBtn}
-          >
+          <button onClick={() => setShareOpen(true)} style={barBtn}>
             <Share2 size={15} />
             Share
           </button>
+          <MarketShareSheet
+            open={shareOpen}
+            onClose={() => setShareOpen(false)}
+            market={market}
+            accentColor={P.accent}
+            theme={isBtc ? "btc" : "ter"}
+            outcomes={[
+              { label: "UP", pct: upPct, color: C.green },
+              { label: "DOWN", pct: downPct, color: C.red },
+            ]}
+            referralId={referralId}
+          />
         </div>
 
         {/* ── Title block ── */}
