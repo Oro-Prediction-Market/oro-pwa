@@ -156,11 +156,12 @@ const PwaEsportsPage = lazy(() =>
 //     default: m.UclHubPage,
 //   })),
 // );
-const PwaBplPage = lazy(() =>
-  import("./pages/BplHubPage").then((m) => ({
-    default: m.BplHubPage,
-  })),
-);
+// BPL hub retired/hidden — uncomment to re-enable (also flip BPL_HIDDEN in BplHubPage.tsx)
+// const PwaBplPage = lazy(() =>
+//   import("./pages/BplHubPage").then((m) => ({
+//     default: m.BplHubPage,
+//   })),
+// );
 // EPL hidden until the 2026/27 season starts — uncomment to re-enable
 // const PwaEplPage = lazy(() =>
 //   import("./pages/EplHubPage").then((m) => ({
@@ -2065,6 +2066,7 @@ function PwaLayout({
               </Suspense>
             }
           /> */}
+          {/* BPL hub retired/hidden — uncomment to re-enable
           <Route
             path="/bpl"
             element={
@@ -2084,7 +2086,7 @@ function PwaLayout({
                 <PwaBplPage />
               </Suspense>
             }
-          />
+          /> */}
           {/* EPL hidden until the 2026/27 season starts — uncomment to re-enable
           <Route
             path="/epl"
