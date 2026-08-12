@@ -51,7 +51,8 @@ import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsBanner } from "@shared/components/EsportsBanner";
 import { UfcBanner } from "@shared/components/UfcBanner";
 import { UclBanner } from "@shared/components/UclBanner";
-import { isEplMarket, EPL_CLUBS } from "./EplHubPage";
+import { EplBanner } from "@shared/components/EplBanner";
+import { isEplMarket } from "./EplHubPage";
 import { isUclMarket } from "./UclHubPage";
 
 // ── Trending strip: small, distinct cards shown side-by-side, auto-scrolling ──
