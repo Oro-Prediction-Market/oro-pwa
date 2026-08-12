@@ -46,7 +46,8 @@ import {
 import { isUfcMarket } from "./UfcHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsBanner } from "@shared/components/EsportsBanner";
-import { isEplMarket, EPL_CLUBS } from "./EplHubPage";
+import { isEplMarket } from "./EplHubPage";
+import { EplBanner } from "@shared/components/EplBanner";
 
 interface BplBannerItem {
   crest: string | null;
@@ -272,218 +273,7 @@ function UfcBannerCard({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-const EPL_TICKER = EPL_CLUBS.map((c) => c.short.toUpperCase());
 
-function EplBannerCard({ onOpen }: { onOpen: () => void }) {
-  return (
-    <div
-      className="epl-banner-card"
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => e.key === "Enter" && onOpen()}
-      style={{
-        borderRadius: 16,
-        overflow: "hidden",
-        cursor: "pointer",
-        position: "relative",
-        background:
-          "radial-gradient(ellipse at 82% 6%, rgba(247,37,133,0.45) 0%, transparent 46%), radial-gradient(ellipse at 6% 96%, rgba(0,255,133,0.24) 0%, transparent 50%), radial-gradient(ellipse at 50% 128%, rgba(123,31,212,0.55) 0%, transparent 62%), linear-gradient(125deg, #16082e 0%, #3d1080 33%, #7b1fd4 66%, #c31d9c 100%)",
-        outline: "none",
-        boxShadow:
-          "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.08)",
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 320,
-      }}
-    >
-      {/* Diagonal broadcast-style slashes */}
-      <div
-        style={{
-          position: "absolute",
-          top: "-20%",
-          right: "10%",
-          width: 90,
-          height: "140%",
-          background:
-            "linear-gradient(90deg, rgba(0,255,133,0.16), rgba(0,255,133,0))",
-          transform: "skewX(-18deg)",
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          top: "-20%",
-          right: "-2%",
-          width: 46,
-          height: "140%",
-          background:
-            "linear-gradient(90deg, rgba(233,0,82,0.28), rgba(233,0,82,0))",
-          transform: "skewX(-18deg)",
-          pointerEvents: "none",
-        }}
-      />
-      {/* Moving light sheen */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: 0,
-          width: "34%",
-          background:
-            "linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.13) 50%, transparent 100%)",
-          animation: "eplSheen 3.8s ease-in-out infinite",
-          pointerEvents: "none",
-        }}
-      />
-
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          justifyContent: "center",
-          gap: 12,
-          padding: "20px 18px 12px",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        {/* Season pill */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "rgba(0,255,133,0.12)",
-            border: "1px solid rgba(0,255,133,0.45)",
-            borderRadius: 20,
-            padding: "4px 12px",
-          }}
-        >
-          <span
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: "#00ff85",
-              animation: "wcPulse 1.6s ease-in-out infinite",
-            }}
-          />
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              color: "#00ff85",
-              letterSpacing: "0.12em",
-            }}
-          >
-            2026/27 SEASON
-          </span>
-        </div>
-        <img
-          src="/premier-league-logo.svg"
-          alt="Premier League"
-          style={{
-            width: "70%",
-            maxWidth: 270,
-            height: "auto",
-            filter: "drop-shadow(0 4px 14px rgba(0,0,0,0.55))",
-          }}
-        />
-        {/* Shimmering wordmark */}
-        <div
-          style={{
-            fontSize: 26,
-            fontWeight: 900,
-            fontStyle: "italic",
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            background:
-              "linear-gradient(90deg, #00ff85 0%, #ffffff 50%, #00ff85 100%)",
-            backgroundSize: "200% auto",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            animation: "wcShimmer 3s linear infinite",
-          }}
-        >
-          Prediction Hub
-        </div>
-      </div>
-
-      {/* Bottom: scrolling club ticker + CTA */}
-      <div
-        style={{
-          background: "rgba(0,0,0,0.55)",
-          borderTop: "1px solid rgba(0,255,133,0.25)",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "9px 12px 9px 0",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: 24,
-              background:
-                "linear-gradient(to right, rgba(0,0,0,0.55), transparent)",
-              zIndex: 1,
-              pointerEvents: "none",
-            }}
-          />
-          <div
-            style={{
-              display: "flex",
-              width: "max-content",
-              animation: "wcMarquee 32s linear infinite",
-            }}
-          >
-            {[...EPL_TICKER, ...EPL_TICKER].map((name, i) => (
-              <span
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "0 10px",
-                  fontSize: 10,
-                  fontWeight: 800,
-                  color: "rgba(255,255,255,0.65)",
-                  letterSpacing: "0.08em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {name}
-                <span style={{ color: "#00ff85", fontSize: 8 }}>◆</span>
-              </span>
-            ))}
-          </div>
-        </div>
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: "#00ff85",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-        >
-          Click Here »
-        </span>
-      </div>
-    </div>
-  );
-}
 
 interface FormattedEvent {
   userName: string;
@@ -1025,9 +815,6 @@ export function PwaFeedPage({
           hasData: false,
         }));
 
-  // Hub banners follow their own category: those markets live in the hubs, not
-  // in the grid, so when a hub's category is filtered the banner is the only
-  // thing left to show (and must not be hidden by an empty grid).
   const activeCategory = selectedCategory.toLowerCase();
   const bannersAllowed = !searchQuery.trim();
   const showEsportsBanner =
@@ -1110,12 +897,12 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
-    // EPL banner hidden until the 2026/27 season starts — remove `false &&` to re-enable
+    // EPL card hidden for now — remove `false &&` to bring it back
     if (false && banners.sports) {
       cards.splice(
         0,
         0,
-        <EplBannerCard key="epl-banner" onOpen={() => navigate("/epl")} />,
+        <EplBanner key="epl-banner" className="epl-banner-card" onClick={() => navigate("/epl")} />,
       );
     }
     // BPL card hidden for now — remove `false &&` to bring it back

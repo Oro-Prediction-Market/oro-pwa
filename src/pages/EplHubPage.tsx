@@ -15,6 +15,7 @@ import { Clock, Trophy, CalendarDays, ListOrdered, BarChart3, Goal, Handshake, R
 import { isWCMarket, calcProb, calcOdds } from "./WorldCupHubPage";
 import { isBplMarket, isDrawOutcome } from "./BplHubPage";
 
+
 const TmaBetModal = lazy(() =>
   import("../components/TmaBetModal").then((m) => ({ default: m.TmaBetModal })),
 );
@@ -764,64 +765,121 @@ export function EplHubPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg-main, #0f0f0f)" }}>
-      {/* ── Header ─────────────────────────────────────────────────── */}
+      {/* ── Header / Banner ────────────────────────────────────────── */}
+      <style>{`
+        .epl-hub-banner { background-position: center 70%; }
+        @media (min-width: 768px) {
+          .epl-hub-banner { background-position: center 30%; }
+        }
+      `}</style>
       <div
+        className="epl-hub-banner"
         style={{
-          background:
-            "radial-gradient(ellipse at 85% 8%, rgba(247,37,133,0.4) 0%, transparent 46%), radial-gradient(ellipse at 8% 96%, rgba(0,255,133,0.2) 0%, transparent 50%), radial-gradient(ellipse at 55% 125%, rgba(123,31,212,0.5) 0%, transparent 60%), linear-gradient(125deg, #16082e 0%, #3d1080 38%, #7b1fd4 72%, #b81f95 100%)",
-          padding: "20px 24px 22px",
           position: "relative",
+
+          backgroundImage: "url('/epl-banner.png')",
+          backgroundSize: "cover",
+          minHeight: 170,
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.45)",
+          padding: "14px 20px",
           overflow: "hidden",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative", maxWidth: 860, margin: "0 auto", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              background: "rgba(255,255,255,0.1)",
-              border: "none",
-              borderRadius: "50%",
-              width: 36,
-              height: 36,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "#fff",
-              fontSize: 18,
-              flexShrink: 0,
-            }}
-          >
-            ←
-          </button>
-          <div style={{ flex: 1 }}>
-            <img
-              src="/premier-league-logo.svg"
-              alt="Premier League"
-              style={{ height: 36, display: "block", marginBottom: 6, filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.6))" }}
-            />
-            <div style={{ fontSize: 24, fontWeight: 900, color: "#fff", lineHeight: 1.1, fontFamily: "var(--font-display, sans-serif)" }}>
-              Prediction Hub
-            </div>
-          </div>
-        </div>
+        {/* Back button — light on the banner artwork */}
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            position: "absolute",
+            top: 14,
+            left: 14,
+            zIndex: 2,
+            background: "rgba(255,255,255,0.12)",
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: "50%",
+            width: 36,
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "#fff",
+            fontSize: 18,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            flexShrink: 0,
+          }}
+        >
+          ←
+        </button>
 
-        <div style={{ display: "flex", gap: 12, position: "relative", maxWidth: 860, margin: "18px auto 0" }}>
+        {/* Live vector logo overlay — the banner artwork's own baked-in logo
+            can get cropped away depending on viewport width (cover-fit on a
+            wide fixed image), so this guarantees it's always visible. */}
+        <img
+          src="/premier-league-logo.svg"
+          alt="Premier League"
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 62,
+            zIndex: 2,
+            height: "clamp(44px, 6vw, 84px)",
+            width: "auto",
+            filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))",
+          }}
+        />
+
+        {/* Pulse Tiles — anchored over the plain strip along the banner's bottom edge */}
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            position: "absolute",
+            zIndex: 1,
+            left: 20,
+            right: 20,
+            bottom: 14,
+            maxWidth: 860,
+            margin: "0 auto",
+          }}
+        >
           {pulseTiles.map(({ label, val }) => (
             <div
               key={label}
               style={{
                 flex: 1,
                 textAlign: "center",
-                background: "rgba(20,0,24,0.72)",
-                borderRadius: 10,
-                padding: "8px 4px",
-                border: "1px solid rgba(0,255,133,0.35)",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.35)",
+                background: "rgba(6, 2, 20, 0.68)",
+                backdropFilter: "blur(4px)",
+                borderRadius: 12,
+                padding: "10px 4px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
               }}
             >
-              <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{val}</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", fontWeight: 600 }}>{label}</div>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: "#fff",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {val}
+              </div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "rgba(255, 255, 255, 0.55)",
+                  fontWeight: 600,
+                  marginTop: 2,
+                }}
+              >
+                {label}
+              </div>
             </div>
           ))}
         </div>
