@@ -609,8 +609,8 @@ export const TmaProfilePage: FC = () => {
           </div>
         </div>
 
-        {/* ── Cards grid: streak + tier progress (two-col on desktop) ─── */}
-        <div className="profile-two-col" style={{ display: "contents" }}>
+        {/* ── Streak + tier progress: full-width rows, incl. on desktop ─── */}
+        <div className="profile-full-width" style={{ display: "contents" }}>
         {/* ── Streak Status ─────────────────────────────────────── */}
         {(user?.betStreakCount ?? 0) > 0 && (
           <button
@@ -773,7 +773,7 @@ export const TmaProfilePage: FC = () => {
           </div>
         ) : null}
 
-        </div>{/* close profile-two-col (streak + tier) */}
+        </div>{/* close profile-full-width (streak + tier) */}
 
         {/* ── Collectibles + Wallet shortcut: two-col on desktop ─── */}
         <div className="profile-two-col" style={{ display: "contents" }}>
