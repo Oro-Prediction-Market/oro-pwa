@@ -179,6 +179,10 @@ export const TmaProfilePage: FC = () => {
     !!user?.dkCid,
     user?.referralCount ?? 0,
   );
+  const profileBadgeIds = ["duel_on_fire", "duel_master", "duel_oracle"];
+  const profileBadges = profileBadgeIds
+    .map((id) => badges.find((badge) => badge.id === id))
+    .filter((badge): badge is CollectibleBadge => !!badge && badge.unlocked);
   const unlockedCount = badges.filter((b) => b.unlocked).length;
   const toggleFeatured = async (id: string) => {
     const next = featuredIds.includes(id) ? featuredIds.filter((x) => x !== id) : featuredIds.length < 3 ? [...featuredIds, id] : featuredIds;
@@ -336,7 +340,7 @@ export const TmaProfilePage: FC = () => {
               display: "flex",
               alignItems: "center",
               gap: 14,
-              marginBottom: 20,
+              marginBottom: profileBadges.length > 0 ? 14 : 20,
             }}
           >
             {/* Avatar */}
@@ -506,6 +510,13 @@ export const TmaProfilePage: FC = () => {
             </button>
           </div>
 
+          {profileBadges.length > 0 && (
+            <ProfileBadgeDock
+              badges={profileBadges}
+              onOpen={() => setCollectiblesOpen(true)}
+            />
+          )}
+
           {/* Prediction stats row */}
           <div
             style={{
@@ -572,8 +583,6 @@ export const TmaProfilePage: FC = () => {
             ))}
           </div>
         </div>
-
-        {featuredIds.length > 0 && <FeaturedBadges badges={badges.filter((badge) => featuredIds.includes(badge.id))} />}
 
         {/* ── Cards grid: streak + tier progress (two-col on desktop) ─── */}
         <div className="profile-two-col" style={{ display: "contents" }}>
@@ -1445,8 +1454,97 @@ function RecentCallTile({ call, onOpen }: { call: Bet; onOpen: () => void }) {
   return <button onClick={onOpen} style={{ margin: "8px 16px 0", borderRadius: 14, padding: "14px 16px", background: "var(--bg-card)", border: `1px solid ${color}55`, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", boxShadow: "var(--shadow-sm)", textAlign: "left" }}><div style={{ width: 40, height: 40, borderRadius: 12, background: `${color}1f`, color, display: "grid", placeItems: "center", flexShrink: 0 }}><Target size={20} /></div><div style={{ minWidth: 0, flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-main)" }}>Latest call</div><div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{call.outcome?.label ?? "Selected outcome"} · {call.status}</div></div><ChevronRight size={16} color="var(--text-muted)" /></button>;
 }
 
-function FeaturedBadges({ badges }: { badges: CollectibleBadge[] }) {
-  return <section style={{ margin: "12px 0 0", padding: "8px 10px", borderRadius: 13, background: "var(--bg-card)", border: "1px solid var(--glass-border)" }}>
-    <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(badges.length, 3)}, minmax(0, 1fr))`, gap: 6 }}>{badges.map((badge) => <div key={badge.id} style={{ width: "100%", textAlign: "center", color: "var(--text-main)", fontSize: 9, fontWeight: 700, lineHeight: 1.1 }}><div style={{ width: 50, height: 50, margin: "auto", borderRadius: 15, padding: 3, background: "#0a101b", border: "2px solid rgba(177,128,79,.72)", boxShadow: "0 3px 10px rgba(0,0,0,.32)" }}>{badge.img ? <img src={badge.img} alt={badge.name} style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 10, display: "block" }} /> : <div style={{ height: "100%", display: "grid", placeItems: "center", fontSize: 26 }}>🏆</div>}</div><div style={{ marginTop: 4 }}>{badge.name}</div></div>)}</div>
-  </section>;
+function ProfileBadgeDock({
+  badges,
+  onOpen,
+}: {
+  badges: CollectibleBadge[];
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        width: "100%",
+        margin: "0 0 16px",
+        padding: "10px",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.12)",
+        background: "rgba(3,7,18,0.2)",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        color: "#fff",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        {badges.map((badge) => (
+          <div
+            key={badge.id}
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              padding: 3,
+              background: "#050812",
+              border: `1.5px solid ${
+                badge.id === "duel_on_fire"
+                  ? "rgba(249,115,22,0.72)"
+                  : badge.id === "duel_oracle"
+                    ? "rgba(168,85,247,0.72)"
+                    : "rgba(245,158,11,0.68)"
+              }`,
+              boxShadow: "0 8px 18px rgba(0,0,0,0.28)",
+              flexShrink: 0,
+            }}
+          >
+            {badge.img ? (
+              <img
+                src={badge.img}
+                alt={badge.name}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  height: "100%",
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                {badge.icon}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.2 }}>
+          Featured duel badges
+        </div>
+        <div
+          style={{
+            marginTop: 3,
+            fontSize: 10,
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.62)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {badges.map((badge) => badge.name).join(", ")}
+        </div>
+      </div>
+      <ChevronRight size={16} color="rgba(255,255,255,0.62)" />
+    </button>
+  );
 }
