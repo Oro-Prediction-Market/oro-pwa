@@ -1126,7 +1126,8 @@ export function TmaBetModal({
                 </div>
               )}
 
-              {isValidAmount && (
+              {/* Payout breakdown hidden for now — remove `false &&` to bring it back */}
+              {false && isValidAmount && (
                 <PayoutBreakdown
                   market={market}
                   outcomeId={outcomeId}
