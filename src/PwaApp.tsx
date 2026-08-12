@@ -195,6 +195,7 @@ import {
   History,
 } from "lucide-react";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
 // Lazy-load HowItWorksModal — only needed on click
 const HowItWorksModal = lazy(() =>
   import("./components/HowItWorksModal").then((m) => ({
@@ -1767,6 +1768,7 @@ function PwaLayout({
         }}
       >
         <PageTitleBar />
+        {authed && <SystemNotificationModal />}
         <Routes>
           <Route
             path="/"
