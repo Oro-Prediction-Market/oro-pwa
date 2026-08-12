@@ -34,7 +34,8 @@ import { TerMarketCard } from "../components/TerMarketCard";
 import { BtcMarketCard } from "../components/BtcMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { useBreakpoint } from "../hooks/useBreakpoint";
-import { Flame, TrendingUp } from "lucide-react";
+import { Flame, TrendingUp, UsersRound, Vote } from "lucide-react";
+import { OracleOrbit } from "../components/OracleOrbit";
 import { useFilter } from "@shared/contexts/FilterContext";
 import { isWCMarket, getWCFlag, calcProb } from "./WorldCupHubPage";
 import { getCategoryVisual } from "@shared/helpers/visuals";
@@ -833,6 +834,7 @@ export function PwaFeedPage({
     setAvailableCategories,
     setHasTrendingMarkets,
   } = useFilter();
+  const [orbitOpen, setOrbitOpen] = useState(false);
 
   useEffect(() => {
     const loadMarkets = () => {
@@ -1468,6 +1470,102 @@ export function PwaFeedPage({
         </div>
       )}
 
+      {/* ── Ask the Crowd: community market suggestions ── */}
+      <button
+        onClick={() => setOrbitOpen(true)}
+        style={{
+          width: "100%",
+          margin: "0 0 var(--space-md)",
+          padding: "14px 16px",
+          borderRadius: 16,
+          border: "1px solid rgba(39,117,208,0.38)",
+          background:
+            "linear-gradient(135deg, rgba(39,117,208,0.18), rgba(39,117,208,0.06))",
+          boxShadow: "0 10px 24px rgba(39,117,208,0.12)",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+      >
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.08)",
+            border: "1px solid rgba(255,255,255,0.16)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            position: "relative",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
+          }}
+        >
+          <Vote size={18} color="rgba(255,255,255,0.82)" strokeWidth={2.4} />
+          <span
+            style={{
+              position: "absolute",
+              right: -5,
+              bottom: -5,
+              width: 18,
+              height: 18,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.18)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <UsersRound
+              size={10.5}
+              color="rgba(255,255,255,0.68)"
+              strokeWidth={2.5}
+            />
+          </span>
+        </div>
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            fontSize: 14,
+            fontWeight: 800,
+            color: "var(--text-main)",
+          }}
+        >
+          <span style={{ display: "block" }}>Ask the Crowd</span>
+          <span
+            style={{
+              display: "block",
+              marginTop: 3,
+              fontSize: 11.5,
+              fontWeight: 600,
+              color: "var(--text-muted)",
+            }}
+          >
+            Suggest a market for everyone to predict on
+          </span>
+        </span>
+        <span
+          style={{
+            padding: "5px 9px",
+            borderRadius: 999,
+            background: "rgba(39,117,208,0.16)",
+            color: "#60a5fa",
+            fontSize: 11,
+            fontWeight: 800,
+            flexShrink: 0,
+          }}
+        >
+          Open
+        </span>
+      </button>
+
+      <OracleOrbit isOpen={orbitOpen} onClose={() => setOrbitOpen(false)} />
+
       {(openMarkets.length > 0 || showEsportsBanner || showSportsBanners) && (
         <section style={{ marginBottom: "var(--space-xl)" }}>
           <div
@@ -1773,6 +1871,7 @@ export function PwaFeedPage({
               onOpen={(id) => navigate(`/market/${id}`)}
             />
           )}
+
 
           {renderGrid(openMarkets, {
             esports: showEsportsBanner,
