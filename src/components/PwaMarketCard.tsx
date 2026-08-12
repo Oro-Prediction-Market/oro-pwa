@@ -1,7 +1,9 @@
 import { useState, useEffect, memo, type FC } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
+import { MarketShareSheet } from "@/components/MarketShareSheet";
 
 function outcomeColor(rank: number, total: number, resolved: boolean): string {
   if (resolved) {
@@ -40,6 +42,12 @@ function useCountdown(targetAt: string | null): string {
   return label;
 }
 
+// How many outcomes a card shows before collapsing the rest behind "+N more".
+// Tuned to sit just within the height of the TER/BTC chart cards: enough to fill
+// the space next to them, but not so many that a multi-outcome market (e.g. Ballon
+// d'Or) grows taller than its neighbours and drags the whole grid row up.
+const DEFAULT_VISIBLE_OUTCOMES = 4;
+
 interface PwaMarketCardProps {
   market: Market;
   onBet: (outcomeId: string) => void;
@@ -48,8 +56,10 @@ interface PwaMarketCardProps {
 
 export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
   ({ market, onBet, userPickedOutcomeId }) => {
+    const navigate = useNavigate();
     const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
     const isUpcoming = market.status === "upcoming";
     const isClosed = market.status === "closed";
     const isResolving = market.status === "resolving";
@@ -65,16 +75,20 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
         ...o,
         pct: calcProb(market, o.id) * 100,
       }));
+      // Order outcomes by probability (which tracks the money on each side)
+      // descending, so the favourites lead and the "+N more" collapse hides the
+      // longest shots rather than whatever order they were created in.
       const sorted = [...raw].sort((a, b) => b.pct - a.pct);
-      return raw.map((o) => {
-        const rank = sorted.findIndex((s) => s.id === o.id);
+      return sorted.map((o, rank) => {
         const resolved =
           market.status === "resolved" || market.status === "settled";
-        return { ...o, color: outcomeColor(rank, raw.length, resolved) };
+        return { ...o, color: outcomeColor(rank, sorted.length, resolved) };
       });
     })();
 
-    const displayOutcomes = showAll ? sentiment : sentiment.slice(0, 2);
+    const displayOutcomes = showAll
+      ? sentiment
+      : sentiment.slice(0, DEFAULT_VISIBLE_OUTCOMES);
 
     return (
       <div
@@ -151,8 +165,9 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
             )}
           </div>
 
-          {/* Title */}
+          {/* Title — tappable → open market detail */}
           <h3
+            onClick={() => navigate(`/market/${market.id}`)}
             style={{
               fontSize: "0.95rem",
               fontWeight: 800,
@@ -165,6 +180,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               WebkitBoxOrient: "vertical",
               fontFamily: "var(--font-display)",
               letterSpacing: "-0.01em",
+              cursor: "pointer",
             }}
           >
             {market.title}
@@ -500,7 +516,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   })()}
                 </div>
 
-                {market.outcomes.length > 2 && (
+                {market.outcomes.length > DEFAULT_VISIBLE_OUTCOMES && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -528,7 +544,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   >
                     {showAll
                       ? "Show Less"
-                      : `+ ${market.outcomes.length - 2} more`}
+                      : `+ ${market.outcomes.length - DEFAULT_VISIBLE_OUTCOMES} more`}
                   </button>
                 )}
               </>
@@ -628,16 +644,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  const url = `${window.location.origin}/market/${market.id}`;
-                  const text = `Check out this prediction market: ${market.title}`;
-                  if (navigator.share) {
-                    navigator
-                      .share({ title: market.title, text, url })
-                      .catch(() => {});
-                  } else {
-                    navigator.clipboard.writeText(url);
-                    alert("Link copied to clipboard!");
-                  }
+                  setShareOpen(true);
                 }}
                 style={{
                   background: "var(--bg-secondary)",
@@ -683,6 +690,12 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
             </div>
           </div>
         </div>
+        <MarketShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          market={market}
+          accentColor={getCategoryVisual(market.category).accentColor}
+        />
       </div>
     );
   },

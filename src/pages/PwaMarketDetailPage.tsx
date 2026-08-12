@@ -5,22 +5,44 @@ import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   getMarket,
   getDisputes,
+  getMyDispute,
+  getMyBets,
   submitDispute,
+  getDisputeInfo,
   bustCache,
   getTerPrice,
   Market,
   Dispute,
+  MyDispute,
+  Bet,
+  DisputeInfo,
+  DisputeSide,
+  SubmitDisputePayload,
   TerPrice,
 } from "@shared/api/client";
+import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
+import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { PwaBetForm } from "../components/PwaBetForm";
+import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useMarketSocket } from "../hooks/useMarketSocket";
+import { useAuth } from "@shared/hooks/useAuth";
 import {
   UnderdogBanner,
   getUnderdogLabel,
 } from "../../shared/components/UnderdogBanner";
 import { getWCFlag, isWCMarket, calcProb } from "./WorldCupHubPage";
+import { isEsportsMarket } from "./EsportsHubPage";
+import { EsportsMarketDetail } from "../components/EsportsMarketDetail";
+import { isUfcMarket } from "./UfcHubPage";
+import { UfcMarketDetail } from "../components/UfcMarketDetail";
+import { isEplMarket } from "./EplHubPage";
+import { EplMarketDetail } from "../components/EplMarketDetail";
+import { isUclMarket } from "./UclHubPage";
+import { UclMarketDetail } from "../components/UclMarketDetail";
+import { PriceMarketDetail } from "../components/PriceMarketDetail";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -211,12 +233,25 @@ function TerPricePanel({ market }: { market: Market }) {
 
 export function PwaMarketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const referralId = String(user?.telegramId ?? user?.id ?? "");
+  const [shareOpen, setShareOpen] = useState(false);
   const [market, setMarket] = useState<Market | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [_disputes, setDisputes] = useState<Dispute[]>([]);
+  const [myDispute, setMyDispute] = useState<MyDispute | null>(null);
+  const [myBets, setMyBets] = useState<Bet[]>([]);
 
+  // Open the detail view at the top, not at the feed's scroll position
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  const [disputeInfo, setDisputeInfo] = useState<DisputeInfo | null>(null);
   const [disputeReason, setDisputeReason] = useState("");
+  const [disputeBond, setDisputeBond] = useState(10);
+  const [disputeSide, setDisputeSide] = useState<DisputeSide>("object");
   const [disputeSubmitting, setDisputeSubmitting] = useState(false);
   const [disputeError, setDisputeError] = useState<string | null>(null);
   const [disputeSuccess, setDisputeSuccess] = useState(false);
@@ -299,27 +334,80 @@ export function PwaMarketDetailPage() {
     getDisputes(id)
       .then(setDisputes)
       .catch(() => {});
+    getDisputeInfo(id)
+      .then((info) => {
+        setDisputeInfo(info);
+        if (!info.bondFixed)
+          setDisputeBond((b) => (b < info.minBond ? info.minBond : b));
+      })
+      .catch(() => {});
+  }, [id, market?.status]);
+
+  // Load the caller's OWN dispute result once the market is settled, so we can
+  // show them what they won or lost. No-ops silently when signed out or when no
+  // objection was ever filed (endpoint returns null / 401).
+  useEffect(() => {
+    if (!id || !market) return;
+    const settled = market.status === "settled" || market.status === "resolved";
+    if (!settled) {
+      setMyDispute(null);
+      return;
+    }
+    getMyDispute(id)
+      .then(setMyDispute)
+      .catch(() => setMyDispute(null));
+    // The caller's own bets on this market — powers the "Your position" card.
+    getMyBets()
+      .then((all) => setMyBets(all.filter((b) => b.marketId === id)))
+      .catch(() => setMyBets([]));
   }, [id, market?.status]);
 
   const handleSubmitDispute = async () => {
     if (!id) return;
     if (!disputeReason.trim()) {
-      setDisputeError("Please explain why the proposed outcome is incorrect.");
+      setDisputeError(
+        disputeSide === "support"
+          ? "Please explain why the proposed outcome is correct."
+          : "Please explain why the proposed outcome is incorrect.",
+      );
+      return;
+    }
+    const bondFixed = !!disputeInfo?.bondFixed;
+    if (!bondFixed && disputeBond < (disputeInfo?.minBond ?? 10)) {
+      setDisputeError(`The minimum bond is Nu ${disputeInfo?.minBond ?? 10}.`);
       return;
     }
     setDisputeSubmitting(true);
     setDisputeError(null);
     try {
-      await submitDispute(id, { reason: disputeReason });
+      const payload: SubmitDisputePayload = {
+        reason: disputeReason,
+        side: disputeSide,
+      };
+      if (!bondFixed && disputeSide === "object")
+        payload.bondAmount = disputeBond;
+      await submitDispute(id, payload);
       setDisputeSuccess(true);
       getDisputes(id)
         .then(setDisputes)
+        .catch(() => {});
+      getDisputeInfo(id)
+        .then(setDisputeInfo)
         .catch(() => {});
     } catch (e: any) {
       setDisputeError(e.message || "Failed to submit dispute");
     } finally {
       setDisputeSubmitting(false);
     }
+  };
+
+  // Bundle the resolution-contest controls for each themed detail form.
+  const disputeContest = {
+    info: disputeInfo,
+    bond: disputeBond,
+    setBond: setDisputeBond,
+    side: disputeSide,
+    setSide: setDisputeSide,
   };
 
   if (loading) return <LoadingScreen message="Syncing market..." />;
@@ -403,6 +491,125 @@ export function PwaMarketDetailPage() {
     `Predict the outcome of "${displayMarket.title}" and win real money on Oro.`;
   const pageUrl = `https://oro.fun/markets/${displayMarket.id}`;
 
+  // TER / BTC price markets get the dedicated trading-styled detail view with
+  // the live chart, price-to-beat and Higher/Lower.
+  if (
+    displayMarket.externalSource === "ter" ||
+    displayMarket.externalSource === "btc"
+  ) {
+    return (
+      <PriceMarketDetail
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
+      />
+    );
+  }
+
+  // UFC markets get the dedicated /ufc-styled detail view
+  if (isUfcMarket(displayMarket)) {
+    return (
+      <UfcMarketDetail
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
+      />
+    );
+  }
+
+  // Esports markets get the dedicated /esports-styled detail view
+  if (isEsportsMarket(displayMarket)) {
+    return (
+      <EsportsMarketDetail
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
+      />
+    );
+  }
+
+  // Champions League markets get the dedicated /ucl-styled detail view
+  if (isUclMarket(displayMarket)) {
+    return (
+      <UclMarketDetail
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
+      />
+    );
+  }
+
+  // EPL markets get the dedicated /epl-styled detail view
+  if (isEplMarket(displayMarket)) {
+    return (
+      <EplMarketDetail
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        myBets={myBets}
+      />
+    );
+  }
+
   return (
     <div
       style={{
@@ -482,18 +689,7 @@ export function PwaMarketDetailPage() {
         </Link>
 
         <button
-          onClick={() => {
-            const url = window.location.href;
-            const text = `Check out this prediction market: ${market.title}`;
-            if (navigator.share) {
-              navigator
-                .share({ title: market.title, text, url })
-                .catch(() => {});
-            } else {
-              navigator.clipboard.writeText(url);
-              alert("Link copied to clipboard!");
-            }
-          }}
+          onClick={() => setShareOpen(true)}
           style={{
             background: "var(--bg-card)",
             border: "1px solid var(--border)",
@@ -537,6 +733,13 @@ export function PwaMarketDetailPage() {
           </svg>
           {bp !== "mobile" && "Share"}
         </button>
+        <MarketShareSheet
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          market={displayMarket}
+          accentColor={getCategoryVisual(displayMarket.category).accentColor}
+          referralId={referralId}
+        />
       </div>
 
       <div
@@ -1202,50 +1405,7 @@ export function PwaMarketDetailPage() {
                       gap: "var(--space-md)",
                     }}
                   >
-                    <div
-                      style={{
-                        padding: "12px 16px",
-                        borderRadius: "12px",
-                        background: "rgba(245,158,11,0.08)",
-                        border: "1px solid rgba(245,158,11,0.3)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "var(--color-warning)",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        Dispute Bond
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "1.1rem",
-                          fontWeight: 900,
-                          color: "var(--color-warning)",
-                        }}
-                      >
-                        Nu 10
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                        fontWeight: 600,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      This bond is locked when you raise an objection. You get
-                      it back + a reward if the admin agrees the outcome was
-                      wrong. You lose it if the admin upholds their decision.
-                    </div>
+                    <DisputeContestFields {...disputeContest} light />
                     <div>
                       <label
                         style={{
@@ -1264,7 +1424,11 @@ export function PwaMarketDetailPage() {
                         value={disputeReason}
                         onChange={(e) => setDisputeReason(e.target.value)}
                         rows={4}
-                        placeholder="Explain why the proposed outcome is incorrect..."
+                        placeholder={
+                          disputeSide === "support"
+                            ? "Explain why the proposed outcome is correct..."
+                            : "Explain why the proposed outcome is incorrect..."
+                        }
                         style={{
                           width: "100%",
                           boxSizing: "border-box",
@@ -1327,7 +1491,11 @@ export function PwaMarketDetailPage() {
                         (e.currentTarget.style.transform = "translateY(0)")
                       }
                     >
-                      {disputeSubmitting ? "Submitting..." : "Submit Dispute"}
+                      {disputeSubmitting
+                        ? "Submitting..."
+                        : disputeSide === "support"
+                          ? "Defend Outcome"
+                          : "Submit Objection"}
                     </button>
                     <div
                       style={{
@@ -1568,6 +1736,10 @@ export function PwaMarketDetailPage() {
                   </p>
                 </div>
               </div>
+
+              <YourPositionCard bets={myBets} resolved={true} />
+
+              <DisputeResultBanner dispute={myDispute} />
             </div>
           )}
         </div>

@@ -66,9 +66,16 @@ export function PwaPaymentModal({
     const outcomePool = (Number(outcome.totalBetAmount) || 0) + betAmount;
     const totalPool = (Number(market.totalPool) || 0) + betAmount;
     if (outcomePool <= 0 || isNaN(outcomePool) || isNaN(totalPool)) return 0;
-    return betAmount * ((totalPool * (1 - houseEdge / 100)) / outcomePool);
+    const parimutuel =
+      betAmount * ((totalPool * (1 - houseEdge / 100)) / outcomePool);
+    // Winners are guaranteed a 1.05x floor (funded by the house edge at
+    // settlement), so the preview must never show less than that.
+    return Math.max(parimutuel, betAmount * 1.05);
   })();
   const estProfit = estPayout - betAmount;
+  // Live parimutuel multiple on this side. Falls as more money backs the same
+  // outcome — the "lock it in now" hook, specific to this stake, no crowd needed.
+  const estMultiple = betAmount > 0 ? estPayout / betAmount : 0;
 
   useEffect(() => {
     if (selectedMethod === "dkbank")
@@ -637,9 +644,6 @@ export function PwaPaymentModal({
                 {isValidAmount && (
                   <div
                     style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
                       background:
                         estProfit >= 0
                           ? "rgba(22, 163, 74, 0.1)"
@@ -650,6 +654,48 @@ export function PwaPaymentModal({
                       marginBottom: 16,
                     }}
                   >
+                    {/* Live multiple — the "lock it in now" hook. Falls as more
+                        money backs this side. */}
+                    {estProfit >= 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "baseline",
+                          gap: 8,
+                          paddingBottom: 8,
+                          marginBottom: 8,
+                          borderBottom: "1px solid rgba(134,239,172,0.35)",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 26,
+                            fontWeight: 900,
+                            color: "#16a34a",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {estMultiple.toFixed(2)}×
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "var(--text-subtle)",
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          on this side now — drops as more money backs it
+                        </span>
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
                     <div>
                       <div
                         style={{
@@ -708,6 +754,7 @@ export function PwaPaymentModal({
                           Grows when more people join
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                 )}

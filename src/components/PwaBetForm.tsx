@@ -4,6 +4,7 @@ import {
   placeBet,
   getMarket,
   getMe,
+  getMyBets,
   bustCache,
   trackEvent,
   isTokenValid,
@@ -33,7 +34,9 @@ function calcWin(market: Market, outcomeId: string, bet: number): number {
   const newTotalPool = totalPool + bet;
   const houseEdge = Number(market.houseEdgePct) / 100;
   if (newOutcomePool <= 0) return 0;
-  return (bet / newOutcomePool) * newTotalPool * (1 - houseEdge);
+  const parimutuel = (bet / newOutcomePool) * newTotalPool * (1 - houseEdge);
+  // Winners are guaranteed a 1.05x floor (funded by the house edge at settlement).
+  return Math.max(parimutuel, bet * 1.05);
 }
 
 export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
@@ -119,7 +122,27 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
       .catch(() => setBalance(0));
   }, []);
 
+  // The user's active stakes on this market, per outcome — so we can warn when
+  // they add to a side they already hold (which lowers their own payout).
+  const [heldByOutcome, setHeldByOutcome] = useState<Record<string, number>>({});
+  useEffect(() => {
+    getMyBets()
+      .then((bets) => {
+        const map: Record<string, number> = {};
+        for (const b of bets) {
+          if (b.marketId === market.id && b.status === "pending") {
+            map[b.outcomeId] = (map[b.outcomeId] ?? 0) + (Number(b.amount) || 0);
+          }
+        }
+        setHeldByOutcome(map);
+      })
+      .catch(() => setHeldByOutcome({}));
+  }, [market.id, betSuccess]);
+
   const betAmount = parseFloat(amount) || 0;
+  const existingStake = selectedOutcomeId
+    ? (heldByOutcome[selectedOutcomeId] ?? 0)
+    : 0;
   const MIN_BET = getMinBet(market);
   const QUICK_AMOUNTS = ["ter", "btc"].includes(market.externalSource ?? "")
     ? QUICK_AMOUNTS_TER
@@ -127,6 +150,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const winAmount = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount)
     : 0;
+  // Live parimutuel multiple on this side. Falls as more money backs the same
+  // outcome — the "lock it in now" hook, specific to this stake, no crowd needed.
+  const winMultiple = betAmount > 0 ? winAmount / betAmount : 0;
   const show2Outcomes = market.outcomes.length === 2;
 
   const hasEnoughBalance = balance !== null && balance >= betAmount;
@@ -189,7 +215,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             letterSpacing: "-0.04em",
           }}
         >
-          Bet Placed!
+          Prediction placed
         </div>
         <div
           style={{
@@ -351,6 +377,28 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
               >
                 {winAmount > 0 ? `Nu ${Math.floor(winAmount)}` : "—"}
               </div>
+              {winMultiple > 0 && (
+                <div
+                  style={{
+                    marginTop: 6,
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: "var(--color-success)",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {winMultiple.toFixed(2)}× now
+                  <span
+                    style={{
+                      color: "var(--text-muted)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {" "}
+                    · drops as more back this side
+                  </span>
+                </div>
+              )}
             </div>
             <div style={{ textAlign: "right" }}>
               <div
@@ -475,6 +523,27 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             </button>
           </div>
         )}
+
+      {/* Already-held warning: adding to your own side lowers your payout */}
+      {selectedOutcomeId && existingStake > 0 && (
+        <div
+          style={{
+            background: "rgba(245,158,11,0.1)",
+            border: "1px solid rgba(245,158,11,0.35)",
+            padding: "10px 12px",
+            borderRadius: 10,
+            fontSize: 12,
+            color: "var(--text-main)",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong>
+            You already have Nu {existingStake.toLocaleString()} on this pick.
+          </strong>{" "}
+          Adding more to the same side splits the winnings with a bigger group —
+          it lowers your own payout. Backing a different outcome raises it.
+        </div>
+      )}
 
       {/* CTA */}
       <button
