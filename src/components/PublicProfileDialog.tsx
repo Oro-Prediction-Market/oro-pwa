@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Flame, Trophy, Target } from "lucide-react";
+import { X, Trophy, Target } from "lucide-react";
 import { getPublicProfile, type PublicProfile } from "@shared/api/client";
 
 export function PublicProfileDialog({ userId, onClose }: { userId: string | null; onClose: () => void }) {
@@ -15,8 +15,8 @@ export function PublicProfileDialog({ userId, onClose }: { userId: string | null
           <div style={{width:64,height:64,borderRadius:"50%",overflow:"hidden",display:"grid",placeItems:"center",background:"var(--bg-secondary)",fontWeight:900,fontSize:24}}>{profile.photoUrl ? <img src={profile.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : name[0]}</div>
           <div><div style={{fontSize:20,fontWeight:900,color:"var(--text-main)"}}>{name}</div><div style={{marginTop:4,color:"var(--color-primary)",fontSize:12,fontWeight:800,textTransform:"uppercase"}}>{profile.reputationTier.replace("_"," ")} predictor</div></div>
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginTop:24}}>
-          <Stat icon={<Trophy size={15}/>} label="Rank" value={profile.rank ? `#${profile.rank}` : "—"}/><Stat icon={<Target size={15}/>} label="Win rate" value={`${profile.winRate}%`}/><Stat icon={<Flame size={15}/>} label="Streak" value={`${profile.streak}`}/>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginTop:24}}>
+          <Stat icon={<Trophy size={15}/>} label="Rank" value={profile.rank ? `#${profile.rank}` : "—"}/><Stat icon={<Target size={15}/>} label="Win rate" value={`${profile.winRate}%`}/>
         </div>
         <div style={{marginTop:16,padding:14,borderRadius:14,background:"rgba(255,255,255,.04)",display:"flex",justifyContent:"space-between",color:"var(--text-muted)",fontSize:13,fontWeight:700}}><span>Predictions</span><strong style={{color:"var(--text-main)"}}>{profile.correctPredictions} / {profile.totalPredictions} correct</strong></div>
         {profile.contrarianBadge && <div style={{marginTop:12,color:"#fbbf24",fontSize:13,fontWeight:800}}>🏆 {profile.contrarianBadge} Contrarian · {profile.contrarianWins} wins</div>}
