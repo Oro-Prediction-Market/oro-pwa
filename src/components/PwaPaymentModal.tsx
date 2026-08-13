@@ -759,8 +759,8 @@ export function PwaPaymentModal({
                   </div>
                 )}
 
-                {/* Payout breakdown */}
-                {isValidAmount && (
+                {/* Payout breakdown — hidden for now, remove `false &&` to bring it back */}
+                {false && isValidAmount && (
                   <PayoutBreakdown
                     market={market}
                     outcomeId={outcomeId}
