@@ -560,24 +560,37 @@ function CardShell({
   market,
   children,
   onClick,
+  chessFinal = false,
 }: {
   categoryKey: EsportsCategoryKey;
   market: Market;
   children: React.ReactNode;
   onClick?: () => void;
+  chessFinal?: boolean;
 }) {
   return (
     <div
       className="ewc-card"
       onClick={onClick}
       style={{
-        background: EWC.goldLine,
+        position: "relative",
+        background: chessFinal
+          ? "linear-gradient(135deg, #e8c56c 0%, #76541d 30%, #d8ad47 68%, #6d4b18 100%)"
+          : EWC.goldLine,
         clipPath: notch(12),
         padding: 1,
         cursor: onClick ? "pointer" : "default",
+        boxShadow: chessFinal ? "0 12px 30px rgba(211, 164, 53, 0.20)" : undefined,
       }}
     >
-      <div style={{ background: EWC.surface, clipPath: notch(12) }}>
+      <div
+        style={{
+          background: chessFinal
+            ? "radial-gradient(circle at 50% -25%, rgba(238, 198, 91, 0.22), transparent 50%), linear-gradient(135deg, #1b1911 0%, #10110e 100%)"
+            : EWC.surface,
+          clipPath: notch(12),
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -585,13 +598,34 @@ function CardShell({
             justifyContent: "space-between",
             gap: 8,
             padding: "9px 12px",
-            background: EWC.sheet,
-            borderBottom: `1px solid ${EWC.border}`,
+            background: chessFinal
+              ? "linear-gradient(90deg, rgba(202, 154, 48, 0.20), rgba(38, 32, 16, 0.82), rgba(202, 154, 48, 0.12))"
+              : EWC.sheet,
+            borderBottom: `1px solid ${chessFinal ? "rgba(230, 190, 91, 0.38)" : EWC.border}`,
           }}
         >
           <CategoryTag categoryKey={categoryKey} />
           <StatusPill market={market} />
         </div>
+        {chessFinal && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 7,
+              padding: "8px 12px 7px",
+              borderBottom: "1px solid rgba(230, 190, 91, 0.18)",
+              color: EWC.goldBright,
+            }}
+          >
+            <Trophy size={13} />
+            <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: "0.18em" }}>
+              CHAMPIONSHIP FINAL
+            </span>
+            <Trophy size={13} />
+          </div>
+        )}
         {children}
       </div>
     </div>
@@ -653,6 +687,9 @@ function EsportsMatchCard({
   const pctA = Math.round(calcProb(m, sa.id) * 100);
   const pctB = 100 - pctA;
   const isFinal = isEsportsFinal(market.title);
+  // This is intentionally stricter than a title match: the market must first
+  // be classified as Chess, then be the tournament's actual final.
+  const isChessFinal = categoryKey === "chess" && isFinal;
 
   const renderSide = (
     outcome: typeof sa,
@@ -676,12 +713,12 @@ function EsportsMatchCard({
         <TeamAvatar
           src={getSideImage(market, idx)}
           label={name}
-          size={38}
+          size={isChessFinal ? 48 : 38}
           color={color}
         />
         <div
           style={{
-            fontSize: 15,
+            fontSize: isChessFinal ? 17 : 15,
             fontWeight: 800,
             color: EWC.text,
             textTransform: "uppercase",
@@ -691,7 +728,7 @@ function EsportsMatchCard({
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
-            marginTop: 9,
+            marginTop: isChessFinal ? 11 : 9,
           }}
         >
           {name}
@@ -706,7 +743,7 @@ function EsportsMatchCard({
         >
           <span
             style={{
-              fontSize: 28,
+              fontSize: isChessFinal ? 34 : 28,
               fontWeight: 900,
               color,
               lineHeight: 1,
@@ -736,8 +773,8 @@ function EsportsMatchCard({
           }}
           style={{
             width: "100%",
-            marginTop: 11,
-            padding: "10px 0",
+            marginTop: isChessFinal ? 14 : 11,
+            padding: isChessFinal ? "12px 0" : "10px 0",
             border: "none",
             clipPath: notch(8),
             color: idx === 0 ? "#1a1400" : "#00160c",
@@ -760,9 +797,10 @@ function EsportsMatchCard({
     <CardShell
       market={market}
       categoryKey={categoryKey}
+      chessFinal={isChessFinal}
       onClick={() => navigate(`/market/${market.id}`)}
     >
-      <div style={{ padding: "14px 13px 12px" }}>
+      <div style={{ padding: isChessFinal ? "18px 16px 15px" : "14px 13px 12px" }}>
         <div
           style={{
             display: "flex",
@@ -780,7 +818,7 @@ function EsportsMatchCard({
               flexDirection: "column",
               alignItems: "center",
               gap: 7,
-              paddingTop: 9,
+              paddingTop: isChessFinal ? 14 : 9,
             }}
           >
             <Label color={EWC.textSecondary} size={11}>
@@ -790,8 +828,8 @@ function EsportsMatchCard({
               style={{
                 width: 1,
                 flex: 1,
-                minHeight: 62,
-                background: `linear-gradient(180deg, ${EWC.border} 0%, transparent 100%)`,
+                minHeight: isChessFinal ? 76 : 62,
+                background: `linear-gradient(180deg, ${isChessFinal ? "rgba(230, 190, 91, 0.52)" : EWC.border} 0%, transparent 100%)`,
               }}
             />
           </div>
@@ -808,7 +846,9 @@ function EsportsMatchCard({
           justifyContent: "space-between",
           gap: 10,
           padding: "9px 12px",
-          background: isFinal ? EWC.glass : EWC.panel,
+          background: isChessFinal
+            ? "linear-gradient(90deg, rgba(196, 147, 43, 0.20), rgba(28, 26, 18, 0.92))"
+            : isFinal ? EWC.glass : EWC.panel,
           borderTop: isFinal ? `1px solid ${EWC.goldLine}` : "none",
         }}
       >
@@ -827,7 +867,7 @@ function EsportsMatchCard({
             whiteSpace: "nowrap",
           }}
         >
-          {isFinal && <Trophy size={11} style={{ flexShrink: 0 }} />}
+          {isFinal && <Trophy size={isChessFinal ? 13 : 11} style={{ flexShrink: 0 }} />}
           <span
             style={{
               overflow: "hidden",
