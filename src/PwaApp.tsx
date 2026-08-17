@@ -145,11 +145,12 @@ const PwaUfcPage = lazy(() =>
     default: m.UfcHubPage,
   })),
 );
-const PwaEsportsPage = lazy(() =>
-  import("./pages/EsportsHubPage").then((m) => ({
-    default: m.EsportsHubPage,
-  })),
-);
+// Esports hub hidden — uncomment to re-enable (also un-gate the feed banner in PwaFeedPage.tsx)
+// const PwaEsportsPage = lazy(() =>
+//   import("./pages/EsportsHubPage").then((m) => ({
+//     default: m.EsportsHubPage,
+//   })),
+// );
 // UCL hidden until the 2026/27 season starts — uncomment to re-enable
 // const PwaUclPage = lazy(() =>
 //   import("./pages/UclHubPage").then((m) => ({
@@ -2026,6 +2027,7 @@ function PwaLayout({
               </Suspense>
             }
           />
+          {/* Esports hub hidden — uncomment to re-enable
           <Route
             path="/esports"
             element={
@@ -2045,7 +2047,7 @@ function PwaLayout({
                 <PwaEsportsPage />
               </Suspense>
             }
-          />
+          /> */}
           {/* UCL hidden until the 2026/27 season starts — uncomment to re-enable
           <Route
             path="/ucl"

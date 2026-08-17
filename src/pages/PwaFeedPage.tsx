@@ -1237,7 +1237,8 @@ export function PwaFeedPage({
       })
       .filter((c): c is ReactElement => c !== null);
     // Esports + UFC + EPL banners lead the grid (TER/BTC auto-markets sort to the bottom)
-    if (banners.esports) {
+    // Esports hub hidden — remove `false &&` to bring it back
+    if (false && banners.esports) {
       cards.splice(
         0,
         0,
