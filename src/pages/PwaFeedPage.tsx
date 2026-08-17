@@ -1263,8 +1263,7 @@ export function PwaFeedPage({
         <UclBannerCard key="ucl-banner" onOpen={() => navigate("/ucl")} />,
       );
     }
-    // EPL hidden until the 2026/27 season starts — remove `false &&` to re-enable
-    if (false && banners.sports) {
+    if (banners.sports) {
       cards.splice(
         0,
         0,

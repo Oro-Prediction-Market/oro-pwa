@@ -162,12 +162,11 @@ const PwaEsportsPage = lazy(() =>
 //     default: m.BplHubPage,
 //   })),
 // );
-// EPL hidden until the 2026/27 season starts — uncomment to re-enable
-// const PwaEplPage = lazy(() =>
-//   import("./pages/EplHubPage").then((m) => ({
-//     default: m.EplHubPage,
-//   })),
-// );
+const PwaEplPage = lazy(() =>
+  import("./pages/EplHubPage").then((m) => ({
+    default: m.EplHubPage,
+  })),
+);
 const PwaWalletTmaPage = lazy(() =>
   import("@/pages/TmaWalletPage").then((m) => ({
     default: () => <m.TmaWalletPage isPwa />,
@@ -2088,8 +2087,27 @@ function PwaLayout({
                 <PwaBplPage />
               </Suspense>
             }
+          /> */}
+          <Route
+            path="/epl"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaEplPage />
+              </Suspense>
+            }
           />
-          {/* EPL hidden until the 2026/27 season starts — restore the <Route path="/epl"> block to re-enable */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
