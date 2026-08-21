@@ -458,6 +458,10 @@ const headerWrap: React.CSSProperties = {
   flexDirection: "column",
   alignItems: "center",
   gap: 4,
+  // Breathing room before the first action. The container's own gap is sized
+  // for the controls below, which sit close together on purpose; the title
+  // needs more separation than that.
+  marginBottom: 10,
 };
 
 const heading: React.CSSProperties = {

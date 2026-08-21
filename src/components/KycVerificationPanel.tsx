@@ -15,10 +15,19 @@ import { ShieldCheck, Clock, XCircle, Upload, Camera } from "lucide-react";
  * way to reach that state.
  */
 
-const DOC_TYPES: { value: KycDocumentType; label: string }[] = [
-  { value: "passport", label: "Passport" },
-  { value: "national_id", label: "National ID card" },
-  { value: "drivers_licence", label: "Driver's licence" },
+
+const DOC_TYPES: { value: KycDocumentType; label: string; hint: string }[] = [
+  { value: "passport", label: "Passport", hint: "The photo page" },
+  {
+    value: "national_id",
+    label: "National ID card",
+    hint: "Front side, showing the number",
+  },
+  {
+    value: "residence_permit",
+    label: "Residence permit",
+    hint: "If you live outside your country of citizenship",
+  },
 ];
 
 /** Comfortably under the server's 4 MB ceiling, and under the request limit. */
@@ -181,6 +190,11 @@ export function KycVerificationPanel({ onSubmitted }: Props) {
             </option>
           ))}
         </select>
+        {/* What to photograph, for the type they picked. A reviewer rejecting
+            a passport's back cover costs both sides a round trip. */}
+        <span style={metaText}>
+          {DOC_TYPES.find((d) => d.value === documentType)?.hint}
+        </span>
       </label>
 
       <label style={labelStyle}>

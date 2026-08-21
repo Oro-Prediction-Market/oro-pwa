@@ -1388,7 +1388,10 @@ export function voteSuggestion(
 
 // ─── KYC ─────────────────────────────────────────────────────────────────────
 
-export type KycDocumentType = "passport" | "national_id" | "drivers_licence";
+export type KycDocumentType =
+  | "passport"
+  | "national_id"
+  | "residence_permit";
 
 export interface KycStatusResponse {
   status: "none" | "pending" | "approved" | "rejected";

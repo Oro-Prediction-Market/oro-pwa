@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { loginWithGoogle } from "@shared/api/client";
 
@@ -7,9 +7,7 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 /** Whether Google sign-in is configured at all. */
 export const googleSignInAvailable = Boolean(CLIENT_ID);
 
-// Hiding the button is right in production and baffling in development, where
-// the usual reaction to a missing sign-in option is to go looking for the bug
-// in the code rather than in the environment.
+
 if (!CLIENT_ID && import.meta.env.DEV) {
   console.warn(
     "[Oro] Google sign-in is hidden: VITE_GOOGLE_CLIENT_ID is not set. It must " +
@@ -22,14 +20,20 @@ interface Props {
   onSuccess: (isNew: boolean) => void;
 }
 
-/**
- * Google sign-in, the primary path for international accounts.
- *
- * Renders nothing when `VITE_GOOGLE_CLIENT_ID` is unset — an unconfigured
- * button is worse than an absent one, because it looks like a working option
- * and fails only after the user commits to it.
- */
 export function GoogleSignInButton({ onSuccess }: Props) {
+
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  const [boxWidth, setBoxWidth] = useState(0);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => setBoxWidth(Math.floor(el.clientWidth));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scriptFailed, setScriptFailed] = useState(false);
@@ -83,37 +87,48 @@ export function GoogleSignInButton({ onSuccess }: Props) {
         </div>
       ) : (
         <div
+          ref={boxRef}
           style={{
-            display: "flex",
-            justifyContent: "center",
+            position: "relative",
             width: "100%",
-            // Google renders a fixed-width iframe; let it fill the sheet so it
-            // reads as the primary action rather than a widget dropped in.
-            colorScheme: "light dark",
             opacity: busy ? 0.5 : 1,
             pointerEvents: busy ? "none" : "auto",
           }}
         >
-          <GoogleOAuthProvider clientId={CLIENT_ID}>
-            <GoogleLogin
-              onSuccess={(res) => void handleCredential(res.credential)}
-              // Fires on a blocked popup, a closed window, or a Google-side
-              // failure. They are indistinguishable to us, so one message.
-              onError={() =>
-                setError(
-                  "Google sign-in was cancelled or blocked. Allow popups for this site and try again.",
-                )
-              }
-              theme="filled_black"
-              size="large"
-              shape="pill"
-              text="continue_with"
-              // Pixels, not a CSS length — the widget ignores "100%". Matches
-              // the sheet's content column so it reads as a full-width button
-              // rather than a widget dropped into the middle.
-              width={String(Math.min(376, window.innerWidth - 56))}
-            />
-          </GoogleOAuthProvider>
+          {/* Our button, drawn to match the rest of the sheet.
+              Purely visual: `pointer-events: none` so every click passes
+              through to Google's own button laid over it. */}
+          <div style={brandButton} aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+              <path d="M12.24 10.4v3.36h5.56c-.24 1.44-1.68 4.22-5.56 4.22-3.34 0-6.07-2.77-6.07-6.18s2.73-6.18 6.07-6.18c1.9 0 3.18.81 3.91 1.51l2.66-2.56C17.1 2.99 14.9 2 12.24 2 6.98 2 2.72 6.26 2.72 11.52s4.26 9.52 9.52 9.52c5.5 0 9.14-3.86 9.14-9.3 0-.63-.07-1.1-.15-1.58h-8.99z" />
+            </svg>
+            Continue with Google
+          </div>
+
+          <div style={overlay}>
+
+            <div style={stretchToCover}>
+            <GoogleOAuthProvider clientId={CLIENT_ID}>
+              <GoogleLogin
+                onSuccess={(res) => void handleCredential(res.credential)}
+                // Fires on a blocked popup, a closed window, or a Google-side
+                // failure. They are indistinguishable to us, so one message.
+                onError={() =>
+                  setError(
+                    "Google sign-in was cancelled or blocked. Allow popups for this site and try again.",
+                  )
+                }
+                theme="filled_blue"
+                size="large"
+                shape="rectangular"
+                text="continue_with"
+                // Matches our button exactly, so the invisible hit area lines
+                // up with what the user can see.
+                width={String(Math.min(400, boxWidth || 320))}
+              />
+            </GoogleOAuthProvider>
+            </div>
+          </div>
         </div>
       )}
 
@@ -130,6 +145,49 @@ export function GoogleSignInButton({ onSuccess }: Props) {
     </div>
   );
 }
+
+/** The visible button. Matches the sheet, not Google's palette. */
+const brandButton: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  width: "100%",
+  padding: "13px 16px",
+  borderRadius: 12,
+  background: "var(--color-primary)",
+  color: "#fff",
+  fontSize: "0.95rem",
+  fontWeight: 800,
+  letterSpacing: "-0.01em",
+  boxSizing: "border-box",
+  // Clicks belong to the real Google button stacked above this one.
+  pointerEvents: "none",
+};
+
+/**
+ * Google's button, invisible and covering ours.
+ *
+ * `opacity: 0` rather than `visibility: hidden` or `display: none` — the
+ * widget must stay rendered and hit-testable, and the other two remove it from
+ * the hit-testing tree entirely.
+ */
+const overlay: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  opacity: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  cursor: "pointer",
+};
+
+/** Scales the invisible widget past our button's bounds so every pixel hits. */
+const stretchToCover: React.CSSProperties = {
+  transform: "scale(1.05, 1.4)",
+  transformOrigin: "center",
+};
 
 const noticeStyle: React.CSSProperties = {
   fontSize: "0.78rem",
