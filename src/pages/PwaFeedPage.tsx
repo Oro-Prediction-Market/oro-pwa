@@ -7,6 +7,7 @@ import {
   useTransition,
   type ReactElement,
 } from "react";
+import { createPortal } from "react-dom";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import {
@@ -1977,17 +1978,20 @@ export function PwaFeedPage({
 
       {/* Auth modal — shown when unauthenticated user tries to bet */}
       {showAuthModal && (
-        <div
-          className="oro-auth-backdrop"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAuthModal(false);
-          }}
-        >
-          <div className="oro-auth-sheet">
-            <div className="oro-auth-handle" />
-            <ProtectedRoute onLogin={handleAuthSuccess} />
-          </div>
-        </div>
+        createPortal(
+          <div
+            className="oro-auth-backdrop"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowAuthModal(false);
+            }}
+          >
+            <div className="oro-auth-sheet">
+              <div className="oro-auth-handle" />
+              <ProtectedRoute onLogin={handleAuthSuccess} />
+            </div>
+          </div>,
+          document.body,
+        )
       )}
     </div>
   );

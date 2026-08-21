@@ -7,6 +7,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { useEffect, useState, useRef, lazy, Suspense } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -1057,8 +1058,13 @@ function PwaLayout({
         </div>
       )}
 
-      {/* ── Login modal (rendered outside header to avoid transform stacking context) ── */}
-      {showLoginModal && (
+      {/* ── Login modal ────────────────────────────────────────────────────
+          Portalled to <body>. `position: fixed` resolves against the nearest
+          transformed or animated ancestor rather than the viewport, and this
+          tree has plenty of both — which is how a bottom sheet ends up
+          anchored to the middle of a page instead of the bottom of the
+          screen. */}
+      {showLoginModal && createPortal(
         <div
           className="oro-auth-backdrop"
           onClick={(e) => {
@@ -1070,7 +1076,8 @@ function PwaLayout({
             <div className="oro-auth-handle" />
             <ProtectedRoute onLogin={handleAuthSuccess} />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* ── iOS install instructions ── */}

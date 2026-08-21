@@ -465,6 +465,9 @@ a:has(.ter-market-card):hover .ter-market-card {
 .oro-auth-backdrop {
   position: fixed;
   inset: 0;
+  /* Both modals portal to <body> so this resolves against the viewport. A
+     transformed or animated ancestor becomes the containing block for
+     `fixed`, which is how a bottom sheet ends up anchored mid-page. */
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -479,6 +482,10 @@ a:has(.ter-market-card):hover .ter-market-card {
   width: 100%;
   max-width: 440px;
   max-height: 90vh;
+  /* `dvh` tracks the *visible* viewport, so the sheet shrinks when the
+     on-screen keyboard appears instead of being pushed under it. Declared
+     after the vh line so browsers without dvh keep the old behaviour. */
+  max-height: 90dvh;
   overflow-y: auto;
   padding: 8px 4px 24px;
   border-radius: 20px;
@@ -526,6 +533,7 @@ a:has(.ter-market-card):hover .ter-market-card {
     /* Taller than the desktop dialog — there is no wasted margin to respect,
        and the content can breathe. */
     max-height: 92vh;
+    max-height: 92dvh;
     padding: 6px 8px calc(20px + env(safe-area-inset-bottom, 0px));
     animation: oroAuthSlideUp 0.24s cubic-bezier(0.32, 0.72, 0, 1);
   }
