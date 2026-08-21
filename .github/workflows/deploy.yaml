@@ -45,6 +45,7 @@ jobs:
             --build-arg VITE_API_URL=$VITE_API_URL \
             --build-arg VITE_UMAMI_SCRIPT_URL=$VITE_UMAMI_SCRIPT_URL \
             --build-arg VITE_UMAMI_WEBSITE_ID=$VITE_UMAMI_WEBSITE_ID \
+            --build-arg VITE_GOOGLE_CLIENT_ID='${{ vars.VITE_GOOGLE_CLIENT_ID || secrets.VITE_GOOGLE_CLIENT_ID }}' \
             -t $IMAGE:$TAG -t $IMAGE:latest .
           docker push $IMAGE:$TAG
           docker push $IMAGE:latest
