@@ -244,6 +244,28 @@ export interface AuthUser {
   balance: string;
   creditsBalance?: number;
   createdAt?: string;
+  /**
+   * The account's currency, fixed at signup and never changed.
+   *
+   * Absent on older sessions, so treat anything other than "USDT" as BTN —
+   * the overwhelming majority of accounts, and the safe default.
+   */
+  currency?: "BTN" | "USDT";
+  /** Only meaningful for email/USDT accounts; BTN accounts stay "none". */
+  kycStatus?: "none" | "pending" | "approved" | "rejected";
+  /**
+   * Whether this account may hold a USDT wallet beside its native currency.
+   *
+   * A Bhutanese account holds ngultrum natively; if it has proved its identity
+   * — an approved document, or a linked DK Bank account — it can also hold
+   * USDT deposited from an outside wallet. The two never mix and there is no
+   * rate between them, so never add {@link usdtBalance} to `balance`.
+   */
+  canHoldUsdt?: boolean;
+  /** Whether identity is proved well enough to fund that wallet. */
+  usdtVerified?: boolean;
+  /** The USDT wallet's balance. Null when the account has no second wallet. */
+  usdtBalance?: number | null;
   // DK Bank linking fields
   dkCid?: string | null;
   dkAccountName?: string | null;
@@ -306,6 +328,36 @@ export async function loginWithDKBank(
       ...(referralCode ? { referralCode } : {}),
     }),
   });
+  setToken(result.token);
+  return result;
+}
+
+/**
+ * Sign in with Google.
+ *
+ * The credential is Google's ID token — a signed JWT. We never parse it here:
+ * anything read client-side is attacker-controlled, so email, name and subject
+ * are all taken from the server's verified copy.
+ *
+ * `isNew` says the account was created by this call, which is the cue to send
+ * the user to identity verification rather than to the feed. Google proves the
+ * address is real; it says nothing about who owns it, so deposits stay gated on
+ * an approved document.
+ */
+export async function loginWithGoogle(
+  credential: string,
+  referralCode?: string,
+): Promise<AuthResponse & { isNew: boolean }> {
+  const result = await request<AuthResponse & { isNew: boolean }>(
+    "/auth/google",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        credential,
+        ...(referralCode ? { referralCode } : {}),
+      }),
+    },
+  );
   setToken(result.token);
   return result;
 }
@@ -501,7 +553,22 @@ export async function verifyDKAccount(
 export interface Outcome {
   id: string;
   label: string;
+  /**
+   * The **BTN** book's pool. Not the total across currencies — nothing in this
+   * product ever adds them. Use {@link Outcome.poolsByCurrency} when quoting a
+   * stake in anything else.
+   */
   totalBetAmount: string;
+  /** Pool per currency, e.g. `{ BTN: 12000, USDT: 340 }`. */
+  poolsByCurrency?: Record<string, number>;
+  /**
+   * LMSR probability per currency.
+   *
+   * `lmsrProbability` below is the **BTN** book's value — the engine writes it
+   * only for ngultrum stakes. Using it for a USDT viewer shows odds derived
+   * from another currency's money.
+   */
+  lmsrByCurrency?: Record<string, number>;
   currentOdds: string;
   lmsrProbability?: number;
   reputationSignal?: number | null;
@@ -520,6 +587,14 @@ export interface SignalMeta {
   composite: number;
 }
 
+export interface MarketBookView {
+  currency: "BTN" | "USDT";
+  /** Minimum stake, in that currency. Chosen per book, never converted. */
+  minStake: number;
+  houseEdgePct: number;
+  totalPool: number;
+}
+
 export interface Market {
   id: string;
   title: string;
@@ -535,8 +610,18 @@ export interface Market {
     | "settled"
     | "cancelled";
   liquidityParam: string;
+  /** The BTN book's pool. See {@link MarketBookView} for the others. */
   totalPool: string;
   houseEdgePct: string;
+  /**
+   * The currency books this market accepts.
+   *
+   * BTN is always present — its book is created on the first ngultrum stake,
+   * so most markets have no row for it while still accepting it perfectly
+   * well, and the server synthesises the terms the engine would apply. A
+   * currency absent from this list is refused by the engine.
+   */
+  books?: MarketBookView[];
   opensAt: string | null;
   closesAt: string | null;
   bettingClosesAt: string | null;
@@ -733,6 +818,14 @@ export function getResolvedMarkets(): Promise<ResolvedMarket[]> {
 export interface PlaceBetPayload {
   outcomeId: string;
   amount: number;
+  /**
+   * Which wallet the stake comes from.
+   *
+   * Omit for the account's native currency, which is what every screen does
+   * today. Only send it when the user is deliberately spending a second
+   * wallet — the server refuses a currency the account cannot hold.
+   */
+  currency?: "BTN" | "USDT";
 }
 
 export interface BetStreak {
@@ -773,6 +866,17 @@ export interface Bet {
 }
 
 export interface Transaction {
+  /**
+   * True while a withdrawal has been debited but not yet sent.
+   *
+   * The debit happens the moment the money is reserved; the transfer happens
+   * only after an admin approves it and 21Pay confirms. Rendering the two
+   * identically tells someone their money has left when it has not.
+   */
+  isPending?: boolean;
+  /** `pending_approval` | `approved` | `rejected`, for withdrawal rows. */
+  withdrawalState?: string;
+
   id: string;
   type:
     | "deposit"
@@ -1273,4 +1377,172 @@ export function voteSuggestion(
   id: string,
 ): Promise<{ votes: number; votedByMe: boolean }> {
   return request(`/suggestions/${id}/vote`, { method: "POST" });
+}
+
+// ── USDT rail (21 Pay) ───────────────────────────────────────────────────────
+//
+// Every display string here — network names, confirmation hints, the Tron gas
+// warning, explorer links — comes from the backend. The client deliberately
+// keeps no per-chain table of its own: one that drifts from what the rail
+// actually supports is how a user is shown a chain nobody is watching.
+
+// ─── KYC ─────────────────────────────────────────────────────────────────────
+
+export type KycDocumentType = "passport" | "national_id" | "drivers_licence";
+
+export interface KycStatusResponse {
+  status: "none" | "pending" | "approved" | "rejected";
+  submittedAt: string | null;
+  reviewedAt: string | null;
+  /** Only ever set when `status` is `rejected`. */
+  rejectionReason: string | null;
+  /** False while a document is under review, and once approved. */
+  canSubmit: boolean;
+}
+
+/**
+ * Live verification state.
+ *
+ * Always fetch this rather than reading `kycStatus` off the session user: the
+ * session was minted at login and does not change when a reviewer approves.
+ */
+export function getKycStatus(): Promise<KycStatusResponse> {
+  return request<KycStatusResponse>("/kyc/status");
+}
+
+export function submitKycDocument(body: {
+  documentType: KycDocumentType;
+  documentNumber: string;
+  documentCountry: string;
+  imageBase64: string;
+  mimeType: string;
+}): Promise<{ status: string }> {
+  return request<{ status: string }>("/kyc/documents", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export interface UsdtNetwork {
+  id: string;
+  /** Spelled out, never a chain id. */
+  name: string;
+  confirmationHint: string;
+  warning: string | null;
+}
+
+export type UsdtIntentStatus =
+  | "awaiting_deposit"
+  | "confirming"
+  | "accepted"
+  | "confirmed"
+  | "confirmed_partial"
+  | "confirmed_overpaid"
+  | "completed_via_topup"
+  | "expired"
+  | "failed";
+
+export interface UsdtDepositIntent {
+  intentId: string;
+  network: string;
+  depositAddress: string;
+  amountUsdt: string;
+  amountBaseUnits: string;
+  detectedAmountUsdt: string | null;
+  status: UsdtIntentStatus;
+  expiresAt: string;
+  txHash: string | null;
+  explorerUrl: string | null;
+}
+
+export interface UsdtDestination {
+  id: string;
+  network: string;
+  address: string;
+  label: string | null;
+  status: "cooldown" | "active" | "disabled";
+  /** When a cooling-down address becomes usable. */
+  usableAt: string | null;
+}
+
+export interface UsdtWithdrawal {
+  id: string;
+  network: string;
+  amountUsdt: string;
+  approvalStatus: "pending_approval" | "approved" | "rejected";
+  remoteStatus: string | null;
+  txHash: string | null;
+  failureReason: string | null;
+  needsManualReview: boolean;
+  createdAt: string;
+}
+
+/** Networks this account may deposit on right now. May be empty. */
+export function getUsdtNetworks(): Promise<{ networks: UsdtNetwork[] }> {
+  return request("/payments/usdt/networks");
+}
+
+/**
+ * `clientRequestId` must be generated once per deposit attempt and reused on
+ * retry — the server keys idempotency on it, so a double-tap replays the same
+ * intent instead of burning another derived address.
+ */
+export function createUsdtDeposit(body: {
+  network: string;
+  amountUsdt: string;
+  clientRequestId: string;
+}): Promise<UsdtDepositIntent> {
+  return request("/payments/usdt/deposit-intent", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function getUsdtDeposit(id: string): Promise<UsdtDepositIntent> {
+  return request(`/payments/usdt/deposit-intent/${id}`);
+}
+
+export function listUsdtDeposits(): Promise<UsdtDepositIntent[]> {
+  return request("/payments/usdt/deposit-intents");
+}
+
+/** Top up an underpaid or expired deposit, reusing the same address. */
+export function topUpUsdtDeposit(
+  id: string,
+  clientRequestId: string,
+): Promise<UsdtDepositIntent> {
+  return request(`/payments/usdt/deposit-intent/${id}/topup`, {
+    method: "POST",
+    body: JSON.stringify({ clientRequestId }),
+  });
+}
+
+export function listUsdtDestinations(): Promise<UsdtDestination[]> {
+  return request("/payments/usdt/destinations");
+}
+
+export function addUsdtDestination(body: {
+  network: string;
+  address: string;
+  label?: string;
+}): Promise<UsdtDestination> {
+  return request("/payments/usdt/destinations", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function requestUsdtWithdrawal(body: {
+  destinationId: string;
+  amountUsdt: string;
+  clientRequestId: string;
+}): Promise<UsdtWithdrawal> {
+  return request("/payments/usdt/withdrawals", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function listUsdtWithdrawals(): Promise<UsdtWithdrawal[]> {
+  return request("/payments/usdt/withdrawals");
 }

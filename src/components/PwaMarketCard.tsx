@@ -1,4 +1,6 @@
 import { useState, useEffect, memo, type FC } from "react";
+import { useCurrency } from "@shared/currency/currency";
+import { bookEdge, marketPool, outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
@@ -67,13 +69,22 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
       isUpcoming ? (market.opensAt ?? null) : market.closesAt,
     );
     const totalPool = Number(market.totalPool);
+    // `market.totalPool` is the ngultrum book and always was; the USDT figure
+    // comes from its own book.
+    const btnPool =
+      market.books?.find((b) => b.currency === "BTN")?.totalPool ?? totalPool;
+    const usdtPool =
+      market.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
+    // The book this viewer transacts in, for odds and percentages.
+    const currency = useCurrency();
+    const viewerPool = marketPool(market, currency);
 
     const sentiment = (() => {
       // calcProb: normalized LMSR when every outcome has one (mixed LMSR/pool
       // sources don't sum to 100), else Laplace-smoothed pool share.
       const raw = market.outcomes.map((o) => ({
         ...o,
-        pct: calcProb(market, o.id) * 100,
+        pct: calcProb(market, o.id, currency) * 100,
       }));
       // Order outcomes by probability (which tracks the money on each side)
       // descending, so the favourites lead and the "+N more" collapse hides the
@@ -500,10 +511,13 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                               }}
                             >
                               <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{(() => {
-                                const outcomePool = Number(s.totalBetAmount) || 0;
-                                const edge = Number(market.houseEdgePct) || 0;
-                                const odds = totalPool > 0 && outcomePool > 0
-                                  ? (totalPool * (1 - edge / 100)) / outcomePool
+                                // Quoted from the viewer's own book — a USDT
+                                // stake priced off ngultrum liquidity is a
+                                // multiple nobody could ever be paid.
+                                const own = outcomePool(s, currency);
+                                const edge = bookEdge(market, currency);
+                                const odds = viewerPool > 0 && own > 0
+                                  ? (viewerPool * (1 - edge / 100)) / own
                                   : 100 / Math.max(s.pct, 1);
                                 return Math.min(99, odds).toFixed(2);
                               })()}x</span>
@@ -600,11 +614,28 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                 gap: 4,
               }}
             >
-              {Number(market.totalPool) > 0 ? (
+              {/* Both books, side by side, never added together.
+                  One event, two pools that settle separately — there is no
+                  exchange rate anywhere in this product, so a combined figure
+                  would be a number that means nothing. A book with nothing in
+                  it is simply left out rather than shown as a zero. */}
+              {btnPool > 0 || usdtPool > 0 ? (
                 <>
-                  <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
-                    Nu {Number(market.totalPool).toLocaleString()}
-                  </span>
+                  {btnPool > 0 && (
+                    <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
+                      Nu {btnPool.toLocaleString()}
+                    </span>
+                  )}
+                  {btnPool > 0 && usdtPool > 0 && (
+                    <span style={{ fontSize: "0.7rem", opacity: 0.45 }}>|</span>
+                  )}
+                  {usdtPool > 0 && (
+                    <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
+                      ${usdtPool.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  )}
                   <span
                     style={{
                       fontSize: "0.58rem",

@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useMemo } from "react";
 import {
   Market,
   placeBet,
@@ -8,6 +8,8 @@ import {
   bustCache,
   trackEvent,
   isTokenValid,
+  type AuthUser,
+  type MarketBookView,
 } from "@shared/api/client";
 import { useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -21,17 +23,54 @@ const DEFAULT_AMOUNT = 100;
 const QUICK_AMOUNTS_DEFAULT = [50, 100, 200, 500];
 const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
 
+/**
+ * Money for display.
+ *
+ * Ngultrum is whole-number in this product; USDT is not — a 1.5 USDT stake
+ * shown as "1" is a wrong number on a screen about money. Trailing zeros are
+ * dropped so a round amount still reads cleanly.
+ */
+function fmt(value: number): string {
+  if (Number.isInteger(value)) return value.toLocaleString();
+  return Number(value.toFixed(6)).toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  });
+}
+
 function getMinBet(market: Market): number {
   return ["ter", "btc"].includes(market.externalSource ?? "") ? 10 : 50;
 }
 
-function calcWin(market: Market, outcomeId: string, bet: number): number {
+/**
+ * Estimated payout for a stake, quoted from the book the money enters.
+ *
+ * `market.totalPool` and `outcome.totalBetAmount` are the **BTN** book's
+ * figures. Using them for a USDT stake quotes odds from a pool that stake will
+ * never join — wrong in both directions, and worst on a market where one book
+ * is busy and the other is empty.
+ */
+function calcWin(
+  market: Market,
+  outcomeId: string,
+  bet: number,
+  currency: "BTN" | "USDT",
+  book: MarketBookView | null,
+): number {
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
   if (!outcome || bet <= 0) return 0;
-  const totalPool = Number(market.totalPool);
-  const outcomePool = Number(outcome.totalBetAmount);
+
+  const totalPool =
+    currency === "BTN"
+      ? Number(market.totalPool)
+      : (book?.totalPool ?? 0);
+  const outcomePool =
+    currency === "BTN"
+      ? Number(outcome.totalBetAmount)
+      : (outcome.poolsByCurrency?.[currency] ?? 0);
+
   const newOutcomePool = outcomePool + bet;
   const newTotalPool = totalPool + bet;
+
   const houseEdge = Number(market.houseEdgePct) / 100;
   if (newOutcomePool <= 0) return 0;
   const parimutuel = (bet / newOutcomePool) * newTotalPool * (1 - houseEdge);
@@ -115,10 +154,17 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
     );
   }
 
-  // Load current wallet balance — drives "insufficient funds" UI
+  // The account, so the form knows which wallet it is spending. Everything
+  // below — the unit, the minimum, the pool the odds come from — follows from
+  // that, and hardcoding ngultrum made a USDT balance of 1 read as "Nu 1" and
+  // fail a Nu 50 minimum it was never subject to.
+  const [me, setMe] = useState<AuthUser | null>(null);
   useEffect(() => {
     getMe()
-      .then((u) => setBalance(Number(u.creditsBalance ?? 0)))
+      .then((u) => {
+        setMe(u);
+        setBalance(Number(u.creditsBalance ?? 0));
+      })
       .catch(() => setBalance(0));
   }, []);
 
@@ -139,23 +185,60 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
       .catch(() => setHeldByOutcome({}));
   }, [market.id, betSuccess]);
 
+  // Which wallets this account could spend on this market: what it may hold,
+  // intersected with the books the market actually accepts.
+  const wallets = useMemo(() => {
+    const books = market.books ?? [];
+    const accepted = new Set(
+      books.length ? books.map((b) => b.currency) : ["BTN"],
+    );
+    const native = (me?.currency ?? "BTN") as "BTN" | "USDT";
+    const held: ("BTN" | "USDT")[] =
+      native === "USDT" ? ["USDT"] : me?.canHoldUsdt ? ["BTN", "USDT"] : ["BTN"];
+    const usable = held.filter((c) => accepted.has(c));
+    // Never leave the form with no wallet at all: fall back to the native one
+    // and let the server give the real reason.
+    return usable.length ? usable : [native];
+  }, [market.books, me?.currency, me?.canHoldUsdt]);
+
+  const [wallet, setWallet] = useState<"BTN" | "USDT" | null>(null);
+  useEffect(() => {
+    // Default to the native currency when it is usable here.
+    if (wallet && wallets.includes(wallet)) return;
+    const native = (me?.currency ?? "BTN") as "BTN" | "USDT";
+    setWallet(wallets.includes(native) ? native : wallets[0]);
+  }, [wallets, me?.currency, wallet]);
+
+  const currency: "BTN" | "USDT" = wallet ?? "BTN";
+  const unit = currency === "USDT" ? "$" : "Nu";
+  const book = market.books?.find((b) => b.currency === currency) ?? null;
+
+  // The balance of the wallet being spent — never the other one, and never a
+  // sum of the two, because no rate exists between them.
+  const walletBalance =
+    currency === (me?.currency ?? "BTN")
+      ? balance
+      : Number(me?.usdtBalance ?? 0);
+
   const betAmount = parseFloat(amount) || 0;
   const existingStake = selectedOutcomeId
     ? (heldByOutcome[selectedOutcomeId] ?? 0)
     : 0;
-  const MIN_BET = getMinBet(market);
+  // From the book when the market has one. `getMinBet` is the ngultrum rule
+  // (Nu 10 on TER/BTC, Nu 50 elsewhere) and means nothing in USDT.
+  const MIN_BET = book?.minStake ?? getMinBet(market);
   const QUICK_AMOUNTS = ["ter", "btc"].includes(market.externalSource ?? "")
     ? QUICK_AMOUNTS_TER
     : QUICK_AMOUNTS_DEFAULT;
   const winAmount = selectedOutcomeId
-    ? calcWin(market, selectedOutcomeId, betAmount)
+    ? calcWin(market, selectedOutcomeId, betAmount, currency, book)
     : 0;
   // Live parimutuel multiple on this side. Falls as more money backs the same
   // outcome — the "lock it in now" hook, specific to this stake, no crowd needed.
   const winMultiple = betAmount > 0 ? winAmount / betAmount : 0;
   const show2Outcomes = market.outcomes.length === 2;
 
-  const hasEnoughBalance = balance !== null && balance >= betAmount;
+  const hasEnoughBalance = walletBalance !== null && walletBalance >= betAmount;
   const isReady =
     !!selectedOutcomeId &&
     betAmount >= MIN_BET &&
@@ -170,6 +253,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
       await placeBet(market.id, {
         outcomeId: selectedOutcomeId,
         amount: betAmount,
+        // Omitted for a native-currency stake so nothing changes for the
+        // existing ngultrum path; sent only when spending a second wallet.
+        ...(currency !== (me?.currency ?? "BTN") ? { currency } : {}),
       });
       // Optimistically update local balance
       setBalance((b) => (b == null ? null : b - betAmount));
@@ -375,7 +461,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
                   letterSpacing: "-0.04em",
                 }}
               >
-                {winAmount > 0 ? `Nu ${Math.floor(winAmount)}` : "—"}
+                {winAmount > 0 ? `${unit} ${fmt(winAmount)}` : "—"}
               </div>
               {winMultiple > 0 && (
                 <div
@@ -421,7 +507,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Nu {amount}
+                {unit} {amount}
               </div>
             </div>
           </div>
@@ -489,7 +575,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
 
       {selectedOutcomeId &&
         betAmount >= MIN_BET &&
-        balance !== null &&
+        walletBalance !== null &&
         !hasEnoughBalance && (
           <div
             style={{
@@ -505,8 +591,8 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             <strong style={{ color: "var(--text-main)" }}>
               Insufficient balance.
             </strong>{" "}
-            You have Nu {balance.toLocaleString()}, need Nu{" "}
-            {betAmount.toLocaleString()}.{" "}
+            You have {unit} {fmt(walletBalance ?? 0)}, need {unit}{" "}
+            {fmt(betAmount)}.{" "}
             <button
               onClick={() => navigate("/wallet")}
               style={{
@@ -538,7 +624,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
           }}
         >
           <strong>
-            You already have Nu {existingStake.toLocaleString()} on this pick.
+            You already have {unit} {fmt(existingStake)} on this pick.
           </strong>{" "}
           Adding more to the same side splits the winnings with a bigger group —
           it lowers your own payout. Backing a different outcome raises it.
@@ -584,10 +670,10 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
           : !selectedOutcomeId
             ? "Select an Outcome"
             : betAmount < MIN_BET
-              ? `Minimum Nu ${MIN_BET} Required`
+              ? `Minimum ${unit} ${fmt(MIN_BET)} Required`
               : !hasEnoughBalance
                 ? "Top Up to Predict"
-                : `Predict Nu ${amount}`}
+                : `Predict ${unit} ${amount}`}
       </button>
 
       {balance !== null && (
@@ -599,7 +685,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             fontWeight: 700,
           }}
         >
-          Wallet balance: Nu {balance.toLocaleString()}
+          Wallet balance: {unit} {fmt(walletBalance ?? 0)}
         </div>
       )}
 

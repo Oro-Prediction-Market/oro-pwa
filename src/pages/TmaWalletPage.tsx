@@ -3,6 +3,10 @@ import { LoadingScreen } from "@shared/components/LoadingScreen";
 import dkBankLogo from "@shared/assets/dk-blue.png";
 import { useAuth } from "@shared/hooks/useAuth";
 import { PhoneInput } from "@/components/ui/PhoneInput";
+import { UsdtWalletModal } from "@/components/UsdtWalletModal";
+import { KycVerificationPanel } from "@/components/KycVerificationPanel";
+import { formatMoney } from "@shared/currency/currency";
+
 import {
   linkDKBank,
   verifyPhoneTma,
@@ -184,11 +188,13 @@ function TxRow({
             marginBottom: tx.note ? 2 : 0,
           }}
         >
-          {tx.note
-            ? tx.note
-            : isWin && !isPositiveNet
-              ? "Payout received"
-              : TX_LABEL[tx.type]}
+          {tx.isPending
+            ? "Withdrawal awaiting approval"
+            : tx.note
+              ? tx.note
+              : isWin && !isPositiveNet
+                ? "Payout received"
+                : TX_LABEL[tx.type]}
         </div>
         {tx.note && (
           <div
@@ -215,6 +221,31 @@ function TxRow({
           {isCredit ? "+" : "−"}
           {Math.abs(Number(tx.amount)).toLocaleString()}
         </div>
+        {/* A withdrawal debits when it is requested and is sent only after a
+            human approves it. Without this the row is indistinguishable from
+            money that has actually left, so people go looking for it on chain
+            and conclude something is wrong. */}
+        {tx.isPending && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              marginTop: 3,
+              padding: "1px 7px",
+              borderRadius: 999,
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--color-warning)",
+              background: "rgba(245,158,11,0.12)",
+              border: "1px solid rgba(245,158,11,0.3)",
+            }}
+          >
+            Pending
+          </div>
+        )}
         <div
           style={{ fontSize: 10, color: "var(--text-subtle)", marginTop: 2 }}
         >
@@ -760,6 +791,23 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
   // In PWA, BhutanApp login already verified identity via national ID — skip phone check
   const hasPhoneVerified = isPwa || !!user?.isPhoneVerified;
 
+  // Which funding rail this account uses.
+  //
+  // A USDT account has no CID, no DK Bank account and no Bhutanese phone, and
+  // never will — showing it "link your DK Bank account" asks for something it
+  // cannot produce and implies its money is stuck until it does.
+  const isUsdt = user?.currency === "USDT";
+  // A Bhutanese account keeps its ngultrum rail exactly as it is and may hold
+  // a USDT wallet beside it. The two balances are never added: no rate exists.
+  const hasSecondWallet = !isUsdt && user?.canHoldUsdt === true;
+  const showUsdtRail = isUsdt || hasSecondWallet;
+  // Null when closed. The USDT rail opens in an overlay, like the ngultrum
+  // rail's Top Up — an address and an exact amount are things a person retypes
+  // into another app, and they should not compete with the wallet page.
+  const [usdtModal, setUsdtModal] = useState<"deposit" | "withdraw" | null>(
+    null,
+  );
+
   const totalWon = txs
     .filter((t) => t.type === "bet_payout")
     .reduce((s, t) => s + Number(t.amount), 0);
@@ -1120,7 +1168,10 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
                 color: "rgba(255,255,255,0.8)",
               }}
             >
-              Nu
+              {/* The hero shows the account's native balance, so the unit is
+                  the native currency — a USDT account was being shown its
+                  tether balance labelled in ngultrum. */}
+              {isUsdt ? "$" : "Nu"}
             </span>
             <span
               style={{
@@ -1201,7 +1252,8 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
           </div>
         </div>
 
-        {/* ── Quick Actions ─────────────────────────────────── */}
+        {/* ── Quick Actions — DK Bank rail only ─────────────── */}
+        {!isUsdt && (
         <div
           style={{
             display: "grid",
@@ -1226,6 +1278,7 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
             Cash Out
           </Button>
         </div>
+        )}
 
         {/* ── Referral Deposit Nudge ─────────────────────────── */}
         {referralDepositNudge && (
@@ -1290,7 +1343,7 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
         )}
 
         {/* ── PWA: CID linking form ─────────────────────────────── */}
-        {isPwa && !user?.dkAccountName && (
+        {isPwa && !isUsdt && !user?.dkAccountName && (
           <PwaCidLinkCard
             onLinked={(merged) => {
               if (merged) {
@@ -1306,11 +1359,12 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
             Shown once a DK Bank account is linked, while no phone-verify
             timestamp is set. telegramLinkedAt is set after either: TMA-side
             phone verification, OR our PWA SMS-OTP verify — both flows count. */}
-        {isPwa && user?.dkAccountName && !user?.telegramLinkedAt && (
+        {isPwa && !isUsdt && user?.dkAccountName && !user?.telegramLinkedAt && (
           <PwaPhoneVerifyCard onVerified={() => refreshWallet()} />
         )}
 
-        {/* ── DK Bank Setup ────────────────────────────────────── */}
+        {/* ── DK Bank Setup — ngultrum rail only ───────────────── */}
+        {!isUsdt && (
         <Card style={{ gap: 12, margin: "0 var(--space-md)" }}>
           <h3
             style={{
@@ -1861,6 +1915,76 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
             </>
           )}
         </Card>
+        )}
+
+        {/* ── USDT rail ─────────────────────────────────────────
+            For a USDT account this is the only way in or out. For a Bhutanese
+            account it is a second wallet beside the ngultrum one above —
+            separate balance, separate books, never converted. */}
+        {showUsdtRail && (
+          <div style={{ padding: "0 var(--space-md)", marginBottom: 20 }}>
+            {hasSecondWallet && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  marginBottom: 6,
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 800,
+                    color: "var(--text-main)",
+                    margin: 0,
+                  }}
+                >
+                  USDT wallet
+                </h3>
+                <span style={{ fontSize: 15, fontWeight: 800 }}>
+                  {formatMoney(Number(user?.usdtBalance ?? 0), "USDT")}
+                </span>
+              </div>
+            )}
+            {hasSecondWallet && (
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "var(--text-muted)",
+                  margin: "0 0 12px",
+                  lineHeight: 1.5,
+                }}
+              >
+                Separate from your ngultrum balance. Deposit from your own
+                crypto wallet — the two are never converted into each other.
+              </p>
+            )}
+
+            {user?.usdtVerified === false ? (
+              <KycVerificationPanel />
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                }}
+              >
+                <Button fullWidth onClick={() => setUsdtModal("deposit")}>
+                  Deposit
+                </Button>
+                <Button
+                  fullWidth
+                  variant="secondary"
+                  onClick={() => setUsdtModal("withdraw")}
+                >
+                  Withdraw
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Transaction History ───────────────────────────── */}
         <div
@@ -2078,6 +2202,28 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
           )}
         </div>
       </div>
+
+      {/* ── USDT deposit / withdraw ───────────────────────────── */}
+      {usdtModal && (
+        <UsdtWalletModal
+          mode={usdtModal}
+          // `creditsBalance` is the live ledger figure every other panel on
+          // this page reads; `user.balance` is a legacy column nothing
+          // maintains, so it always read zero. For a USDT-native account the
+          // native balance *is* the USDT wallet; a Bhutanese account holds it
+          // separately as `usdtBalance`.
+          balance={Number(
+            isUsdt
+              ? (freshUser?.creditsBalance ?? user?.creditsBalance ?? 0)
+              : (freshUser?.usdtBalance ?? user?.usdtBalance ?? 0),
+          )}
+          onClose={() => setUsdtModal(null)}
+          onCredited={() => {
+            window.dispatchEvent(new Event("oro:balance-changed"));
+            refreshWallet();
+          }}
+        />
+      )}
 
       {/* ── Payment Modal ─────────────────────────────────────── */}
       {paymentModal && (

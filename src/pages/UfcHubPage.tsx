@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useCurrency } from "@shared/currency/currency";
+import { outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
 import { getMarkets, type Market } from "@shared/api/client";
 import { Clock, CalendarDays } from "lucide-react";
@@ -167,10 +169,19 @@ function UfcFightCard({
 
   const totalPool = Number(m.totalPool ?? 0) ||
     (m.outcomes ?? []).reduce((s, o) => s + Number(o.totalBetAmount ?? 0), 0);
+  // The USDT book, shown beside the ngultrum one and never added to it.
+  const usdtPool =
+    m.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
 
   const fighters = (m.outcomes ?? []).filter((o) => !isDrawOutcome(o.label ?? ""));
   const [fa, fb] = fighters;
   if (!fa || !fb) return null;
+
+  // The book this viewer transacts in. Pools, percentages and multiples all
+  // come from it; the other currency's pool settles separately and is not
+  // this viewer's business.
+  const viewerCcy = useCurrency();
+  const viewerUnit = viewerCcy === "USDT" ? "$" : "Nu";
 
   const titleNames = parseFightNames(market.title);
   const nameOf = (label: string, idx: number) =>
@@ -201,7 +212,16 @@ function UfcFightCard({
         
         {/* Pool */}
         <div style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginTop: 2, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-          <span style={{ color: GOLD, fontWeight: 800 }}>Nu</span> {Number(outcome.totalBetAmount ?? 0).toLocaleString()} pool
+          {/* The viewer's own book. A USDT bettor is told what is staked in
+              USDT; the ngultrum figure is another currency's pool and settles
+              separately. */}
+          <span style={{ color: GOLD, fontWeight: 800 }}>
+            {viewerUnit}
+          </span>{" "}
+          {outcomePool(outcome, viewerCcy).toLocaleString(undefined, {
+            maximumFractionDigits: viewerCcy === "USDT" ? 2 : 0,
+          })}{" "}
+          pool
         </div>
         
         {/* Win % */}
@@ -328,6 +348,15 @@ function UfcFightCard({
             <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.45)", letterSpacing: "0.1em" }}>TOTAL POOL</div>
             <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", marginTop: 2 }}>
               <span style={{ color: GOLD }}>Nu</span> {totalPool.toLocaleString()}
+              {usdtPool > 0 && (
+                <>
+                  <span style={{ opacity: 0.4, margin: "0 6px" }}>|</span>
+                  <span style={{ color: GOLD }}>$</span>
+                  {usdtPool.toLocaleString(undefined, {
+                    maximumFractionDigits: 2,
+                  })}
+                </>
+              )}
             </div>
         </div>
       </div>
@@ -342,6 +371,12 @@ function UfcEventMarket({
   market: Market;
   onBet: (marketId: string, outcomeId: string) => void;
 }) {
+  // The book this viewer transacts in. Pools, percentages and multiples all
+  // come from it; the other currency's pool settles separately and is not
+  // this viewer's business.
+  const viewerCcy = useCurrency();
+  const viewerUnit = viewerCcy === "USDT" ? "$" : "Nu";
+
   const navigate = useNavigate();
   const closes = useClosesAt(market.bettingClosesAt ?? market.closesAt);
   const resolving = market.status === "resolving";
@@ -395,7 +430,11 @@ function UfcEventMarket({
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 800, color: "var(--text-main, #fff)", marginBottom: 2 }}>{outcome.label}</div>
                 <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>
-                  Nu {Number(outcome.totalBetAmount).toLocaleString()} pool
+                  {viewerUnit}{" "}
+                  {outcomePool(outcome, viewerCcy).toLocaleString(undefined, {
+                    maximumFractionDigits: viewerCcy === "USDT" ? 2 : 0,
+                  })}{" "}
+                  pool
                 </div>
               </div>
               <div style={{ background: "rgba(210,10,10,0.12)", border: "1px solid rgba(210,10,10,0.3)", borderRadius: 9, padding: "5px 9px", textAlign: "center", flexShrink: 0 }}>
@@ -542,6 +581,10 @@ export function UfcHubPage() {
     });
   const eventMarkets = ufcMarkets.filter((m) => !isFightMarket(m));
   const totalPool = ufcMarkets.reduce((s, m) => s + Number(m.totalPool ?? 0), 0);
+  const usdtTotalPool = ufcMarkets.reduce(
+    (s, m) => s + (m.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0),
+    0,
+  );
 
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -609,7 +652,14 @@ export function UfcHubPage() {
               {[
                 { label: "Fight predictions", val: String(fightMarkets.length) },
                 { label: "Event predictions", val: String(eventMarkets.length) },
-                { label: "Total pool", val: `Nu ${totalPool.toLocaleString()}` },
+                {
+                  label: "Total pool",
+                  // Two figures, not a sum — there is no rate between them.
+                  val:
+                    usdtTotalPool > 0
+                      ? `Nu ${totalPool.toLocaleString()} | $${usdtTotalPool.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                      : `Nu ${totalPool.toLocaleString()}`,
+                },
               ].map(({ label, val }) => (
                 <div
                   key={label}

@@ -174,7 +174,6 @@ const PwaWalletTmaPage = lazy(() =>
   })),
 );
 
-import { publicUrl } from "@shared/helpers/publicUrl.ts";
 import { ThemeProvider } from "@shared/contexts/ThemeContext";
 import { OroLogo } from "@shared/components/OroLogo";
 import { FilterProvider, useFilter } from "@shared/contexts/FilterContext";
@@ -207,26 +206,15 @@ const FaqModal = lazy(() =>
     default: m.FaqModal,
   })),
 );
-// Lazy TonConnect provider — scoped to the /wallet route only (835 KiB saved on all other routes)
-const LazyTonConnectProvider = lazy(() =>
-  import("@tonconnect/ui-react").then((m) => ({
-    default: function TonConnectProvider({
-      children,
-      manifestUrl,
-    }: {
-      children: React.ReactNode;
-      manifestUrl: string;
-    }) {
-      return (
-        <m.TonConnectUIProvider manifestUrl={manifestUrl}>
-          {children}
-        </m.TonConnectUIProvider>
-      );
-    },
-  })),
-);
 import React from "react";
-import { isTokenValid, clearToken, logoutApi, refreshAuth } from "@shared/api/client";
+import {
+  isTokenValid,
+  clearToken,
+  logoutApi,
+  refreshAuth,
+  getMe,
+} from "@shared/api/client";
+import { CurrencyProvider } from "@shared/currency/currency";
 
 // ── Page title map ───────────────────────────────────────────────────────────
 
@@ -960,6 +948,7 @@ function PwaLayout({
   authed: boolean;
   onAuthSuccess: () => void;
 }) {
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
@@ -992,6 +981,15 @@ function PwaLayout({
   function handleAuthSuccess() {
     setShowLoginModal(false);
     onAuthSuccess();
+    // A brand-new account cannot deposit until a reviewer has approved a
+    // document. Landing it on the feed means it discovers that only when it
+    // tries to fund, so send it straight to the wallet, where verification is.
+    if (sessionStorage.getItem("oro_new_account") === "1") {
+      sessionStorage.removeItem("oro_new_account");
+      showToast("Welcome — verify your identity to deposit", "info");
+      navigate("/wallet");
+      return;
+    }
     showToast("Signed in successfully", "success");
   }
 
@@ -1062,34 +1060,14 @@ function PwaLayout({
       {/* ── Login modal (rendered outside header to avoid transform stacking context) ── */}
       {showLoginModal && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10000,
-            background: "rgba(0,0,0,0.6)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
+          className="oro-auth-backdrop"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowLoginModal(false);
           }}
         >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 440,
-              background: "var(--bg-main)",
-              borderRadius: 20,
-              padding: "24px 4px",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              animation: "fadeScaleIn 0.2s ease-out",
-            }}
-          >
-            <style>{`@keyframes fadeScaleIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
+          <div className="oro-auth-sheet">
+            {/* Grab handle — bottom sheet only, hidden by CSS on desktop. */}
+            <div className="oro-auth-handle" />
             <ProtectedRoute onLogin={handleAuthSuccess} />
           </div>
         </div>
@@ -1591,21 +1569,28 @@ function PwaLayout({
                 >
                   FAQ
                 </button>
-                <a
-                  href="https://t.me/OroPredictBot"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                {/* Primary call to action for a signed-out visitor, in the
+                    slot "Open in Telegram" used to occupy. Telegram is now a
+                    tile inside the sign-in sheet: it is one of several ways in
+                    and no longer the only one, so it does not need a place in
+                    the header or the menu.
+                    Hidden once signed in — a logged-in user seeing "Log in" is
+                    worse than an empty slot. */}
+                {!authed && (
+                <button
+                  onClick={() => setShowLoginModal(true)}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    padding: "7px 14px",
+                    padding: "7px 16px",
                     borderRadius: 10,
                     background: "var(--grad-primary)",
                     color: "#fff",
                     fontSize: "0.82rem",
                     fontWeight: 800,
-                    textDecoration: "none",
+                    border: "none",
+                    cursor: "pointer",
                     boxShadow: "0 4px 10px rgba(39,117,208,0.2)",
                     transition: "transform 0.2s",
                   }}
@@ -1616,16 +1601,9 @@ function PwaLayout({
                     (e.currentTarget.style.transform = "translateY(0)")
                   }
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-                  </svg>
-                  Open in Telegram
-                </a>
+                  Log in
+                </button>
+                )}
               </div>
             )}
 
@@ -1831,11 +1809,7 @@ function PwaLayout({
                     </div>
                   }
                 >
-                  <LazyTonConnectProvider
-                    manifestUrl={publicUrl("tonconnect-manifest.json")}
-                  >
-                    <PwaWalletTmaPage />
-                  </LazyTonConnectProvider>
+                  <PwaWalletTmaPage />
                 </Suspense>
               </AuthGate>
             }
@@ -2446,6 +2420,29 @@ function FooterLink({
 
 export function PwaApp() {
   const [authed, setAuthed] = useState(() => isTokenValid());
+  // The signed-in account's own currency, published to the whole tree.
+  //
+  // Every pool, payout and multiple on a market is per book, so a screen that
+  // does not know which currency the viewer transacts in quotes ngultrum odds
+  // to somebody staking dollars. Fetched here once rather than in each card.
+  const [viewerCurrency, setViewerCurrency] = useState<"BTN" | "USDT">("BTN");
+  useEffect(() => {
+    if (!authed) {
+      setViewerCurrency("BTN");
+      return;
+    }
+    let cancelled = false;
+    getMe()
+      .then((u) => {
+        if (!cancelled) setViewerCurrency(u.currency === "USDT" ? "USDT" : "BTN");
+      })
+      .catch(() => {
+        /* Signed out or offline — ngultrum is the safe default. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authed]);
   const [bootstrapping, setBootstrapping] = useState(!isTokenValid());
 
   // On mount, attempt to restore session from the httpOnly cookie.
@@ -2492,11 +2489,13 @@ export function PwaApp() {
   return (
     <HelmetProvider>
       <ThemeProvider>
+        <CurrencyProvider currency={viewerCurrency}>
         <FilterProvider>
           <BrowserRouter future={{ v7_startTransition: true }}>
             <PwaLayout authed={authed} onAuthSuccess={() => setAuthed(true)} />
           </BrowserRouter>
         </FilterProvider>
+        </CurrencyProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

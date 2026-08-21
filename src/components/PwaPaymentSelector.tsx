@@ -25,15 +25,6 @@ export function PwaPaymentSelector({
       maxAmount: 15000,
     },
     {
-      id: "ton",
-      name: "TON Wallet",
-      type: "ton",
-      currency: "USDT",
-      enabled: true,
-      minAmount: 0.5,
-      maxAmount: 100,
-    },
-    {
       id: "credits",
       name: "Test Credits",
       type: "credits",
@@ -45,9 +36,7 @@ export function PwaPaymentSelector({
 
   const handlePaymentSelect = (methodId: string) => {
     setSelectedMethod(methodId);
-    if (methodId === "ton") {
-      onPaymentFailure?.("TON payments coming soon");
-    } else if (methodId === "credits") {
+    if (methodId === "credits") {
       onPaymentFailure?.("Credits payments coming soon");
     }
   };
@@ -164,7 +153,6 @@ export function PwaPaymentSelector({
                         <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
                       </svg>
                     )}
-                    {method.type === "ton" && "💎"}
                     {method.type === "credits" && "🪙"}
                   </div>
                   <div style={{ textAlign: "left" }}>

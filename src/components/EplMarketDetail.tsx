@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Trophy } from "lucide-react";
@@ -128,6 +129,8 @@ export function EplMarketDetail({
   const totalPool =
     Number(market.totalPool ?? 0) ||
     outcomes.reduce((s, o) => s + Number(o.totalBetAmount ?? 0), 0);
+  const usdtPool =
+    market.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
 
   const isMatch = isMatchLayout(market);
   const winnerId = market.resolvedOutcomeId ?? null;
@@ -306,7 +309,16 @@ export function EplMarketDetail({
             )}
 
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <StatTile label="Total pool" value={`Nu ${totalPool.toLocaleString()}`} />
+              <StatTile
+                label="Total pool"
+                // Both books when both hold money — never added, since no rate
+                // between them exists.
+                value={
+                  usdtPool > 0
+                    ? `Nu ${totalPool.toLocaleString()} | $${usdtPool.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                    : `Nu ${totalPool.toLocaleString()}`
+                }
+              />
               <StatTile label="Outcomes" value={String(outcomes.length)} />
               <StatTile
                 label={locked ? "Status" : "Closes in"}
@@ -892,7 +904,7 @@ function FieldBlock({
                   fontWeight: 600,
                 }}
               >
-                Nu {Number(outcome.totalBetAmount ?? 0).toLocaleString()} pool
+                <PoolAmount outcome={outcome} />
               </div>
             </div>
             <div style={{ textAlign: "center", flexShrink: 0, minWidth: 46 }}>

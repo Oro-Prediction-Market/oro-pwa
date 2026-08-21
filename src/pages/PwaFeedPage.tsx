@@ -1978,34 +1978,13 @@ export function PwaFeedPage({
       {/* Auth modal — shown when unauthenticated user tries to bet */}
       {showAuthModal && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "rgba(0,0,0,0.6)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
+          className="oro-auth-backdrop"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowAuthModal(false);
           }}
         >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: 440,
-              background: "var(--bg-main)",
-              borderRadius: 20,
-              padding: "24px 4px",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              animation: "fadeScaleIn 0.2s ease-out",
-            }}
-          >
-            <style>{`@keyframes fadeScaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }`}</style>
+          <div className="oro-auth-sheet">
+            <div className="oro-auth-handle" />
             <ProtectedRoute onLogin={handleAuthSuccess} />
           </div>
         </div>

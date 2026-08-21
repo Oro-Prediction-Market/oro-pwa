@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
+import { UsdtDepositPanel } from "../components/UsdtDepositPanel";
+import { KycVerificationPanel } from "../components/KycVerificationPanel";
+import { formatMoney } from "@shared/currency/currency";
+import { UsdtWithdrawPanel } from "../components/UsdtWithdrawPanel";
 import {
+  getKycStatus,
   getMe,
   getMyTransactions,
   type AuthUser,
@@ -186,6 +191,32 @@ export function PwaWalletPage() {
     window.addEventListener("oro:balance-changed", handler);
     return () => window.removeEventListener("oro:balance-changed", handler);
   }, []);
+
+  // An account is native to one currency. A USDT account gets the crypto rail
+  // and never sees DK Bank; a BTN account sees exactly what it always has.
+  const isUsdt = profile?.currency === "USDT";
+  // A Bhutanese account that also holds USDT. Its ngultrum rail is unchanged —
+  // DK Bank top-up, DK Bank withdrawal — and the USDT wallet sits beside it as
+  // a separate section. The two balances are never added: there is no rate
+  // between them.
+  const hasSecondWallet = !isUsdt && profile?.canHoldUsdt === true;
+  // Read live rather than from the session: `profile.kycStatus` was minted at
+  // login and does not change when a reviewer approves, so a verified user
+  // would keep seeing the form until they logged out and back in.
+  const [kycApproved, setKycApproved] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!isUsdt) return;
+    let cancelled = false;
+    getKycStatus()
+      .then((s) => !cancelled && setKycApproved(s.status === "approved"))
+      // A failed status check must not open the gate. The server refuses an
+      // unverified deposit anyway; showing the form is the honest fallback.
+      .catch(() => !cancelled && setKycApproved(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [isUsdt]);
+  const [usdtTab, setUsdtTab] = useState<"deposit" | "withdraw">("deposit");
 
   const totalIn = txs
     .filter((t) => Number(t.amount) > 0)
@@ -382,7 +413,166 @@ export function PwaWalletPage() {
             </div>
           </div>
 
-          {/* Action buttons */}
+          {/* ── USDT rail ─────────────────────────────────────────────────
+              A USDT account funds and withdraws through 21 Pay and never sees
+              DK Bank. A BTN account sees exactly what it always has: the two
+              blocks are mutually exclusive, because an account is native to
+              one currency and there is no conversion between them. */}
+          {isUsdt && kycApproved === false && (
+            <div style={{ marginBottom: 32 }}>
+              <KycVerificationPanel
+                onSubmitted={() => setKycApproved(false)}
+              />
+            </div>
+          )}
+
+          {isUsdt && kycApproved && (
+            <div style={{ marginBottom: 32 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 12,
+                  marginBottom: 16,
+                }}
+              >
+                <button
+                  onClick={() => setUsdtTab("deposit")}
+                  style={{
+                    padding: "12px",
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    border: "1px solid var(--glass-border)",
+                    background:
+                      usdtTab === "deposit"
+                        ? "var(--deposit-btn-bg)"
+                        : "var(--bg-card)",
+                    color: usdtTab === "deposit" ? "#fff" : "var(--text-main)",
+                  }}
+                >
+                  Deposit
+                </button>
+                <button
+                  onClick={() => setUsdtTab("withdraw")}
+                  style={{
+                    padding: "12px",
+                    borderRadius: 12,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    border: "1px solid var(--glass-border)",
+                    background:
+                      usdtTab === "withdraw"
+                        ? "var(--deposit-btn-bg)"
+                        : "var(--bg-card)",
+                    color: usdtTab === "withdraw" ? "#fff" : "var(--text-main)",
+                  }}
+                >
+                  Withdraw
+                </button>
+              </div>
+
+              {usdtTab === "deposit" ? (
+                <UsdtDepositPanel
+                  onCredited={() =>
+                    window.dispatchEvent(new Event("oro:balance-changed"))
+                  }
+                />
+              ) : (
+                <UsdtWithdrawPanel balance={Number(profile.balance ?? 0)} />
+              )}
+            </div>
+          )}
+
+          {/* ── Second wallet: USDT held by a Bhutanese account ───────────
+              Only rendered when the account may hold one. The ngultrum rail
+              above is untouched by anything in here. */}
+          {hasSecondWallet && (
+            <div style={{ marginBottom: 32 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
+                  marginBottom: 10,
+                }}
+              >
+                <h3
+                  style={{
+                    fontSize: "0.95rem",
+                    fontWeight: 800,
+                    color: "var(--text-main)",
+                    margin: 0,
+                  }}
+                >
+                  USDT wallet
+                </h3>
+                <span
+                  style={{
+                    fontSize: "0.95rem",
+                    fontWeight: 800,
+                    color: "var(--text-main)",
+                  }}
+                >
+                  {formatMoney(Number(profile.usdtBalance ?? 0), "USDT")}
+                </span>
+              </div>
+              <p
+                style={{
+                  fontSize: "0.72rem",
+                  color: "var(--text-subtle)",
+                  margin: "0 0 12px",
+                  lineHeight: 1.5,
+                }}
+              >
+                Separate from your ngultrum balance. Deposit from your own
+                crypto wallet and stake it in USDT markets — the two are never
+                converted into each other.
+              </p>
+
+              {profile.usdtVerified === false ? (
+                <KycVerificationPanel />
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 12,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <button
+                      onClick={() => setUsdtTab("deposit")}
+                      style={walletTabStyle(usdtTab === "deposit")}
+                    >
+                      Deposit
+                    </button>
+                    <button
+                      onClick={() => setUsdtTab("withdraw")}
+                      style={walletTabStyle(usdtTab === "withdraw")}
+                    >
+                      Withdraw
+                    </button>
+                  </div>
+                  {usdtTab === "deposit" ? (
+                    <UsdtDepositPanel
+                      onCredited={() =>
+                        window.dispatchEvent(new Event("oro:balance-changed"))
+                      }
+                    />
+                  ) : (
+                    <UsdtWithdrawPanel
+                      balance={Number(profile.usdtBalance ?? 0)}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Action buttons — BTN rail only */}
+          {!isUsdt && (
           <div
             style={{
               display: "grid",
@@ -430,6 +620,7 @@ export function PwaWalletPage() {
               Cash Out
             </button>
           </div>
+          )}
 
           {/* Transaction list */}
           <div style={{ padding: "0 4px" }}>
@@ -554,4 +745,17 @@ export function PwaWalletPage() {
       )}
     </div>
   );
+}
+
+/** Shared by both wallet tab rows, which were byte-identical inline blocks. */
+function walletTabStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: "12px",
+    borderRadius: 12,
+    fontWeight: 800,
+    cursor: "pointer",
+    border: "1px solid var(--glass-border)",
+    background: active ? "var(--deposit-btn-bg)" : "var(--bg-card)",
+    color: active ? "#fff" : "var(--text-main)",
+  };
 }

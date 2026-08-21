@@ -1,0 +1,448 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   USDT rail — deposit and withdrawal panels.
+
+   These markups shipped with `usdt-*` class names and no stylesheet behind
+   them, so every panel rendered as bare browser defaults: Times New Roman
+   headings, unstyled inputs, no spacing. This file is that missing stylesheet.
+
+   Everything below is expressed in the app's own tokens rather than literal
+   values, so the panels follow the theme — including `html.dark` — the same
+   way every other surface does.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.usdt-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  font-family: var(--font-primary);
+  color: var(--text-main);
+}
+
+.usdt-panel h3 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 2px;
+  color: var(--text-main);
+}
+
+.usdt-panel p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+/* Section heading above a control — small, quiet, and never competing with
+   the values underneath it. */
+.usdt-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  margin-top: var(--space-sm);
+}
+
+.usdt-muted {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* ── Network picker ─────────────────────────────────────────────────────── */
+
+.usdt-networks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.usdt-network {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.usdt-network:hover {
+  border-color: var(--color-primary);
+}
+
+.usdt-network.is-selected {
+  border-color: var(--color-primary);
+  background: rgba(39, 117, 208, 0.08);
+}
+
+.usdt-network-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ── Inputs and the primary action ──────────────────────────────────────── */
+
+.usdt-panel input:not([type="radio"]):not([type="checkbox"]),
+.usdt-panel select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--bg-card);
+  color: var(--text-main);
+  /* 16px exactly: anything smaller makes iOS Safari zoom the page on focus. */
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.usdt-panel input:not([type="radio"]):not([type="checkbox"]):focus,
+.usdt-panel select:focus {
+  border-color: var(--color-primary);
+}
+
+.usdt-primary {
+  width: 100%;
+  padding: 12px;
+  margin-top: var(--space-sm);
+  border: none;
+  border-radius: var(--radius-button);
+  background: var(--grad-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.usdt-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Copyable address and amount ────────────────────────────────────────── */
+
+.usdt-copyrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  background: var(--bg-secondary);
+}
+
+.usdt-copyrow code,
+.usdt-addr {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8rem;
+  /* A Tron address is 34 characters and must never be truncated — a user
+     comparing it against their wallet needs every character. */
+  word-break: break-all;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+
+.usdt-copyrow button {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--color-primary);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.usdt-copyrow button:hover {
+  border-color: var(--color-primary);
+}
+
+/* ── Status messages ────────────────────────────────────────────────────── */
+
+.usdt-notice,
+.usdt-warning,
+.usdt-error,
+.usdt-partial {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.usdt-notice {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: var(--color-info);
+}
+
+.usdt-warning,
+.usdt-partial {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--color-warning);
+}
+
+.usdt-error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--color-danger);
+}
+
+/* ── Destinations and history ───────────────────────────────────────────── */
+
+.usdt-destination,
+.usdt-newdest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+}
+
+.usdt-destination.is-cooling {
+  /* Whitelisted but still inside its cooldown — visibly not yet usable. */
+  opacity: 0.6;
+}
+
+.usdt-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.usdt-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  font-size: 0.78rem;
+}
+
+/* ── Receive block: the QR leads, the address sits under it ────────────────
+
+   Scanning is the path that cannot be mistyped, so it gets the room. The
+   address below it serves two other people: whoever is copying by hand, and
+   whoever is checking the scanned address against what they see. */
+
+.usdt-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0 0;
+}
+
+/* Always light, never themed. A QR needs dark modules on a light field with a
+   quiet zone around it; inheriting the dark theme's card colour would make it
+   unscannable while still looking deliberate. */
+.usdt-qr-frame {
+  display: flex;
+  padding: 12px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  line-height: 0;
+}
+
+/* The SVG is rendered at a fixed pixel size; let it shrink on a narrow phone
+   rather than forcing the panel to scroll sideways. */
+.usdt-qr-frame svg {
+  width: 100%;
+  height: auto;
+  max-width: 220px;
+}
+
+.usdt-qr figcaption {
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* An action inside a notice — "top up the difference", "start again".
+   These were rendering as raw browser buttons: grey, square, system font,
+   visibly not part of the product. Sized down from the primary action, since
+   they sit inside a message rather than ending the screen. */
+.usdt-inline-action {
+  align-self: flex-start;
+  margin-top: var(--space-sm);
+  padding: 7px 14px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.usdt-inline-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Notices holding an action need to stack, not run the button inline. */
+.usdt-partial,
+.usdt-notice {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A quiet way out of a screen — "deposit a different amount".
+   Underlined text rather than a button, so it never competes with the action
+   the screen is actually about. */
+.usdt-textlink {
+  align-self: center;
+  margin-top: var(--space-xs);
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--text-subtle);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.usdt-textlink:hover {
+  color: var(--color-primary);
+}
+
+
+/* ── Withdrawal ─────────────────────────────────────────────────────────────
+   Same vocabulary as the deposit side: card-shaped selectable rows, one
+   primary action, quiet secondaries. Only the styling is shared — the flow
+   itself (whitelist, cooldown, review) is unchanged. */
+
+/* A saved destination, shaped like a network option on the deposit side so
+   picking where money goes looks like picking how it arrives. */
+.usdt-destination {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.usdt-destination:hover {
+  border-color: var(--color-primary);
+}
+
+/* :has() so the whole row reacts to its radio, matching how a selected network
+   looks on the deposit side. */
+.usdt-destination:has(input:checked) {
+  border-color: var(--color-primary);
+  background: rgba(39, 117, 208, 0.08);
+}
+
+.usdt-destination input[type="radio"] {
+  margin: 3px 0 0;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.usdt-destination > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.82rem;
+}
+
+.usdt-destination strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* Whitelisted but inside its 24h cooldown: visibly present, visibly not yet
+   usable, and not clickable. */
+.usdt-destination.is-cooling {
+  opacity: 0.55;
+  cursor: default;
+  border-style: dashed;
+}
+
+.usdt-destination.is-cooling:hover {
+  border-color: var(--border);
+}
+
+.usdt-newdest {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--bg-secondary);
+}
+
+/* The quieter twin of .usdt-primary, for an action that opens a form rather
+   than completing one. */
+.usdt-secondary {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-button);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.usdt-secondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.usdt-panel h4 {
+  margin: var(--space-sm) 0 0;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.usdt-history-row strong {
+  font-weight: 700;
+}

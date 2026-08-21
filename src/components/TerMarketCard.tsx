@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef, memo, type FC } from "react";
+import { useCurrency } from "@shared/currency/currency";
+import { marketPool, outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
 import { Market, getTerPrice, getTerPriceHistory, TerPrice } from "../../shared/api/client";
 
@@ -335,8 +337,14 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
     const upOutcome   = market.outcomes.find((o) => o.label === "UP");
     const downOutcome = market.outcomes.find((o) => o.label === "DOWN");
     const totalPool   = Number(market.totalPool);
-    const upPool      = upOutcome ? Number(upOutcome.totalBetAmount) : 0;
-    const upPct       = totalPool > 0 ? Math.round((upPool / totalPool) * 100) : 50;
+    const usdtPool =
+      market.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
+    // The viewer's own book — see BtcMarketCard for the same reasoning.
+    const viewerCcy   = useCurrency();
+    const viewerTotal = marketPool(market, viewerCcy);
+    const upPool      = upOutcome ? outcomePool(upOutcome, viewerCcy) : 0;
+    const upPct       =
+      viewerTotal > 0 ? Math.round((upPool / viewerTotal) * 100) : 50;
 
     const winLabel = isSettled
       ? (market.outcomes.find((o) => o.id === market.resolvedOutcomeId)?.label ?? null)
@@ -515,7 +523,17 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
           {/* Footer */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 11, color: C.muted }}>
-              {totalPool > 0 ? `Nu ${totalPool.toLocaleString()} vol` : "No volume yet"}
+              {/* Both books, never added: no rate exists between them. */}
+              {totalPool > 0 || usdtPool > 0
+                ? [
+                    totalPool > 0 ? `Nu ${totalPool.toLocaleString()}` : null,
+                    usdtPool > 0
+                      ? `$${usdtPool.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" | ") + " vol"
+                : "No volume yet"}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
               <div style={{ width: 5, height: 5, borderRadius: "50%", background: upPct >= 50 ? "#10b981" : "#f43f5e" }} />

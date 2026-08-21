@@ -1,4 +1,6 @@
 import { FC, useState, useEffect } from "react";
+import { useCurrency } from "@shared/currency/currency";
+import { outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -196,10 +198,15 @@ export const PriceMarketDetail: FC<Props> = ({
   const downPct = 100 - upPct;
   const upLabel = up?.label ?? "Higher";
   const downLabel = down?.label ?? "Lower";
-  const upStake = Number(up?.totalBetAmount) || 0;
-  const downStake = Number(down?.totalBetAmount) || 0;
+  // The viewer's own book, like every other figure on this screen.
+  const viewerCcy = useCurrency();
+  const viewerUnit = viewerCcy === "USDT" ? "$" : "Nu";
+  const upStake = up ? outcomePool(up, viewerCcy) : 0;
+  const downStake = down ? outcomePool(down, viewerCcy) : 0;
 
   const pool = Number(market.totalPool) || 0;
+  const usdtPool =
+    market.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
   const closeAt = market.bettingClosesAt ?? market.closesAt;
 
   const timeline = [
@@ -299,6 +306,13 @@ export const PriceMarketDetail: FC<Props> = ({
           </div>
           <div style={{ fontSize: 15.5, fontWeight: 800, color: C.text }}>
             Nu {pool.toLocaleString()}
+            {usdtPool > 0 && (
+              <>
+                {" | "}${usdtPool.toLocaleString(undefined, {
+                  maximumFractionDigits: 2,
+                })}
+              </>
+            )}
           </div>
         </div>
         <div style={tile}>
@@ -368,8 +382,12 @@ export const PriceMarketDetail: FC<Props> = ({
           fontWeight: 600,
         }}
       >
-        <span>Nu {upStake.toLocaleString()} on {upLabel.toLowerCase()}</span>
-        <span>Nu {downStake.toLocaleString()} on {downLabel.toLowerCase()}</span>
+        <span>
+          {viewerUnit} {upStake.toLocaleString()} on {upLabel.toLowerCase()}
+        </span>
+        <span>
+          {viewerUnit} {downStake.toLocaleString()} on {downLabel.toLowerCase()}
+        </span>
       </div>
     </div>
   );

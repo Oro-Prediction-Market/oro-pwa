@@ -1,4 +1,12 @@
 import { useState, useEffect, memo, type FC } from "react";
+import { useCurrency, type Currency } from "@shared/currency/currency";
+import {
+  bookEdge,
+  hasOutcomeBreakdown,
+  marketPool,
+  outcomePool,
+  smoothingPrior,
+} from "@shared/currency/pools";
 import type { Market, Outcome } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { BottomSheet } from "@/components/ui/Modal";
@@ -54,38 +62,60 @@ function findOutcome(m: Market, label: "yes" | "no"): Outcome | undefined {
 
 /** Chance % of an outcome (Laplace-smoothed pool share once bets exist, else
  *  initial LMSR odds). */
-function chanceOf(m: Market, o: Outcome | undefined): number {
+function chanceOf(
+  m: Market,
+  o: Outcome | undefined,
+  currency: Currency,
+): number {
   if (!o) return 50;
 
-  const prior = 1000;
+  const prior = smoothingPrior(currency);
   const n = m.outcomes.length || 1;
-  const totalPool = Number(m.totalPool) || 0;
+  const totalPool = marketPool(m, currency);
   // Real money in the pool → use the outcome's pool share (see calcProb). Stored
   // LMSR probabilities saturate on a lopsided pool (favourite → ~0.99, everyone
   // else → ~0) and misreport as "99% / 0%".
-  if (totalPool > 0) {
-    const smoothedAmount = Number(o.totalBetAmount) + prior / n;
+  // Needs the per-outcome breakdown to be present — see calcProb.
+  if (totalPool > 0 && (currency === "BTN" || hasOutcomeBreakdown(o))) {
+    const smoothedAmount = outcomePool(o, currency) + prior / n;
     return (smoothedAmount / (totalPool + prior)) * 100;
   }
-  const lmsr = (m.outcomes ?? []).map((x) => Number(x.lmsrProbability) || 0);
+  // Per currency: `lmsrProbability` is the BTN book's value, so a USDT viewer
+  // reading it gets odds derived from ngultrum money. An untouched USDT book
+  // means an even split, which is the honest answer.
+  const lmsrOf = (x: Outcome) =>
+    Number(
+      x.lmsrByCurrency?.[currency] ??
+        (currency === "BTN" ? x.lmsrProbability : 0),
+    ) || 0;
+  const lmsr = (m.outcomes ?? []).map(lmsrOf);
   if (lmsr.length && lmsr.every((p) => p > 0)) {
     const sum = lmsr.reduce((a, b) => a + b, 0);
-    return ((Number(o.lmsrProbability) || 0) / sum) * 100;
+    return (lmsrOf(o) / sum) * 100;
   }
-  const smoothedAmount = Number(o.totalBetAmount) + prior / n;
+  const smoothedAmount = outcomePool(o, currency) + prior / n;
   return (smoothedAmount / (totalPool + prior)) * 100;
 }
 
 
-function outcomeOdds(m: Market, o: Outcome, stake = 100): number | null {
-  const totalPool = Number(m.totalPool) || 0;
-  const outcomePool = Number(o.totalBetAmount) || 0;
-  const edge = Number(m.houseEdgePct) || 0;
-  if (totalPool <= 0) return null;
-  return Math.min(
-    99,
-    ((totalPool + stake) * (1 - edge / 100)) / (outcomePool + stake),
-  );
+/**
+ * The multiple a stake in `currency` would return right now.
+ *
+ * `stake` is a notional probe, so it must be sized in the viewer's own
+ * currency: a Nu 100 probe against a $2 book would swamp the pool and report a
+ * multiple nobody could ever get.
+ */
+function outcomeOdds(
+  m: Market,
+  o: Outcome,
+  currency: Currency,
+): number | null {
+  const total = marketPool(m, currency);
+  const own = outcomePool(o, currency);
+  const edge = bookEdge(m, currency);
+  const stake = currency === "USDT" ? 1 : 100;
+  if (total <= 0) return null;
+  return Math.min(99, ((total + stake) * (1 - edge / 100)) / (own + stake));
 }
 
 interface GroupedMarketCardProps {
@@ -101,10 +131,29 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
     const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
     const [shareOpen, setShareOpen] = useState(false);
     const [showAll, setShowAll] = useState(false);
+    // The book this viewer transacts in. Every pool, percentage and multiple
+    // below is read from it.
+    const currency = useCurrency();
     const first = markets[0];
     const title = (first.groupTitle || first.title).trim();
     const vis = getCategoryVisual(first.category);
-    const groupPool = markets.reduce((s, m) => s + Number(m.totalPool), 0);
+    // Per currency, summed across the group's markets but never across
+    // currencies — one event, two pools that settle separately, and no rate
+    // exists between them.
+    const groupBtnPool = markets.reduce(
+      (s, m) =>
+        s +
+        (m.books?.find((b) => b.currency === "BTN")?.totalPool ??
+          Number(m.totalPool) ??
+          0),
+      0,
+    );
+    const groupUsdtPool = markets.reduce(
+      (s, m) => s + (m.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0),
+      0,
+    );
+    // The BTN figure remains what the group's existing UI is built around.
+    const groupPool = groupBtnPool;
     // Countdown to the earliest close among the children
     const earliestClose = markets.reduce<string | null>(
       (acc, m) =>
@@ -124,7 +173,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
         return {
           market: m,
           name: candidateName(m),
-          pct: chanceOf(m, yes),
+          pct: chanceOf(m, yes, currency),
           yes,
           no,
         };
@@ -142,7 +191,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
       color: string,
     ) => {
       const disabled = !o || o.isEliminated || m.status !== "open";
-      const odds = o ? outcomeOdds(m, o) : null;
+      const odds = o ? outcomeOdds(m, o, currency) : null;
       return (
         <button
           disabled={disabled}
@@ -493,11 +542,23 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
                 gap: 4,
               }}
             >
-              {groupPool > 0 ? (
+              {groupBtnPool > 0 || groupUsdtPool > 0 ? (
                 <>
-                  <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
-                    Nu {groupPool.toLocaleString()}
-                  </span>
+                  {groupBtnPool > 0 && (
+                    <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
+                      Nu {groupBtnPool.toLocaleString()}
+                    </span>
+                  )}
+                  {groupBtnPool > 0 && groupUsdtPool > 0 && (
+                    <span style={{ fontSize: "0.7rem", opacity: 0.45 }}>|</span>
+                  )}
+                  {groupUsdtPool > 0 && (
+                    <span style={{ fontSize: "0.78rem", fontWeight: 900 }}>
+                      ${groupUsdtPool.toLocaleString(undefined, {
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  )}
                   <span
                     style={{
                       fontSize: "0.58rem",

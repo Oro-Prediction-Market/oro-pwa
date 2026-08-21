@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { hapticFeedback } from "@tma.js/sdk-react";
 import confetti from "canvas-confetti";
-import { getMe, getMyBets, placeBet } from "@shared/api/client";
+import {
+  getMe,
+  getMyBets,
+  placeBet,
+  type AuthUser,
+} from "@shared/api/client";
 import type { Market, BetStreak } from "@shared/api/client";
 import { PayoutBreakdown } from "@shared/components/PayoutBreakdown";
 import { ShareCTA } from "@shared/components/ShareCTA";
@@ -12,6 +17,25 @@ import { useAuth } from "@shared/hooks/useAuth";
 
 const QUICK_AMOUNTS_DEFAULT = [100, 500, 1000];
 const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
+/**
+ * USDT shortcuts.
+ *
+ * The ngultrum figures are meaningless here: offering 100 / 500 / 1000 to
+ * someone holding $17 is three buttons that cannot be pressed. Scaled to the
+ * $1 minimum instead.
+ */
+const QUICK_AMOUNTS_USDT = [1, 5, 10, 25];
+
+/**
+ * Money for display. Ngultrum is whole-number in this product; USDT is not, so
+ * flooring a 1.5 USDT payout to "1" would be a wrong number on a money screen.
+ */
+function fmtMoney(value: number): string {
+  if (Number.isInteger(value)) return value.toLocaleString();
+  return Number(value.toFixed(6)).toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  });
+}
 
 function getMinBet(market: Market): number {
   return ["ter", "btc"].includes(market.externalSource ?? "") ? 10 : 50;
@@ -43,6 +67,9 @@ export function TmaBetModal({
   const [amountStr, setAmountStr] = useState(() =>
     initialAmount ? String(initialAmount) : "100",
   );
+  // Whether the person has changed the stake themselves. Once they have, the
+  // default below must never overwrite what they typed.
+  const touchedAmount = useRef(false);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
@@ -55,12 +82,14 @@ export function TmaBetModal({
   // stake again.
   const [existingStake, setExistingStake] = useState(0);
   const { user } = useAuth();
+  const [me, setMe] = useState<AuthUser | null>(null);
 
   // Fetch user's balance + any existing position on this pick when modal opens
   useEffect(() => {
     if (!isOpen) return;
     getMe()
       .then((u) => {
+        setMe(u);
         setCreditsBalance(u.creditsBalance ?? 0);
       })
       .catch(() => {});
@@ -107,21 +136,82 @@ export function TmaBetModal({
     return neutral[rank % neutral.length];
   })();
 
+  // Which wallet this stake spends, and everything that follows from it.
+  //
+  // Hardcoding ngultrum here showed a 23 USDT balance as "Nu 23" and measured
+  // it against the Nu 50 minimum it was never subject to — so a funded account
+  // was told it had insufficient funds in a currency it does not hold.
+  const wallets = useMemo(() => {
+    const books = market.books ?? [];
+    const accepted = new Set(
+      books.length ? books.map((b) => b.currency) : ["BTN"],
+    );
+    const native = (me?.currency ?? "BTN") as "BTN" | "USDT";
+    const held: ("BTN" | "USDT")[] =
+      native === "USDT" ? ["USDT"] : me?.canHoldUsdt ? ["BTN", "USDT"] : ["BTN"];
+    const usable = held.filter((c) => accepted.has(c));
+    return usable.length ? usable : [native];
+  }, [market.books, me?.currency, me?.canHoldUsdt]);
+
+  const currency: "BTN" | "USDT" = wallets.includes(
+    (me?.currency ?? "BTN") as "BTN" | "USDT",
+  )
+    ? ((me?.currency ?? "BTN") as "BTN" | "USDT")
+    : wallets[0];
+  const unit = currency === "USDT" ? "$" : "Nu";
+  const book = market.books?.find((b) => b.currency === currency) ?? null;
+
+  // The balance of the wallet being spent. `creditsBalance` is the account's
+  // native currency; a Bhutanese account staking its USDT wallet is a
+  // different figure, and the two are never added.
+  const walletBalance =
+    currency === (me?.currency ?? "BTN")
+      ? (creditsBalance ?? 0)
+      : Number(me?.usdtBalance ?? 0);
+  /** What "Max" stakes. Not floored in USDT — see the stepper below. */
+  const maxStakeStr = String(
+    currency === "USDT" ? walletBalance : Math.floor(walletBalance),
+  );
+
   const betAmount = parseFloat(amountStr) || 0;
-  const MIN_BET = getMinBet(market);
-  const QUICK_AMOUNTS = ["ter", "btc"].includes(market.externalSource ?? "")
-    ? QUICK_AMOUNTS_TER
-    : QUICK_AMOUNTS_DEFAULT;
+  // The book's minimum. `getMinBet` is the ngultrum rule and means nothing in
+  // USDT.
+  const MIN_BET = book?.minStake ?? getMinBet(market);
+  const QUICK_AMOUNTS =
+    currency === "USDT"
+      ? QUICK_AMOUNTS_USDT
+      : ["ter", "btc"].includes(market.externalSource ?? "")
+        ? QUICK_AMOUNTS_TER
+        : QUICK_AMOUNTS_DEFAULT;
+  // The field opens at 100, which is a ngultrum figure: for a USDT account it
+  // is both far above the usual balance and above anything they meant to
+  // stake. Corrected once the account's currency is known, and only while the
+  // field is untouched.
+  useEffect(() => {
+    if (touchedAmount.current || initialAmount) return;
+    if (currency === "USDT" && amountStr === "100") {
+      setAmountStr(String(QUICK_AMOUNTS[0]));
+    }
+  }, [currency, amountStr, initialAmount, QUICK_AMOUNTS]);
+
   const isValidAmount = betAmount >= MIN_BET;
-  const hasEnoughBalance =
-    creditsBalance !== null && creditsBalance >= betAmount;
+  const hasEnoughBalance = walletBalance >= betAmount;
   const canPlaceBet = isValidAmount && hasEnoughBalance && status === "idle";
 
   const estPayout = (() => {
     if (!isValidAmount || !outcome) return 0;
-    const houseEdge = Number(market.houseEdgePct) || 0;
-    const outcomePool = (Number(outcome.totalBetAmount) || 0) + betAmount;
-    const totalPool = (Number(market.totalPool) || 0) + betAmount;
+    const houseEdge = book?.houseEdgePct ?? Number(market.houseEdgePct) ?? 0;
+    // Quoted from the book the money enters. `outcome.totalBetAmount` and
+    // `market.totalPool` are the BTN book's figures, so using them for a USDT
+    // stake prices it against a pool it will never join.
+    const outcomePool =
+      (currency === "BTN"
+        ? Number(outcome.totalBetAmount) || 0
+        : (outcome.poolsByCurrency?.[currency] ?? 0)) + betAmount;
+    const totalPool =
+      (currency === "BTN"
+        ? Number(market.totalPool) || 0
+        : (book?.totalPool ?? 0)) + betAmount;
     if (outcomePool <= 0 || isNaN(outcomePool) || isNaN(totalPool)) return 0;
     const parimutuel = betAmount * ((totalPool * (1 - houseEdge / 100)) / outcomePool);
     // Winners are guaranteed a 1.05x floor (funded by the house edge at settlement).
@@ -135,7 +225,10 @@ export function TmaBetModal({
   const estMultiple = betAmount > 0 ? estPayout / betAmount : 0;
   // No one has placed a bet on this market yet — the user would be the first
   // predictor, so there's no pool to compute a meaningful payout against.
-  const poolEmpty = (Number(market.totalPool) || 0) === 0;
+  const poolEmpty =
+    (currency === "BTN"
+      ? Number(market.totalPool) || 0
+      : (book?.totalPool ?? 0)) === 0;
 
   // Some markets are created with an incomplete title (e.g. "UFC Fight Night:"
   // with the fighters left off). Fall back to the matchup from the outcomes so
@@ -181,12 +274,16 @@ export function TmaBetModal({
     try {
       // Re-fetch balance to ensure it's up-to-date
       const fresh = await getMe();
-      const freshBalance = fresh.creditsBalance ?? 0;
-      setCreditsBalance(freshBalance);
+      setMe(fresh);
+      setCreditsBalance(fresh.creditsBalance ?? 0);
+      const freshBalance =
+        currency === (fresh.currency ?? "BTN")
+          ? (fresh.creditsBalance ?? 0)
+          : Number(fresh.usdtBalance ?? 0);
 
       if (freshBalance < betAmount) {
         setError(
-          `Insufficient balance. You have Nu ${freshBalance.toLocaleString()}, need Nu ${betAmount.toLocaleString()}.`,
+          `Insufficient balance. You have ${unit} ${fmtMoney(freshBalance)}, need ${unit} ${fmtMoney(betAmount)}.`,
         );
         setStatus("idle");
         return;
@@ -194,6 +291,9 @@ export function TmaBetModal({
 
       // Place the bet - this will deduct from credits balance on backend
       const result = await placeBet(market.id, {
+        // Omitted for a native-currency stake, so the ngultrum path is
+        // byte-identical to before.
+        ...(currency !== (me?.currency ?? "BTN") ? { currency } : {}),
         outcomeId,
         amount: betAmount,
       });
@@ -380,7 +480,7 @@ export function TmaBetModal({
                   color: "var(--text-main)",
                 }}
               >
-                Nu {betAmount.toLocaleString()} on{" "}
+                {unit} {fmtMoney(betAmount)} on{" "}
                 <span style={{ color: "#10b981" }}>{outcome?.label}</span>
               </div>
               {closeLabel && (
@@ -715,10 +815,8 @@ export function TmaBetModal({
                   <div
                     style={{ fontSize: 20, fontWeight: 800, color: "#10b981" }}
                   >
-                    Nu{" "}
-                    {creditsBalance !== null
-                      ? Number(creditsBalance).toLocaleString()
-                      : "…"}
+                    {unit}{" "}
+                    {creditsBalance !== null ? fmtMoney(walletBalance) : "…"}
                   </div>
                 </div>
                 {betAmount > 0 && creditsBalance !== null && (
@@ -743,7 +841,7 @@ export function TmaBetModal({
                           : "#ef4444",
                       }}
                     >
-                      Nu {(creditsBalance - betAmount).toLocaleString()}
+                      {unit} {fmtMoney(walletBalance - betAmount)}
                     </div>
                   </div>
                 )}
@@ -802,7 +900,7 @@ export function TmaBetModal({
                   marginBottom: 8,
                 }}
               >
-                Stake (Nu)
+                Stake ({unit})
               </div>
               {/* Stake input with stepper buttons */}
               <div style={{ display: "flex", gap: 8, alignItems: "stretch", marginBottom: 10 }}>
@@ -846,15 +944,20 @@ export function TmaBetModal({
                       pointerEvents: "none",
                     }}
                   >
-                    Nu
+                    {unit}
                   </span>
                   <input
                     type="number"
                     min={MIN_BET}
                     value={amountStr}
-                    inputMode="numeric"
+                    // USDT stakes are not whole numbers — a numeric keypad
+                    // hides the decimal point and makes $2.50 untypeable.
+                    inputMode={currency === "USDT" ? "decimal" : "numeric"}
                     placeholder="Amount"
-                    onChange={(e) => setAmountStr(e.target.value)}
+                    onChange={(e) => {
+                      touchedAmount.current = true;
+                      setAmountStr(e.target.value);
+                    }}
                     onFocus={(e) => e.target.select()}
                     style={{
                       width: "100%",
@@ -879,7 +982,10 @@ export function TmaBetModal({
                 <button
                   onClick={() => {
                     const step = QUICK_AMOUNTS[0];
-                    const max = creditsBalance !== null ? Math.floor(creditsBalance) : Infinity;
+                    // Not floored for USDT — a 23.5 balance can fund a 23.5
+                    // stake, and rounding it down silently strands the rest.
+                    const max =
+                      currency === "USDT" ? walletBalance : Math.floor(walletBalance);
                     const next = Math.min(max, (parseFloat(amountStr) || 0) + step);
                     setAmountStr(next.toString());
                   }}
@@ -934,26 +1040,26 @@ export function TmaBetModal({
                     {q}
                   </button>
                 ))}
-                {creditsBalance !== null && creditsBalance > 0 && (
+                {creditsBalance !== null && walletBalance > 0 && (
                   <button
                     onClick={() =>
-                      setAmountStr(Math.floor(creditsBalance).toString())
+                      setAmountStr(maxStakeStr)
                     }
                     className="tma-outcome-btn"
                     style={{
                       padding: "8px 12px",
                       borderRadius: 10,
                       border:
-                        amountStr === Math.floor(creditsBalance).toString()
+                        amountStr === maxStakeStr
                           ? "2px solid #10b981"
                           : "1px solid var(--border)",
                       borderBottomWidth: 2,
                       background:
-                        amountStr === Math.floor(creditsBalance).toString()
+                        amountStr === maxStakeStr
                           ? "rgba(16,185,129,0.1)"
                           : "var(--bg-secondary)",
                       color:
-                        amountStr === Math.floor(creditsBalance).toString()
+                        amountStr === maxStakeStr
                           ? "#10b981"
                           : "var(--text-subtle)",
                       fontSize: 12,
@@ -1069,7 +1175,7 @@ export function TmaBetModal({
                         color: estProfit >= 0 ? "#16a34a" : "var(--text-muted)",
                       }}
                     >
-                      {estProfit >= 0 ? `Nu ${Math.floor(estPayout).toLocaleString()}` : "—"}
+                      {estProfit >= 0 ? `${unit} ${fmtMoney(estPayout)}` : "—"}
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
@@ -1092,7 +1198,7 @@ export function TmaBetModal({
                           color: "#16a34a",
                         }}
                       >
-                        +Nu {Math.floor(estProfit).toLocaleString()}
+                        +{unit} {fmtMoney(estProfit)}
                       </div>
                     ) : (
                       <div
@@ -1169,7 +1275,7 @@ export function TmaBetModal({
                   }}
                 >
                   <strong>
-                    You already have Nu {existingStake.toLocaleString()} on{" "}
+                    You already have {unit} {fmtMoney(existingStake)} on{" "}
                     {outcome?.label ?? "this pick"}.
                   </strong>{" "}
                   Adding more to the same side splits the winnings with a bigger
@@ -1225,11 +1331,11 @@ export function TmaBetModal({
                     Placing Bet…
                   </span>
                 ) : !isValidAmount ? (
-                  `Min Nu ${MIN_BET}`
+                  `Min ${unit} ${fmtMoney(MIN_BET)}`
                 ) : !hasEnoughBalance ? (
                   "Insufficient Balance"
                 ) : (
-                  `Predict — Nu ${betAmount.toLocaleString()}`
+                  `Predict — ${unit} ${fmtMoney(betAmount)}`
                 )}
               </button>
             </div>

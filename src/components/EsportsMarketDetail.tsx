@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
@@ -180,6 +181,8 @@ export function EsportsMarketDetail({
   const totalPool =
     Number(market.totalPool ?? 0) ||
     outcomes.reduce((s, o) => s + Number(o.totalBetAmount ?? 0), 0);
+  const usdtPool =
+    market.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
 
   const isMatch = isMatchMarket(market);
   const winnerId = market.resolvedOutcomeId ?? null;
@@ -393,7 +396,16 @@ export function EsportsMarketDetail({
             )}
 
             <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <StatTile label="Total pool" value={`Nu ${totalPool.toLocaleString()}`} />
+              <StatTile
+                label="Total pool"
+                // Both books when both hold money — never added, since no rate
+                // between them exists.
+                value={
+                  usdtPool > 0
+                    ? `Nu ${totalPool.toLocaleString()} | $${usdtPool.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                    : `Nu ${totalPool.toLocaleString()}`
+                }
+              />
               <StatTile label="Outcomes" value={String(outcomes.length)} />
               <StatTile
                 label={locked ? "Status" : "Closes in"}
@@ -710,7 +722,7 @@ function MatchBlock({
         </div>
         <div style={{ marginTop: 4 }}>
           <Label size={9}>
-            Nu {Number(outcome.totalBetAmount ?? 0).toLocaleString()}
+            <PoolAmount outcome={outcome} suffix="" />
           </Label>
         </div>
         {won ? (

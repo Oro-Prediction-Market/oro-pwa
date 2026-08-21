@@ -1,6 +1,20 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense, useTransition } from "react";
+import type { Currency } from "@shared/currency/currency";
+import {
+  bookEdge,
+  getViewerCurrency,
+  hasOutcomeBreakdown,
+  marketPool,
+  smoothingPrior,
+  outcomePool,
+} from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
-import { getMarkets, getMyBets, type Market } from "@shared/api/client";
+import {
+  getMarkets,
+  getMyBets,
+  type Market,
+  type Outcome,
+} from "@shared/api/client";
 import { Trophy, BarChart3, Clock, CalendarDays, Network } from "lucide-react";
 import { WorldCupBracket } from "@shared/components/WorldCupBracket";
 import { looksEsports } from "@shared/helpers/esportsKeywords";
@@ -274,44 +288,83 @@ export function isWCMarket(m: Market): boolean {
   return m.title.toLowerCase().includes("world cup");
 }
 
-export function calcProb(market: Market, outcomeId: string): number {
+/**
+ * Probability implied by the money on each side.
+ *
+ * `currency` selects the book: the figure has to agree with the payout
+ * multiple shown next to it, and that multiple is per book. Defaults to
+ * ngultrum so older callers are unchanged.
+ */
+export function calcProb(
+  market: Market,
+  outcomeId: string,
+  currency: Currency = getViewerCurrency(),
+): number {
   const outcomes = market.outcomes ?? [];
   const o = outcomes.find((x) => x.id === outcomeId);
   if (!o) return 0;
   const n = outcomes.length || 1;
-  const prior = 1000;
-  const tPool = Number(market.totalPool) || 0;
+  const prior = smoothingPrior(currency);
+  const tPool = marketPool(market, currency);
   // Once there is real money in the pool, the honest probability is the
   // outcome's Laplace-smoothed share of the pool — which is also consistent with
   // the parimutuel payout multiple shown next to it. The stored LMSR values are
   // NOT used here: on a lopsided pool they saturate (favourite → ~0.99, everyone
   // else → a tiny non-zero number), which read as "99% / 0%" and don't reflect
   // the actual money on each side.
-  if (tPool > 0) {
-    return (Number(o.totalBetAmount) + prior / n) / (tPool + prior);
+  // The pool branch needs the per-outcome breakdown to mean anything. Without
+  // it — an older server, or a cached response from one — the market reports a
+  // pool while every outcome reads zero, and the split comes out confidently
+  // wrong rather than merely unknown.
+  if (tPool > 0 && (currency === "BTN" || hasOutcomeBreakdown(o))) {
+    return (outcomePool(o, currency) + prior / n) / (tPool + prior);
   }
-  // Empty pool: show sensible initial odds from LMSR when every outcome has one
-  // (they sum to ~100), otherwise fall back to equal priors.
-  const lmsr = outcomes.map((x) => Number(x.lmsrProbability) || 0);
+  // Empty pool: sensible initial odds from LMSR when every outcome has one
+  // (they sum to ~100), otherwise equal priors.
+  //
+  // Read per currency. `outcome.lmsrProbability` is the BTN book's value — the
+  // engine writes it only on ngultrum stakes — so using it for a USDT viewer
+  // quotes odds derived from money in a book their stake will never join. With
+  // an untouched USDT book the honest answer is an even split.
+  const lmsrOf = (x: Outcome) =>
+    Number(x.lmsrByCurrency?.[currency] ?? (currency === "BTN" ? x.lmsrProbability : 0)) || 0;
+  const lmsr = outcomes.map(lmsrOf);
   if (lmsr.every((p) => p > 0)) {
     const sum = lmsr.reduce((a, b) => a + b, 0);
-    return (Number(o.lmsrProbability) || 0) / sum;
+    return lmsrOf(o) / sum;
   }
-  return (Number(o.totalBetAmount) + prior / n) / (tPool + prior);
+  // Last resort, and it must still read the viewer's own book. Reading
+  // `o.totalBetAmount` here divided a ngultrum figure by the USDT prior and
+  // produced percentages like 1050% and 5008% — a BTN pool measured on a USDT
+  // scale. With an untouched book this now yields exactly 1/n: 50% on a
+  // two-way market, which is the honest starting point.
+  return (outcomePool(o, currency) + prior / n) / (tPool + prior);
 }
 
+/**
+ * The multiple a stake would return, quoted from the viewer's own book.
+ *
+ * `stake` is a notional probe and defaults per currency: a Nu 100 probe
+ * against a one-dollar book would swamp the pool and report a multiple nobody
+ * could ever be paid.
+ *
+ * Returns null when the viewer's book is empty — there is no pool to quote
+ * against, and borrowing the other currency's would be inventing a rate.
+ */
 export function calcOdds(
   market: Market,
   outcomeId: string,
-  stake = 100,
+  stake?: number,
+  currency: Currency = getViewerCurrency(),
 ): number | null {
   const o = market.outcomes?.find((x) => x.id === outcomeId);
   if (!o) return null;
-  const totalPool = Number(market.totalPool) || 0;
-  const outcomePool = Number(o.totalBetAmount) || 0;
-  const houseEdge = Number(market.houseEdgePct) || 0;
-  if (totalPool <= 0) return null;
-  return ((totalPool + stake) * (1 - houseEdge / 100)) / (outcomePool + stake);
+  const probe = stake ?? (currency === "USDT" ? 1 : 100);
+  const total = marketPool(market, currency);
+  const own = outcomePool(o, currency);
+  const houseEdge = bookEdge(market, currency);
+  if (total <= 0) return null;
+  return ((total + probe) * (1 - houseEdge / 100)) / (own + probe);
 }
 
 

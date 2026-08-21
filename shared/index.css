@@ -453,3 +453,90 @@ a:has(.ter-market-card):hover {
 a:has(.ter-market-card):hover .ter-market-card {
   box-shadow: var(--shadow-md);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Sign-in sheet.
+
+   A centred dialog on a desktop, a bottom sheet on a phone. Inline styles
+   cannot express a media query, so the two modals that host it share these
+   classes rather than each carrying its own copy of the breakpoint.
+   ────────────────────────────────────────────────────────────────────────── */
+
+.oro-auth-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.oro-auth-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 8px 4px 24px;
+  border-radius: 20px;
+  background: var(--bg-main);
+  animation: oroAuthPop 0.2s ease-out;
+}
+
+/* The grab handle only belongs on the bottom sheet. */
+.oro-auth-handle {
+  display: none;
+}
+
+@keyframes oroAuthPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes oroAuthSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .oro-auth-backdrop {
+    /* Anchored to the bottom, where a thumb is. */
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .oro-auth-sheet {
+    max-width: none;
+    /* Square at the bottom: it is attached to the edge of the screen, not
+       floating above it. */
+    border-radius: 20px 20px 0 0;
+    /* Taller than the desktop dialog — there is no wasted margin to respect,
+       and the content can breathe. */
+    max-height: 92vh;
+    padding: 6px 8px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: oroAuthSlideUp 0.24s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .oro-auth-handle {
+    display: block;
+    width: 92px;
+    height: 4px;
+    margin: 8px auto 2px;
+    border-radius: 999px;
+    background: var(--text-subtle);
+    opacity: 0.35;
+  }
+}
