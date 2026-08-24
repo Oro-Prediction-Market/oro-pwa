@@ -125,7 +125,7 @@ function TerPricePanel({ market }: { market: Market }) {
               color: refLocked ? "var(--text-main)" : "var(--text-subtle)",
             }}
           >
-            {refLocked ? `Nu ${refPrice.toFixed(4)}` : "🔒 Locks at bet close"}
+            {refLocked ? `Nu ${refPrice.toFixed(4)}` : "🔒 Locks at prediction close"}
           </div>
         </div>
         <div style={{ fontSize: 22, color: "var(--text-subtle)" }}>→</div>

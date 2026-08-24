@@ -830,7 +830,7 @@ export function TmaBetModal({
                         letterSpacing: "0.06em",
                       }}
                     >
-                      After bet
+                      After prediction
                     </div>
                     <div
                       style={{
@@ -1228,7 +1228,7 @@ export function TmaBetModal({
                   }}
                 >
                   Estimate only — the winning pool is shared among all winners, so
-                  your payout changes as more people bet and is final at close.
+                  your payout changes as more people predict and is final at close.
                 </div>
               )}
 
