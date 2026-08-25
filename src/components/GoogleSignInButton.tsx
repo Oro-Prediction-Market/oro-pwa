@@ -1,12 +1,11 @@
-import { useEffect, useState, useRef } from "react";
-import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { useState, useEffect } from "react";
+import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { loginWithGoogle } from "@shared/api/client";
 
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
 /** Whether Google sign-in is configured at all. */
 export const googleSignInAvailable = Boolean(CLIENT_ID);
-
 
 if (!CLIENT_ID && import.meta.env.DEV) {
   console.warn(
@@ -21,39 +20,59 @@ interface Props {
 }
 
 export function GoogleSignInButton({ onSuccess }: Props) {
+  if (!CLIENT_ID) return null;
+  // `useGoogleLogin` must run inside the provider, so the button lives in an
+  // inner component.
+  return (
+    <GoogleOAuthProvider clientId={CLIENT_ID}>
+      <GoogleButtonInner onSuccess={onSuccess} />
+    </GoogleOAuthProvider>
+  );
+}
 
-  const boxRef = useRef<HTMLDivElement | null>(null);
-  const [boxWidth, setBoxWidth] = useState(0);
-  useEffect(() => {
-    const el = boxRef.current;
-    if (!el) return;
-    const measure = () => setBoxWidth(Math.floor(el.clientWidth));
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
+/**
+ * Our own branded button that opens Google in a popup (authorization-code flow).
+ *
+ * We deliberately do NOT use Google's embedded button: it renders inside a
+ * Google-owned iframe that cannot be restyled, and the old trick of hiding it
+ * under a custom button at `opacity: 0` is blocked by Google's anti-clickjacking
+ * protection — the click was silently ignored on desktop. `useGoogleLogin` opens
+ * a real popup from our own, fully-styled button and hands back a one-time code
+ * that the backend exchanges and verifies.
+ */
+function GoogleButtonInner({ onSuccess }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scriptFailed, setScriptFailed] = useState(false);
 
-  // Google's script is loaded from accounts.google.com. It is blocked outright
-  // in some networks and by some extensions, and when that happens the button
-  // silently never renders. Watch for it rather than leaving a blank gap.
+  // Google's script (accounts.google.com/gsi/client) is blocked on some networks
+  // and by some extensions. Watch for it so we explain rather than leave a button
+  // that can never open the popup.
   useEffect(() => {
-    if (!CLIENT_ID) return;
     const timer = setTimeout(() => {
-      if (!(window as any).google?.accounts?.id) setScriptFailed(true);
+      if (!(window as any).google?.accounts?.oauth2) setScriptFailed(true);
     }, 6000);
     return () => clearTimeout(timer);
   }, []);
 
-  if (!CLIENT_ID) return null;
+  const login = useGoogleLogin({
+    flow: "auth-code",
+    // `openid` is what makes the code exchange return an ID token; email/profile
+    // fill in the verified address and name the backend reads. Without openid
+    // there is no id_token and the backend can't verify who signed in.
+    scope: "openid email profile",
+    onSuccess: (resp) => void handleCode(resp.code),
+    // Fires on a blocked popup, a closed window, or a Google-side failure. They
+    // are indistinguishable to us, so one message.
+    onError: () =>
+      setError(
+        "Google sign-in was cancelled or blocked. Allow popups for this site and try again.",
+      ),
+  });
 
-  async function handleCredential(credential?: string) {
-    if (!credential) {
-      setError("Google did not return a sign-in token. Please try again.");
+  async function handleCode(code?: string) {
+    if (!code) {
+      setError("Google did not return a sign-in code. Please try again.");
       return;
     }
     setBusy(true);
@@ -61,7 +80,7 @@ export function GoogleSignInButton({ onSuccess }: Props) {
     try {
       const referralCode =
         sessionStorage.getItem("oro_pending_referral") ?? undefined;
-      const result = await loginWithGoogle(credential, referralCode);
+      const result = await loginWithGoogle(code, referralCode);
       if (referralCode) sessionStorage.removeItem("oro_pending_referral");
       onSuccess(result.isNew);
     } catch (err: any) {
@@ -86,50 +105,21 @@ export function GoogleSignInButton({ onSuccess }: Props) {
           extension, then reload.
         </div>
       ) : (
-        // Google's own rendered button, shown directly — NOT hidden under a
-        // custom-styled overlay. The previous approach drew our own button and
-        // stacked Google's real one on top at `opacity: 0` to capture the click.
-        // Google Identity Services refuses to act on a click when it decides its
-        // button isn't genuinely visible (anti-clickjacking), so on desktop the
-        // button rendered but every real mouse click was silently ignored — it
-        // only "worked" under DevTools touch emulation. Rendering Google's button
-        // visibly is the reliable path; we lose the exact brand colour but the
-        // button actually works at every viewport.
-        <div
-          ref={boxRef}
+        <button
+          type="button"
+          onClick={() => login()}
+          disabled={busy}
           style={{
-            width: "100%",
-            display: "flex",
-            justifyContent: "center",
-            colorScheme: "light", // keep Google's button legible in dark mode
-            opacity: busy ? 0.5 : 1,
-            pointerEvents: busy ? "none" : "auto",
+            ...brandButton,
+            opacity: busy ? 0.6 : 1,
+            cursor: busy ? "default" : "pointer",
           }}
         >
-          <GoogleOAuthProvider clientId={CLIENT_ID}>
-            <GoogleLogin
-              onSuccess={(res) => void handleCredential(res.credential)}
-              // Fires on a blocked popup, a closed window, or a Google-side
-              // failure. They are indistinguishable to us, so one message.
-              onError={() =>
-                setError(
-                  "Google sign-in was cancelled or blocked. Allow popups for this site and try again.",
-                )
-              }
-              theme="filled_blue"
-              size="large"
-              shape="rectangular"
-              text="continue_with"
-              width={String(Math.min(400, boxWidth || 320))}
-            />
-          </GoogleOAuthProvider>
-        </div>
-      )}
-
-      {busy && (
-        <p style={{ fontSize: "0.75rem", color: "var(--text-subtle)", margin: 0, textAlign: "center" }}>
-          Signing in…
-        </p>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12.24 10.4v3.36h5.56c-.24 1.44-1.68 4.22-5.56 4.22-3.34 0-6.07-2.77-6.07-6.18s2.73-6.18 6.07-6.18c1.9 0 3.18.81 3.91 1.51l2.66-2.56C17.1 2.99 14.9 2 12.24 2 6.98 2 2.72 6.26 2.72 11.52s4.26 9.52 9.52 9.52c5.5 0 9.14-3.86 9.14-9.3 0-.63-.07-1.1-.15-1.58h-8.99z" />
+          </svg>
+          {busy ? "Signing in…" : "Continue with Google"}
+        </button>
       )}
       {error && (
         <p style={{ fontSize: "0.78rem", color: "#ef4444", margin: 0, textAlign: "center" }}>
@@ -139,6 +129,24 @@ export function GoogleSignInButton({ onSuccess }: Props) {
     </div>
   );
 }
+
+/** The visible button — matches the sheet, restored to the original look. */
+const brandButton: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  width: "100%",
+  padding: "13px 16px",
+  borderRadius: 12,
+  border: "none",
+  background: "var(--color-primary)",
+  color: "#fff",
+  fontSize: "0.95rem",
+  fontWeight: 800,
+  letterSpacing: "-0.01em",
+  boxSizing: "border-box",
+};
 
 const noticeStyle: React.CSSProperties = {
   fontSize: "0.78rem",

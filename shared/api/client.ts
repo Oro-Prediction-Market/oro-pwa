@@ -345,7 +345,7 @@ export async function loginWithDKBank(
  * an approved document.
  */
 export async function loginWithGoogle(
-  credential: string,
+  code: string,
   referralCode?: string,
 ): Promise<AuthResponse & { isNew: boolean }> {
   const result = await request<AuthResponse & { isNew: boolean }>(
@@ -353,7 +353,9 @@ export async function loginWithGoogle(
     {
       method: "POST",
       body: JSON.stringify({
-        credential,
+        // Authorization-code (popup) flow — the backend exchanges this for
+        // tokens and verifies the resulting ID token.
+        code,
         ...(referralCode ? { referralCode } : {}),
       }),
     },
