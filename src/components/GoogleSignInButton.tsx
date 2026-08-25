@@ -79,7 +79,13 @@ export function GoogleSignInButton({ onSuccess }: Props) {
   }
 
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+    // maxWidth 400 + centered: Google's real (invisible) button is capped at
+    // 400px wide, so on desktop/wide layouts a full-width visible button left
+    // its edges over dead space — clicks there never reached Google's button
+    // (it only "worked" once the screen was narrow enough to match). Capping the
+    // whole control to 400px keeps the visible button and the clickable overlay
+    // the same width at every viewport.
+    <div style={{ width: "100%", maxWidth: 400, marginInline: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
       {scriptFailed ? (
         <div style={noticeStyle}>
           Google sign-in could not load. Check your connection or any blocking
