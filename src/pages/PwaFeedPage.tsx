@@ -15,6 +15,7 @@ import {
   getMe,
   getMyBets,
   getRecentActivity,
+  isTokenValid,
   feedHeartbeat,
   type Market,
   type ActivityEvent,
@@ -637,6 +638,9 @@ function LiveTicker() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Activity requires auth; skip it when logged out so the browser doesn't log
+    // a 401 for a call we know can't succeed.
+    if (!isTokenValid()) return;
     getRecentActivity()
       .then((data) => {
         if (data.length > 0) {
@@ -818,9 +822,13 @@ export function PwaFeedPage({
   };
 
   useEffect(() => {
-    getMe()
-      .then(setMe)
-      .catch(() => {});
+    // Only fetch the signed-in user when there's a token — otherwise /users/me
+    // 401s and the browser logs it for a logged-out visitor.
+    if (isTokenValid()) {
+      getMe()
+        .then(setMe)
+        .catch(() => {});
+    }
     if (authed) {
       getMyBets()
         .then(setMyBets)
