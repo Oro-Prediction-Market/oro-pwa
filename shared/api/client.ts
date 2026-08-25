@@ -365,6 +365,20 @@ export async function loginWithGoogle(
 }
 
 /**
+ * Send a footer "contact support" feedback message. The destination inbox lives
+ * only on the server (env SUPPORT_EMAIL) — we never learn or send the address.
+ */
+export async function sendFeedback(
+  email: string,
+  message: string,
+): Promise<{ ok: true }> {
+  return request<{ ok: true }>("/feedback", {
+    method: "POST",
+    body: JSON.stringify({ email, message }),
+  });
+}
+
+/**
  * A protected first-time merge (an existing verified account) returns this
  * instead of a token: the server sent a one-time code to the DK-registered
  * phone, and login completes via {@link verifyBhutanAppMerge}.

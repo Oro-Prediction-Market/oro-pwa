@@ -195,6 +195,7 @@ import {
   History,
 } from "lucide-react";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ContactSupport } from "./components/ContactSupport";
 import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
 // Lazy-load HowItWorksModal — only needed on click
 const HowItWorksModal = lazy(() =>
@@ -2321,6 +2322,7 @@ function PwaFooter({
                 </span>
               </div>
             </a>
+            <ContactSupport />
           </div>
         </div>
 
