@@ -5,7 +5,14 @@ import {
   type KycDocumentType,
   type KycStatusResponse,
 } from "@shared/api/client";
-import { ShieldCheck, Clock, XCircle, Upload, Camera } from "lucide-react";
+import {
+  ShieldCheck,
+  Clock,
+  XCircle,
+  Upload,
+  Camera,
+  CheckCircle,
+} from "lucide-react";
 
 /**
  * Identity verification.
@@ -55,6 +62,9 @@ export function KycVerificationPanel({ onSubmitted }: Props) {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // True only for the session right after the user submits, so we can show an
+  // explicit "document sent" confirmation instead of the generic review card.
+  const [submitted, setSubmitted] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   async function refresh() {
@@ -111,6 +121,7 @@ export function KycVerificationPanel({ onSubmitted }: Props) {
         mimeType: image.mimeType,
       });
       sessionStorage.removeItem("oro_new_account");
+      setSubmitted(true);
       await refresh();
       onSubmitted?.();
     } catch (err: any) {
@@ -133,6 +144,27 @@ export function KycVerificationPanel({ onSubmitted }: Props) {
         <p style={bodyText}>
           Your account is verified. Deposits and withdrawals are open.
         </p>
+      </div>
+    );
+  }
+
+  // Immediately after the user submits, acknowledge that their document went
+  // to the reviewer. On a later visit `submitted` is false, so the standard
+  // "Under review" card below takes over.
+  if (submitted && state?.status === "pending") {
+    return (
+      <div style={{ ...cardStyle, ...tone("#22c55e") }}>
+        <Row icon={<CheckCircle size={18} />} title="Document sent" />
+        <p style={bodyText}>
+          Your document has been sent to the admin for review. This usually
+          takes a few hours — deposits open as soon as it's approved. You can
+          browse markets meanwhile.
+        </p>
+        {state.submittedAt && (
+          <p style={metaText}>
+            Submitted {new Date(state.submittedAt).toLocaleString()}
+          </p>
+        )}
       </div>
     );
   }
