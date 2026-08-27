@@ -5,6 +5,7 @@ import {
   getMarkets,
   placeBet,
   getRecentActivity,
+  isTokenValid,
   type Market,
   type ActivityEvent,
 } from "@shared/api/client";
@@ -46,6 +47,8 @@ function LiveTicker() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Activity requires auth; skip when logged out to avoid a console 401.
+    if (!isTokenValid()) return;
     getRecentActivity()
       .then((data) => { if (data.length > 0) setEvents(data.map(parseEvent)); })
       .catch(() => {});

@@ -291,6 +291,12 @@ export interface AuthUser {
   // Referrals
   referralCount?: number;
   featuredAchievementIds?: string[];
+  // Season-scoped EPL/UCL tallies for the season collectible badges, keyed by
+  // season (e.g. "2026-27"). Counts only that season's settled predictions.
+  seasonBadgeStats?: Record<
+    string,
+    { eplSettled: number; eplWins: number; uclSettled: number; uclWins: number }
+  >;
 }
 
 export interface AuthResponse {
@@ -345,7 +351,7 @@ export async function loginWithDKBank(
  * an approved document.
  */
 export async function loginWithGoogle(
-  credential: string,
+  code: string,
   referralCode?: string,
 ): Promise<AuthResponse & { isNew: boolean }> {
   const result = await request<AuthResponse & { isNew: boolean }>(
@@ -353,13 +359,29 @@ export async function loginWithGoogle(
     {
       method: "POST",
       body: JSON.stringify({
-        credential,
+        // Authorization-code (popup) flow — the backend exchanges this for
+        // tokens and verifies the resulting ID token.
+        code,
         ...(referralCode ? { referralCode } : {}),
       }),
     },
   );
   setToken(result.token);
   return result;
+}
+
+/**
+ * Send a footer "contact support" feedback message. The destination inbox lives
+ * only on the server (env SUPPORT_EMAIL) — we never learn or send the address.
+ */
+export async function sendFeedback(
+  email: string,
+  message: string,
+): Promise<{ ok: true }> {
+  return request<{ ok: true }>("/feedback", {
+    method: "POST",
+    body: JSON.stringify({ email, message }),
+  });
 }
 
 /**
@@ -930,6 +952,10 @@ export interface PublicProfile {
   totalPredictions: number; correctPredictions: number; winRate: number; rank: number | null;
   betStreak?: number; contrarianBadge: string | null; contrarianWins: number; joinedAt: string;
   featuredAchievementIds?: string[];
+  seasonBadgeStats?: Record<
+    string,
+    { eplSettled: number; eplWins: number; uclSettled: number; uclWins: number }
+  >;
   recentCalls?: Array<{ id: string; marketTitle: string; outcomeLabel: string; status: "won" | "lost" | "refunded"; payout: number | null; placedAt: string }>;
 }
 export function getPublicProfile(id: string): Promise<PublicProfile> {
