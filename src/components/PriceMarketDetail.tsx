@@ -175,22 +175,29 @@ export const PriceMarketDetail: FC<Props> = ({
     ? market.outcomes.find((o) => o.id === market.resolvedOutcomeId)
     : null;
 
-  // Crowd sentiment (Higher vs Lower)
+  // Crowd sentiment (Higher vs Lower) — read from the VIEWER'S currency book.
+  // `totalBetAmount` and `lmsrProbability` are BTN-only, so using them for a
+  // USDT viewer shows the wrong crowd: an all-USDT market has empty BTN pools,
+  // so the % would fall back to the BTN book's saturated LMSR (e.g. 100% one
+  // side) even when the USDT stakes are evenly split. Per-currency pools/LMSR
+  // (populated by the backend) fix that.
+  const viewerCcy = useCurrency();
+  const viewerUnit = viewerCcy === "USDT" ? "$" : "Nu";
   const outs = market.outcomes ?? [];
   const up = outs.find((o) => /(high|up|yes|above|over)/i.test(o.label)) ?? outs[0];
   const down = outs.find((o) => o?.id !== up?.id) ?? outs[1];
   // Pool share once bets exist (consistent with the price card and the rest of
   // the app). The stored LMSR value saturates on a lopsided pool, so it only
   // seeds the display while the pool is empty.
-  const upStakeAmt = Number(up?.totalBetAmount) || 0;
-  const downStakeAmt = Number(down?.totalBetAmount) || 0;
-  const stakedPool = upStakeAmt + downStakeAmt;
+  const upStake = up ? outcomePool(up, viewerCcy) : 0;
+  const downStake = down ? outcomePool(down, viewerCcy) : 0;
+  const stakedPool = upStake + downStake;
   let upProb: number;
   if (stakedPool > 0) {
-    upProb = upStakeAmt / stakedPool;
+    upProb = upStake / stakedPool;
   } else {
-    const upRaw = up?.lmsrProbability;
-    const downRaw = down?.lmsrProbability;
+    const upRaw = up?.lmsrByCurrency?.[viewerCcy] ?? up?.lmsrProbability;
+    const downRaw = down?.lmsrByCurrency?.[viewerCcy] ?? down?.lmsrProbability;
     upProb = upRaw ?? (downRaw != null ? 1 - downRaw : 0.5);
   }
   if (!(upProb >= 0 && upProb <= 1)) upProb = 0.5;
@@ -198,11 +205,6 @@ export const PriceMarketDetail: FC<Props> = ({
   const downPct = 100 - upPct;
   const upLabel = up?.label ?? "Higher";
   const downLabel = down?.label ?? "Lower";
-  // The viewer's own book, like every other figure on this screen.
-  const viewerCcy = useCurrency();
-  const viewerUnit = viewerCcy === "USDT" ? "$" : "Nu";
-  const upStake = up ? outcomePool(up, viewerCcy) : 0;
-  const downStake = down ? outcomePool(down, viewerCcy) : 0;
 
   const pool = Number(market.totalPool) || 0;
   const usdtPool =
