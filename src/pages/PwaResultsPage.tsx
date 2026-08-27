@@ -24,6 +24,11 @@ import {
   type MyDisputeSummary,
   type AuthUser,
 } from "@shared/api/client";
+import { formatMoney, type Currency } from "@shared/currency/currency";
+
+// A stake is settled in the currency it was placed in — show that book's
+// symbol ($ for USDT, Nu for BTN), not the viewer's currently-selected one.
+const betCcy = (bet: Bet): Currency => (bet.currency === "USDT" ? "USDT" : "BTN");
 
 // Collapse/expand toggle for the Active & Settled lists.
 function ShowMore({
@@ -845,7 +850,7 @@ export function PwaResultsPage() {
                                 color: "var(--text-muted)",
                               }}
                             >
-                              Nu {Number(bet.amount).toLocaleString()}
+                              {formatMoney(bet.amount, betCcy(bet))}
                             </div>
                             <div
                               style={{
@@ -1058,7 +1063,7 @@ export function PwaResultsPage() {
                                 color: "#22c55e",
                               }}
                             >
-                              +Nu {Number(bet.payout).toLocaleString()}
+                              +{formatMoney(bet.payout, betCcy(bet))}
                             </div>
                           ) : isLost ? (
                             <div
@@ -1068,7 +1073,7 @@ export function PwaResultsPage() {
                                 color: "#ef4444",
                               }}
                             >
-                              -Nu {Number(bet.amount).toLocaleString()}
+                              -{formatMoney(bet.amount, betCcy(bet))}
                             </div>
                           ) : (
                             <div
@@ -1078,7 +1083,7 @@ export function PwaResultsPage() {
                                 color: "var(--text-muted)",
                               }}
                             >
-                              Nu {Number(bet.amount).toLocaleString()}
+                              {formatMoney(bet.amount, betCcy(bet))}
                             </div>
                           )}
                           <div
