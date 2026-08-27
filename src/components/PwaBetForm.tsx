@@ -22,6 +22,12 @@ interface PwaBetFormProps {
 const DEFAULT_AMOUNT = 100;
 const QUICK_AMOUNTS_DEFAULT = [50, 100, 200, 500];
 const QUICK_AMOUNTS_TER = [10, 25, 50, 100];
+/**
+ * USDT shortcuts. The ngultrum figures mean nothing here: offering 50 / 100 /
+ * 200 / 500 to someone holding $17 is four buttons that cannot be pressed.
+ * Scaled to the $1 minimum instead.
+ */
+const QUICK_AMOUNTS_USDT = [1, 5, 10, 25];
 
 /**
  * Money for display.
@@ -227,9 +233,40 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   // From the book when the market has one. `getMinBet` is the ngultrum rule
   // (Nu 10 on TER/BTC, Nu 50 elsewhere) and means nothing in USDT.
   const MIN_BET = book?.minStake ?? getMinBet(market);
-  const QUICK_AMOUNTS = ["ter", "btc"].includes(market.externalSource ?? "")
-    ? QUICK_AMOUNTS_TER
-    : QUICK_AMOUNTS_DEFAULT;
+  const QUICK_AMOUNTS =
+    currency === "USDT"
+      ? QUICK_AMOUNTS_USDT
+      : ["ter", "btc"].includes(market.externalSource ?? "")
+        ? QUICK_AMOUNTS_TER
+        : QUICK_AMOUNTS_DEFAULT;
+
+  /** The balance of one wallet. The two are never added — no rate exists. */
+  const balanceOf = (c: "BTN" | "USDT") =>
+    c === (me?.currency ?? "BTN") ? (balance ?? 0) : Number(me?.usdtBalance ?? 0);
+
+  /**
+   * Switch which wallet funds this stake.
+   *
+   * The stake field resets to the new wallet's first shortcut rather than
+   * carrying across: 500 is a routine ngultrum bet and an impossible USDT one,
+   * so carrying the number reads as an error the moment it lands.
+   */
+  function switchWallet(next: "BTN" | "USDT") {
+    if (next === currency) return;
+    setWallet(next);
+    setError(null);
+    const shortcut =
+      next === "USDT"
+        ? QUICK_AMOUNTS_USDT[0]
+        : ["ter", "btc"].includes(market.externalSource ?? "")
+          ? QUICK_AMOUNTS_TER[0]
+          : QUICK_AMOUNTS_DEFAULT[0];
+    // Never land below the new book's minimum. `USDT_MIN_STAKE` is a
+    // per-deployment number, so a shortcut of 1 is only right while it is 1.
+    const nextBook = market.books?.find((b) => b.currency === next) ?? null;
+    const floor = nextBook?.minStake ?? (next === "USDT" ? shortcut : getMinBet(market));
+    setAmount(String(Math.max(shortcut, floor)));
+  }
   const winAmount = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount, currency, book)
     : 0;
@@ -257,8 +294,18 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         // existing ngultrum path; sent only when spending a second wallet.
         ...(currency !== (me?.currency ?? "BTN") ? { currency } : {}),
       });
-      // Optimistically update local balance
-      setBalance((b) => (b == null ? null : b - betAmount));
+      // Optimistically update the balance that was actually spent. `balance`
+      // is the native currency's, so decrementing it after a USDT stake would
+      // show ngultrum draining out of a wallet that never moved.
+      if (currency === (me?.currency ?? "BTN")) {
+        setBalance((b) => (b == null ? null : b - betAmount));
+      } else {
+        setMe((u) =>
+          u
+            ? { ...u, usdtBalance: Number(u.usdtBalance ?? 0) - betAmount }
+            : u,
+        );
+      }
       window.dispatchEvent(new CustomEvent("oro:balance-changed"));
       setBetSuccess(true);
       if (onBetPlaced) {
@@ -413,6 +460,54 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
           })}
         </div>
       </div>
+
+      {/* Which wallet funds this stake. Only shown when the account holds more
+          than one — a BTN-only account sees nothing new. */}
+      {wallets.length > 1 && (
+        <div style={{ display: "flex", gap: 8 }}>
+          {wallets.map((c) => {
+            const active = c === currency;
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => switchWallet(c)}
+                disabled={submitting}
+                style={{
+                  flex: 1,
+                  padding: "10px 12px",
+                  borderRadius: "var(--radius-md)",
+                  border: active
+                    ? "1px solid var(--color-primary)"
+                    : "1px solid var(--border)",
+                  background: active
+                    ? "var(--bg-secondary)"
+                    : "var(--bg-card)",
+                  color: active ? "var(--text-main)" : "var(--text-muted)",
+                  cursor: submitting ? "not-allowed" : "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.62rem",
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    opacity: 0.75,
+                    marginBottom: 2,
+                  }}
+                >
+                  {c === "USDT" ? "USDT wallet" : "Ngultrum"}
+                </div>
+                <div style={{ fontSize: "0.95rem", fontWeight: 900 }}>
+                  {c === "USDT" ? "$" : "Nu"} {fmt(balanceOf(c))}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Win display + amount */}
       {selectedOutcomeId && (

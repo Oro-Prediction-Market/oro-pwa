@@ -8,6 +8,12 @@ interface BetShareCardProps {
   outcomePicked: string;
   stakeAmount?: number;
   totalPool?: number;
+  /**
+   * Currency of the figures above. Defaults to ngultrum so every existing
+   * caller is unchanged; a USDT stake shared as "Nu 5" is the wrong number in
+   * the wrong currency, on the one artefact that leaves the app.
+   */
+  currency?: "BTN" | "USDT";
   outcomeColor?: string;
   /** Telegram bot username for deep-link */
   botUsername?: string;
@@ -195,7 +201,8 @@ async function renderCard(
       ? "total pool"
       : null;
   if (badgeAmount && badgeLabel) {
-    const badgeText = `Nu ${badgeAmount.toLocaleString()}`;
+    const unit = opts.currency === "USDT" ? "$" : "Nu";
+    const badgeText = `${unit} ${badgeAmount.toLocaleString()}`;
     ctx.font = "bold 28px system-ui";
     ctx.fillStyle = opts.stakeAmount ? "#f59e0b" : "#a78bfa";
     ctx.textAlign = "right";

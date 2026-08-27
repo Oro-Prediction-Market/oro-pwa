@@ -153,21 +153,27 @@ export function TmaBetModal({
     return usable.length ? usable : [native];
   }, [market.books, me?.currency, me?.canHoldUsdt]);
 
-  const currency: "BTN" | "USDT" = wallets.includes(
-    (me?.currency ?? "BTN") as "BTN" | "USDT",
-  )
-    ? ((me?.currency ?? "BTN") as "BTN" | "USDT")
-    : wallets[0];
+  const [wallet, setWallet] = useState<"BTN" | "USDT" | null>(null);
+  useEffect(() => {
+    if (wallet && wallets.includes(wallet)) return;
+    const native = (me?.currency ?? "BTN") as "BTN" | "USDT";
+    setWallet(wallets.includes(native) ? native : wallets[0]);
+  }, [wallets, me?.currency, wallet]);
+
+  const currency: "BTN" | "USDT" =
+    wallet && wallets.includes(wallet)
+      ? wallet
+      : wallets.includes((me?.currency ?? "BTN") as "BTN" | "USDT")
+        ? ((me?.currency ?? "BTN") as "BTN" | "USDT")
+        : wallets[0];
   const unit = currency === "USDT" ? "$" : "Nu";
   const book = market.books?.find((b) => b.currency === currency) ?? null;
 
-  // The balance of the wallet being spent. `creditsBalance` is the account's
-  // native currency; a Bhutanese account staking its USDT wallet is a
-  // different figure, and the two are never added.
-  const walletBalance =
-    currency === (me?.currency ?? "BTN")
+  const balanceOf = (c: "BTN" | "USDT") =>
+    c === (me?.currency ?? "BTN")
       ? (creditsBalance ?? 0)
       : Number(me?.usdtBalance ?? 0);
+  const walletBalance = balanceOf(currency);
   /** What "Max" stakes. Not floored in USDT — see the stepper below. */
   const maxStakeStr = String(
     currency === "USDT" ? walletBalance : Math.floor(walletBalance),
@@ -183,16 +189,28 @@ export function TmaBetModal({
       : ["ter", "btc"].includes(market.externalSource ?? "")
         ? QUICK_AMOUNTS_TER
         : QUICK_AMOUNTS_DEFAULT;
-  // The field opens at 100, which is a ngultrum figure: for a USDT account it
-  // is both far above the usual balance and above anything they meant to
-  // stake. Corrected once the account's currency is known, and only while the
-  // field is untouched.
   useEffect(() => {
     if (touchedAmount.current || initialAmount) return;
     if (currency === "USDT" && amountStr === "100") {
       setAmountStr(String(QUICK_AMOUNTS[0]));
     }
   }, [currency, amountStr, initialAmount, QUICK_AMOUNTS]);
+  function switchWallet(next: "BTN" | "USDT") {
+    if (next === currency) return;
+    setWallet(next);
+    setError("");
+    const shortcut =
+      next === "USDT"
+        ? QUICK_AMOUNTS_USDT[0]
+        : ["ter", "btc"].includes(market.externalSource ?? "")
+          ? QUICK_AMOUNTS_TER[0]
+          : QUICK_AMOUNTS_DEFAULT[0];
+    // Never land below the new book's minimum. `USDT_MIN_STAKE` is a
+    // per-deployment number, so a shortcut of 1 is only right while it is 1.
+    const nextBook = market.books?.find((b) => b.currency === next) ?? null;
+    const floor = nextBook?.minStake ?? (next === "USDT" ? shortcut : getMinBet(market));
+    setAmountStr(String(Math.max(shortcut, floor)));
+  }
 
   const isValidAmount = betAmount >= MIN_BET;
   const hasEnoughBalance = walletBalance >= betAmount;
@@ -201,9 +219,6 @@ export function TmaBetModal({
   const estPayout = (() => {
     if (!isValidAmount || !outcome) return 0;
     const houseEdge = book?.houseEdgePct ?? Number(market.houseEdgePct) ?? 0;
-    // Quoted from the book the money enters. `outcome.totalBetAmount` and
-    // `market.totalPool` are the BTN book's figures, so using them for a USDT
-    // stake prices it against a pool it will never join.
     const outcomePool =
       (currency === "BTN"
         ? Number(outcome.totalBetAmount) || 0
@@ -525,6 +540,7 @@ export function TmaBetModal({
                 marketTitle={market.title}
                 outcomePicked={outcome?.label ?? ""}
                 stakeAmount={betAmount}
+                currency={currency}
                 outcomeColor={outcomeColor}
                 referralId={String(user?.telegramId ?? user?.id ?? "")}
               />
@@ -787,6 +803,55 @@ export function TmaBetModal({
                 marginRight: -4,
               }}
             >
+              {/* Which wallet funds this stake. Rendered only when the
+                  account actually holds more than one. */}
+              {wallets.length > 1 && (
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  {wallets.map((c) => {
+                    const active = c === currency;
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => switchWallet(c)}
+                        disabled={status === "processing"}
+                        style={{
+                          flex: 1,
+                          padding: "10px 12px",
+                          borderRadius: 12,
+                          border: active
+                            ? "1px solid rgba(59,130,246,0.65)"
+                            : "1px solid var(--glass-border)",
+                          background: active
+                            ? "rgba(59,130,246,0.14)"
+                            : "var(--bg-main)",
+                          color: active ? "var(--text-main)" : "var(--text-muted)",
+                          cursor:
+                            status === "processing" ? "not-allowed" : "pointer",
+                          textAlign: "left",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.06em",
+                            opacity: 0.75,
+                            marginBottom: 2,
+                          }}
+                        >
+                          {c === "USDT" ? "USDT wallet" : "Ngultrum"}
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 800 }}>
+                          {c === "USDT" ? "$" : "Nu"} {fmtMoney(balanceOf(c))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Balance display */}
               <div
                 style={{
@@ -1238,6 +1303,7 @@ export function TmaBetModal({
                   market={market}
                   outcomeId={outcomeId}
                   betAmount={betAmount}
+                  currency={currency}
                 />
               )}
             </div>

@@ -15,19 +15,37 @@ function Row({ label, value, muted, bold, green }: {
   );
 }
 
-export function PayoutBreakdown({ market, outcomeId, betAmount }: {
+export function PayoutBreakdown({ market, outcomeId, betAmount, currency = 'BTN' }: {
   market: Market;
   outcomeId: string;
   betAmount: number;
+  /**
+   * Which book this stake enters. Defaults to ngultrum, so every existing
+   * caller renders exactly what it rendered before.
+   *
+   * It has to be a prop rather than a guess: `market.totalPool` and
+   * `outcome.totalBetAmount` are the BTN book's figures and nothing else, so a
+   * USDT stake broken down against them is priced against a pool it will never
+   * join — and every row would be labelled in a currency the user is not
+   * spending.
+   */
+  currency?: 'BTN' | 'USDT';
 }) {
   const [open, setOpen] = useState(false);
 
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
   if (!outcome || betAmount <= 0) return null;
 
-  const houseEdgePct = parseFloat(market.houseEdgePct) || 0;
-  const curOutcomePool = Number(outcome.totalBetAmount);
-  const curTotalPool = Number(market.totalPool);
+  const book = market.books?.find((b) => b.currency === currency) ?? null;
+  const houseEdgePct = book
+    ? Number(book.houseEdgePct)
+    : parseFloat(market.houseEdgePct) || 0;
+  const curOutcomePool =
+    currency === 'BTN'
+      ? Number(outcome.totalBetAmount)
+      : (outcome.poolsByCurrency?.[currency] ?? 0);
+  const curTotalPool =
+    currency === 'BTN' ? Number(market.totalPool) : (book?.totalPool ?? 0);
   const newOutcomePool = curOutcomePool + betAmount;
   const newTotalPool = curTotalPool + betAmount;
   const yourShare = newOutcomePool > 0 ? betAmount / newOutcomePool : 0;
@@ -36,8 +54,14 @@ export function PayoutBreakdown({ market, outcomeId, betAmount }: {
   const netPayout = grossPayout - houseDeduction;
   const profit = netPayout - betAmount;
 
-  const nu = (n: number) => `Nu ${n.toFixed(2)}`;
-  const nuInt = (n: number) => `Nu ${Math.round(n).toLocaleString()}`;
+  // USDT is not a whole-number currency, so the ngultrum rounding that reads
+  // as tidy there would drop real money off a dollar figure here.
+  const unit = currency === 'USDT' ? '$' : 'Nu';
+  const nu = (n: number) => `${unit} ${n.toFixed(2)}`;
+  const nuInt = (n: number) =>
+    currency === 'USDT'
+      ? `${unit} ${Number(n.toFixed(2)).toLocaleString()}`
+      : `${unit} ${Math.round(n).toLocaleString()}`;
 
   return (
     <div style={{ marginTop: 6 }}>
