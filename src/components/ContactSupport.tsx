@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CheckCircle } from "lucide-react";
 import { sendFeedback } from "@shared/api/client";
 
 /**
@@ -86,15 +87,19 @@ export function ContactSupport() {
             </button>
 
             {status === "sent" ? (
-              <div style={{ textAlign: "center", padding: "16px 4px" }}>
-                <div style={{ fontSize: 40, lineHeight: 1 }}>✅</div>
-                <h3 style={{ margin: "14px 0 6px", fontSize: "1.05rem", fontWeight: 800, color: "#fff" }}>
-                  Message sent
-                </h3>
+              /* Same confirmation the My Bhutan App sign-in shows on success:
+                 the lucide check at 40px in #22c55e over green bold text. An
+                 emoji ✅ renders as a different glyph on every platform and
+                 sits at whatever weight the system font gives it, so the two
+                 success moments in the app did not look like the same
+                 product. See BhutanAppLogin's `phase === "success"`. */
+              <div style={sentWrap}>
+                <CheckCircle size={40} color="#22c55e" strokeWidth={2.5} />
+                <p style={sentHeading}>Message sent</p>
                 <p style={{ margin: 0, fontSize: "0.85rem", color: "rgba(255,255,255,0.6)" }}>
                   Thanks — Oro Customer Support will get back to you by email.
                 </p>
-                <button type="button" onClick={close} style={{ ...sendBtn, marginTop: 20, opacity: 1 }}>
+                <button type="button" onClick={close} style={{ ...sendBtn, marginTop: 6, opacity: 1 }}>
                   Done
                 </button>
               </div>
@@ -154,6 +159,24 @@ export function ContactSupport() {
     </>
   );
 }
+
+/** Mirrors BhutanAppLogin's `wrap` so both success states sit identically. */
+const sentWrap: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 14,
+  padding: "16px 4px",
+  textAlign: "center",
+};
+
+/** Mirrors the green headline on the sign-in success screen. */
+const sentHeading: React.CSSProperties = {
+  fontWeight: 800,
+  color: "#22c55e",
+  fontSize: 13,
+  margin: 0,
+};
 
 const itemBtn: React.CSSProperties = {
   display: "flex",
