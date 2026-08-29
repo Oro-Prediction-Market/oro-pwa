@@ -39,6 +39,7 @@ import { useBreakpoint } from "../hooks/useBreakpoint";
 import { Flame, TrendingUp, UsersRound, Vote } from "lucide-react";
 import { OracleOrbit } from "../components/OracleOrbit";
 import { useFilter } from "@shared/contexts/FilterContext";
+import { formatMoney, type Currency } from "@shared/currency/currency";
 import { isWCMarket, getWCFlag, calcProb } from "./WorldCupHubPage";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import {
@@ -90,6 +91,7 @@ function TrendingMiniCard({
   const topPct = isNaN(rawPct) ? Math.round(100 / n) : Math.round(rawPct);
   const vis = getCategoryVisual(m.category);
   const timeLeft = trendingTimeLeft(m);
+  const pool = dominantBook(m);
   return (
     <button
       onClick={() => onOpen(m.id)}
@@ -195,7 +197,7 @@ function TrendingMiniCard({
               fontWeight: 600,
             }}
           >
-            <span>Nu {Number(m.totalPool).toLocaleString()}</span>
+            <span>{formatMoney(pool.pool, pool.currency)}</span>
             {timeLeft && <span>{timeLeft} left</span>}
           </div>
         </div>
@@ -206,10 +208,40 @@ function TrendingMiniCard({
 
 const TRENDING_CARD_W = 200;
 const TRENDING_GAP = 12;
-// A market is "featured" (trending) only once its pool is at least this (Nu).
-// No fallback — if nothing qualifies, the strip is empty.
-const TRENDING_MIN_POOL = 1000;
+// A market is "featured" (trending) only once its pool is at least this. No
+// fallback — if nothing qualifies, the strip is empty. BTN and USDT have no
+// exchange rate here (the books are never summed), so each currency gets its
+// own bar and a market trends when EITHER book crosses its own.
+const TRENDING_MIN_POOL = 1000; // BTN (Nu)
+const TRENDING_MIN_POOL_USDT = 100; // USDT ($)
 const TRENDING_MAX = 10;
+
+// The USDT book's pool for a market — 0 when it has no USDT book yet.
+const usdtBookPool = (m: Market): number =>
+  Number(m.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0);
+
+// Trends when either book crosses its own bar.
+const meetsTrendingPool = (m: Market): boolean =>
+  Number(m.totalPool) >= TRENDING_MIN_POOL ||
+  usdtBookPool(m) >= TRENDING_MIN_POOL_USDT;
+
+// Cross-currency ordering: how far past its own bar the hotter book sits, so a
+// USDT-driven market ranks fairly against a BTN one instead of by raw Nu.
+const trendingScore = (m: Market): number =>
+  Math.max(
+    Number(m.totalPool) / TRENDING_MIN_POOL,
+    usdtBookPool(m) / TRENDING_MIN_POOL_USDT,
+  );
+
+// The book that best represents this market's action, for the pool label — so a
+// USDT-driven market shows "$X", not "Nu 0".
+const dominantBook = (m: Market): { currency: Currency; pool: number } => {
+  const btn = Number(m.totalPool) || 0;
+  const usdt = usdtBookPool(m);
+  return usdt / TRENDING_MIN_POOL_USDT > btn / TRENDING_MIN_POOL
+    ? { currency: "USDT", pool: usdt }
+    : { currency: "BTN", pool: btn };
+};
 
 function TrendingCarousel({
   markets,
@@ -1094,13 +1126,13 @@ export function PwaFeedPage({
           m.bettingClosesAt &&
           new Date(m.bettingClosesAt).getTime() <= Date.now()
         ) &&
-        (isPriceMarket(m) || Number(m.totalPool) >= TRENDING_MIN_POOL),
+        (isPriceMarket(m) || meetsTrendingPool(m)),
     )
     .slice()
     .sort(
       (a, b) =>
         trendingRank(a) - trendingRank(b) ||
-        Number(b.totalPool) - Number(a.totalPool),
+        trendingScore(b) - trendingScore(a),
     )
     .slice(0, TRENDING_MAX);
   const resolvingMarkets = filteredMarkets.filter(
