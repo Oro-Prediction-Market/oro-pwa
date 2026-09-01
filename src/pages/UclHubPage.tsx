@@ -1259,37 +1259,44 @@ export function UclHubPage() {
             ←
           </button>
 
-          <div style={{ position: "relative", zIndex: 2, maxWidth: 860, margin: "0 auto", padding: "14px 16px 16px", textAlign: "center" }}>
-            <div style={{ display: "flex", gap: 12 }}>
-              {[
-                { v: "36", l: "Teams" },
-                { v: "189", l: "Matches" },
-                { v: "Munich", l: "Final 2027" },
-              ].map((s) => (
-                <div
-                  key={s.l}
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    padding: "10px 4px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: 12,
-                    background: "linear-gradient(135deg, rgba(7, 10, 39, 0.84), rgba(25, 8, 67, 0.66))",
-                    border: "1px solid rgba(139, 105, 255, 0.32)",
-                    boxShadow: "0 8px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.07)",
-                    backdropFilter: "blur(10px)",
-                  }}
-                >
-                  <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{s.v}</div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "#c7b8ff", marginTop: 2, textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
-                    {s.l}
-                  </div>
+          {/* Stat strip — anchored over the banner's bottom edge, matching the EPL hub */}
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              position: "absolute",
+              zIndex: 2,
+              left: 20,
+              right: 20,
+              bottom: 14,
+              maxWidth: 860,
+              margin: "0 auto",
+            }}
+          >
+            {[
+              { v: "36", l: "Teams" },
+              { v: "189", l: "Matches" },
+              { v: "Munich", l: "Final 2027" },
+            ].map((s) => (
+              <div
+                key={s.l}
+                style={{
+                  flex: 1,
+                  textAlign: "center",
+                  background: "rgba(6, 2, 20, 0.68)",
+                  backdropFilter: "blur(4px)",
+                  borderRadius: 12,
+                  padding: "10px 4px",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+                }}
+              >
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.v}</div>
+                <div style={{ fontSize: 10, color: "rgba(255, 255, 255, 0.55)", fontWeight: 600, marginTop: 2 }}>
+                  {s.l}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
