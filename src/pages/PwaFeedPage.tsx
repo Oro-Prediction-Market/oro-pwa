@@ -1297,8 +1297,7 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
-    // UCL hidden until the 2026/27 season starts — remove `false &&` to re-enable
-    if (false && banners.sports) {
+    if (banners.sports) {
       cards.splice(
         0,
         0,
