@@ -24,12 +24,12 @@ const STEPS: Step[] = [
   {
     icon: <User size={32} />,
     title: "Open the app",
-    desc: "Use Oro two ways: on the web at oro.fun, or in Telegram — it's the same account either way. Open it through Telegram and your account is created automatically from your Telegram profile; on the web you sign in with My Bhutan App or your CID + password. No complicated sign-up needed.",
+    desc: "Use Oro in Telegram or on the web at oro.fun — same account either way. Telegram signs you in automatically; no sign-up form.",
   },
   {
     icon: <Building2 size={32} />,
-    title: "Link your DK Bank account or fund with USDT",
-    desc: "Connect your DK Bank account using your 11-digit CID to deposit and withdraw ngultrum instantly, with zero friction. Prefer crypto? Verify your identity once, then deposit USDT from your own crypto wallet — the app shows the address and the network to send on — and withdraw back to it the same way. The two balances sit side by side and are never converted into each other: ngultrum stakes in ngultrum markets, USDT in USDT markets.",
+    title: "Link DK Bank, or use USDT",
+    desc: "Link DK Bank with your 11-digit CID for instant ngultrum deposits and withdrawals. Prefer crypto? Verify your ID once and use USDT from your own wallet. The two balances stay separate — never converted.",
   },
   {
     icon: <Lock size={32} />,
@@ -39,7 +39,7 @@ const STEPS: Step[] = [
   {
     icon: <Coins size={32} />,
     title: "Add funds to your wallet",
-    desc: "Deposit ngultrum from your DK Bank account — your Oro credits top up instantly so you can start predicting straight away. Funding in crypto instead? Send USDT to the deposit address the app gives you; it lands in your USDT wallet as soon as the network confirms the transfer.",
+    desc: "Deposit from DK Bank and your credits land instantly. USDT: send to the address the app shows — it credits once the network confirms.",
   },
   {
     icon: <Target size={32} />,
