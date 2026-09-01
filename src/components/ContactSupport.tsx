@@ -87,12 +87,7 @@ export function ContactSupport() {
             </button>
 
             {status === "sent" ? (
-              /* Same confirmation the My Bhutan App sign-in shows on success:
-                 the lucide check at 40px in #22c55e over green bold text. An
-                 emoji ✅ renders as a different glyph on every platform and
-                 sits at whatever weight the system font gives it, so the two
-                 success moments in the app did not look like the same
-                 product. See BhutanAppLogin's `phase === "success"`. */
+
               <div style={sentWrap}>
                 <CheckCircle size={40} color="#22c55e" strokeWidth={2.5} />
                 <p style={sentHeading}>Message sent</p>

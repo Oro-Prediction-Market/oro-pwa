@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useLayoutEffect, useEffect } from "react";
+import React, { useState, useRef, useCallback, useLayoutEffect, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Trophy,
@@ -21,6 +21,10 @@ import type {
   UclBracketTeam,
 } from "@shared/api/client";
 import { getMarkets, getUclStandings, getUclStats, getUclBracket } from "@shared/api/client";
+
+const TmaBetModal = lazy(() =>
+  import("../components/TmaBetModal").then((m) => ({ default: m.TmaBetModal })),
+);
 
 // Live-data row shapes fed into the tabs (from the API, with dummy fallback).
 type StandRow = { short: string; crest: string; p: number; gd: number; pts: number };
@@ -54,11 +58,11 @@ const GOLD = "#e8c766";
 // All hub data is live: standings/stats/bracket from /ucl/*, and markets
 // (matches, stat markets, outrights) from the markets API.
 
-type UclTab = "season" | "matches" | "bracket" | "standings" | "stats";
+type UclTab = "matches" | "season" | "bracket" | "standings" | "stats";
 
 const TABS: { id: UclTab; label: string; icon: React.ReactNode }[] = [
-  { id: "season", label: "Season", icon: <Trophy size={14} /> },
   { id: "matches", label: "Matches", icon: <CalendarDays size={14} /> },
+  { id: "season", label: "Season", icon: <Trophy size={14} /> },
   { id: "bracket", label: "Bracket", icon: <Swords size={14} /> },
   { id: "standings", label: "Table", icon: <ListOrdered size={14} /> },
   { id: "stats", label: "Stats", icon: <BarChart3 size={14} /> },
@@ -250,12 +254,23 @@ const WIN_GREEN = "#3ddc97";
 
 // Big card for an upcoming or in-progress match (open / betting-closed / resolving).
 // `featured` cards span the full width of the grid and carry a gold accent.
-function MatchCard({ m, onOpen, featured }: { m: Market; onOpen: (id: string) => void; featured?: boolean }) {
+function MatchCard({
+  m,
+  onOpen,
+  onBet,
+  featured,
+}: {
+  m: Market;
+  onOpen: (id: string) => void;
+  onBet: (marketId: string, outcomeId: string) => void;
+  featured?: boolean;
+}) {
   const colors = [BLUE, SILVER, "#e0457b"];
   const outs = m.outcomes ?? [];
   const home = outs[0];
   const away = outs[outs.length - 1];
   const probs = outcomeShares(m);
+  const pool = Number(m.totalPool) || outs.reduce((sum, o) => sum + Number(o.totalBetAmount ?? 0), 0);
   const labels = outs.map((o) => o.label);
   const kickoff = m.bettingClosesAt ?? m.closesAt;
   const when = kickoff
@@ -274,7 +289,11 @@ function MatchCard({ m, onOpen, featured }: { m: Market; onOpen: (id: string) =>
       onClick={() => onOpen(m.id)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onOpen(m.id)}
+      // Only the card itself opens the market on Enter — a keyboard Enter on an
+      // outcome button must place that bet, not also navigate away.
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target === e.currentTarget) onOpen(m.id);
+      }}
       style={{
         borderRadius: 16,
         overflow: "hidden",
@@ -314,8 +333,16 @@ function MatchCard({ m, onOpen, featured }: { m: Market; onOpen: (id: string) =>
       </div>
       <div style={{ display: "flex", gap: 8, padding: "12px 12px 14px" }}>
         {outs.map((o, i) => (
-          <div
+          <button
             key={o.id}
+            type="button"
+            disabled={locked}
+            // Tapping a side stakes on that side directly; the surrounding card
+            // still opens the full market.
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!locked) onBet(m.id, o.id);
+            }}
             style={{
               flex: 1,
               minWidth: 0,
@@ -324,15 +351,23 @@ function MatchCard({ m, onOpen, featured }: { m: Market; onOpen: (id: string) =>
               border: `1px solid ${colors[Math.min(i, 2)]}55`,
               borderRadius: 11,
               textAlign: "center",
+              cursor: locked ? "default" : "pointer",
+              opacity: locked ? 0.6 : 1,
+              font: "inherit",
             }}
           >
             <div style={{ fontSize: 18, fontWeight: 900, color: i === 1 ? "#c8d2e0" : colors[Math.min(i, 2)], lineHeight: 1 }}>{probs[i]}%</div>
             <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labels[i]}</div>
-          </div>
+          </button>
         ))}
       </div>
-      <div style={{ textAlign: "center", fontSize: 10.5, fontWeight: 800, color: BLUE, padding: "0 0 12px" }}>
-        {locked ? "View market »" : "Tap to predict »"}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "0 14px 12px" }}>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: SILVER }}>
+          Nu {pool.toLocaleString()} pool
+        </span>
+        <span style={{ fontSize: 10.5, fontWeight: 800, color: BLUE }}>
+          {locked ? "View market »" : "Tap to predict »"}
+        </span>
       </div>
     </div>
   );
@@ -397,7 +432,15 @@ function UclResultCard({ m, onOpen }: { m: Market; onOpen: (id: string) => void 
   );
 }
 
-function MatchesTab({ matches, onOpen }: { matches: Market[]; onOpen: (id: string) => void }) {
+function MatchesTab({
+  matches,
+  onOpen,
+  onBet,
+}: {
+  matches: Market[];
+  onOpen: (id: string) => void;
+  onBet: (marketId: string, outcomeId: string) => void;
+}) {
   const [matchView, setMatchView] = useState<"upcoming" | "previous">("upcoming");
   // `matches` arrives sorted soonest-first. Upcoming keeps that order; previous
   // (resolved/settled) reads best most-recent first.
@@ -464,11 +507,11 @@ function MatchesTab({ matches, onOpen }: { matches: Market[]; onOpen: (id: strin
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
                 {featured.map((m) => (
                   <div key={m.id} style={{ gridColumn: "1 / -1" }}>
-                    <MatchCard m={m} onOpen={onOpen} featured />
+                    <MatchCard m={m} onOpen={onOpen} onBet={onBet} featured />
                   </div>
                 ))}
                 {rest.map((m) => (
-                  <MatchCard key={m.id} m={m} onOpen={onOpen} />
+                  <MatchCard key={m.id} m={m} onOpen={onOpen} onBet={onBet} />
                 ))}
               </div>
             );
@@ -1127,16 +1170,22 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
 
 export function UclHubPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<UclTab>("season");
+  const [tab, setTab] = useState<UclTab>("matches");
   const [markets, setMarkets] = useState<Market[]>([]);
   const [liveStandings, setLiveStandings] = useState<UclStandings | null>(null);
   const [liveStats, setLiveStats] = useState<UclStats | null>(null);
   const [bracket, setBracket] = useState<UclBracket | null>(null);
+  // Outcome tapped on a match card → opens the bet sheet on that pick.
+  const [activeBet, setActiveBet] = useState<{ marketId: string; outcomeId: string } | null>(null);
 
-  useEffect(() => {
+  const loadMarkets = useCallback(() => {
     getMarkets()
       .then((d) => setMarkets(d.filter((m) => m.status !== "cancelled")))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    loadMarkets();
     getUclStandings().then(setLiveStandings).catch(() => {});
     getUclStats().then(setLiveStats).catch(() => {});
     getUclBracket().then(setBracket).catch(() => {});
@@ -1199,6 +1248,11 @@ export function UclHubPage() {
 
 
   const openMarket = (id: string) => navigate(`/market/${id}`);
+  const openBet = (marketId: string, outcomeId: string) =>
+    setActiveBet({ marketId, outcomeId });
+  const activeBetMarket = activeBet
+    ? markets.find((m) => m.id === activeBet.marketId) ?? null
+    : null;
 
   return (
     <>
@@ -1347,7 +1401,9 @@ export function UclHubPage() {
           {tab === "season" && (
             <SeasonTab outrightMarkets={outrightMarkets} onOpen={openMarket} />
           )}
-          {tab === "matches" && <MatchesTab matches={matchMarkets} onOpen={openMarket} />}
+          {tab === "matches" && (
+            <MatchesTab matches={matchMarkets} onOpen={openMarket} onBet={openBet} />
+          )}
           {tab === "bracket" && <BracketTab bracket={bracket} />}
           {tab === "standings" && <StandingsTab rows={standRows} />}
           {tab === "stats" && (
@@ -1360,6 +1416,24 @@ export function UclHubPage() {
             />
           )}
         </div>
+
+        {/* ── Bet sheet — opened by tapping an outcome on a match card ── */}
+        {activeBetMarket && activeBet && (
+          <Suspense fallback={null}>
+            <TmaBetModal
+              isOpen={true}
+              onClose={() => setActiveBet(null)}
+              market={activeBetMarket}
+              outcomeId={activeBet.outcomeId}
+              onSuccess={() => {
+                setActiveBet(null);
+                loadMarkets(); // refresh pools/percentages after a stake
+              }}
+              onFailure={(e: string) => console.error(e)}
+              onGoToWallet={() => navigate("/wallet")}
+            />
+          </Suspense>
+        )}
       </div>
     </>
   );
