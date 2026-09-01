@@ -1208,13 +1208,13 @@ export function UclHubPage() {
           style={{
             position: "relative",
             overflow: "hidden",
-            minHeight: "clamp(170px, 27vw, 240px)",
+            minHeight: "clamp(210px, 27vw, 280px)",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
-            backgroundImage: "url('/ucl-banner-wide.webp')",
+            backgroundImage: "url('/ucl_hub_new.jpeg')",
             backgroundSize: "cover",
-            backgroundPosition: "center 28%",
+            backgroundPosition: "center 48%",
             backgroundColor: NAVY,
             borderBottom: "1px solid rgba(43,107,255,0.25)",
           }}
@@ -1259,23 +1259,35 @@ export function UclHubPage() {
             ←
           </button>
 
-          {/* Lockup — image carries the branding; only the stat strip sits on top */}
-          <div style={{ position: "relative", maxWidth: 860, margin: "0 auto", padding: "16px 16px 14px", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center" }}>
+          <div style={{ position: "relative", zIndex: 2, maxWidth: 860, margin: "0 auto", padding: "14px 16px 16px", textAlign: "center" }}>
+            <div style={{ display: "flex", gap: 12 }}>
               {[
                 { v: "36", l: "Teams" },
                 { v: "189", l: "Matches" },
                 { v: "Munich", l: "Final 2027" },
-              ].map((s, i) => (
-                <React.Fragment key={s.l}>
-                  {i > 0 && <span style={{ width: 1, background: "rgba(255,255,255,0.14)", margin: "2px 0" }} />}
-                  <div style={{ padding: "0 16px" }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}>{s.v}</div>
-                    <div style={{ fontSize: 9.5, fontWeight: 700, color: SILVER, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>
-                      {s.l}
-                    </div>
+              ].map((s) => (
+                <div
+                  key={s.l}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: "10px 4px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 12,
+                    background: "linear-gradient(135deg, rgba(7, 10, 39, 0.84), rgba(25, 8, 67, 0.66))",
+                    border: "1px solid rgba(139, 105, 255, 0.32)",
+                    boxShadow: "0 8px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.07)",
+                    backdropFilter: "blur(10px)",
+                  }}
+                >
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>{s.v}</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "#c7b8ff", marginTop: 2, textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
+                    {s.l}
                   </div>
-                </React.Fragment>
+                </div>
               ))}
             </div>
           </div>
