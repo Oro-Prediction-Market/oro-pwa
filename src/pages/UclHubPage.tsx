@@ -11,7 +11,7 @@ import {
   Handshake,
   Swords,
 } from "lucide-react";
-import { calcProb } from "./WorldCupHubPage";
+import { calcProb, calcOdds } from "./WorldCupHubPage";
 import type {
   Market,
   UclStandings,
@@ -244,9 +244,15 @@ function UclSeasonMarket({
               <div style={{ fontSize: 12.5, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.label}</div>
               <div style={{ fontSize: 10.5, color: SILVER, fontWeight: 600, marginTop: 1 }}>Nu {Number(o.totalBetAmount ?? 0).toLocaleString()} pool</div>
             </div>
-            <div style={{ textAlign: "center", minWidth: 40, flexShrink: 0 }}>
+            <div style={{ textAlign: "center", minWidth: 46, flexShrink: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 900, color: BLUE, lineHeight: 1 }}>{shareOf(o.id)}%</div>
               <div style={{ fontSize: 8.5, color: SILVER, fontWeight: 700, textTransform: "uppercase", marginTop: 2 }}>win</div>
+              {(() => {
+                const od = calcOdds(market, o.id);
+                return od ? (
+                  <div style={{ fontSize: 9, fontWeight: 800, color: GOLD, marginTop: 3 }}>{od.toFixed(2)}x</div>
+                ) : null;
+              })()}
             </div>
             {!locked && (
               <button
@@ -427,6 +433,12 @@ function MatchCard({
           >
             <div style={{ fontSize: 18, fontWeight: 900, color: i === 1 ? "#c8d2e0" : colors[Math.min(i, 2)], lineHeight: 1 }}>{probs[i]}%</div>
             <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labels[i]}</div>
+            <div style={{ marginTop: 3, fontSize: 9, fontWeight: 800, color: GOLD }}>
+              {(() => {
+                const od = calcOdds(m, o.id);
+                return od ? `${od.toFixed(2)}x` : "—";
+              })()}
+            </div>
           </button>
         ))}
       </div>
