@@ -346,7 +346,6 @@ function MatchCard({
   const away = outs[outs.length - 1];
   const probs = outcomeShares(m);
   const pool = Number(m.totalPool) || outs.reduce((sum, o) => sum + Number(o.totalBetAmount ?? 0), 0);
-  const labels = outs.map((o) => o.label);
   const kickoff = m.bettingClosesAt ?? m.closesAt;
   const when = kickoff
     ? new Date(kickoff).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -432,8 +431,7 @@ function MatchCard({
             }}
           >
             <div style={{ fontSize: 18, fontWeight: 900, color: i === 1 ? "#c8d2e0" : colors[Math.min(i, 2)], lineHeight: 1 }}>{probs[i]}%</div>
-            <div style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{labels[i]}</div>
-            <div style={{ marginTop: 3, fontSize: 9, fontWeight: 800, color: GOLD }}>
+            <div style={{ marginTop: 4, fontSize: 9, fontWeight: 800, color: GOLD }}>
               {(() => {
                 const od = calcOdds(m, o.id);
                 return od ? `${od.toFixed(2)}x` : "—";
