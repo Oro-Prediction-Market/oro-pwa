@@ -289,6 +289,28 @@ const FAQ_DATA: FAQSection[] = [
       },
       {
         id: "22",
+        question: "I sent USDT to the wrong address or the wrong network. Can Oro get it back?",
+        answer: (
+          <>
+            <p style={{ margin: "0 0 8px" }}>
+              No. Blockchain transfers are final the moment they confirm — they
+              cannot be reversed, cancelled, or redirected, by us or by anyone
+              else. If funds reach an address we do not control, we have no way
+              to reach them, and Oro is not responsible for the loss.
+            </p>
+            <p style={{ margin: 0 }}>
+              This is why the deposit screen shows the network spelled out and
+              why withdrawals only go to an address you whitelisted in advance.
+              Before you send: check the network, check the address, and send a
+              small test amount first if you are unsure. Never trust an address
+              pasted to you by anyone — malware and scam messages both work by
+              swapping the address at the last second.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "23",
         question: "Can I move money between my Ngultrum and USDT balances?",
         answer:
           "No. Ngultrum and USDT are kept completely separate — separate balances, separate markets, separate pools. There is no exchange rate anywhere in Oro, so the two never mix and a Nu prediction can never be paid out in USDT or the reverse.",

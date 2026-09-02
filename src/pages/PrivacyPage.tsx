@@ -20,14 +20,22 @@ const SECTIONS = [
       },
       {
         heading: "2.2 Financial Information",
-        text: "Account balances (BTN), payment records (amounts, methods, timestamps, status), DK Bank transaction references and OTP confirmation data. We do not store your full bank credentials or PIN.",
+        text: "Account balances (BTN and USDT, held separately), payment records (amounts, methods, timestamps, status), DK Bank transaction references and OTP confirmation data. We do not store your full bank credentials or PIN.",
       },
       {
-        heading: "2.3 Prediction & Activity Data",
+        heading: "2.3 Digital Asset Data",
+        text: "For USDT activity we process deposit addresses issued to you, blockchain network selected, transaction hashes, on-chain amounts and confirmation status, and the withdrawal addresses you whitelist together with any label you give them. We do not hold your private keys, seed phrase, or wallet credentials, and we never ask for them.",
+      },
+      {
+        heading: "2.4 Identity Verification (KYC) Documents",
+        text: "Where identity verification is required — including before any USDT deposit — we collect your document type, document number, issuing country, and an image of the document, along with the review decision, reviewer, timestamp, and any rejection reason. Document images and numbers are encrypted before storage and are accessible only to authorised reviewers through audited internal tooling.",
+      },
+      {
+        heading: "2.5 Prediction & Activity Data",
         text: "Prediction history (markets, amounts staked, outcomes, winnings), positions held, and settlement records.",
       },
       {
-        heading: "2.4 Technical Data",
+        heading: "2.6 Technical Data",
         text: "Session tokens (JWT, stored client-side), IP address, browser/app version, Telegram client info, page views, interaction timestamps, and WebSocket session metadata.",
       },
     ],
@@ -47,6 +55,14 @@ const SECTIONS = [
       {
         purpose: "Calculating and settling prediction",
         data: "Prediction history, market data, balances",
+      },
+      {
+        purpose: "Processing USDT deposits and withdrawals",
+        data: "Deposit addresses, whitelisted addresses, transaction hashes, network",
+      },
+      {
+        purpose: "Identity verification (KYC) and eligibility",
+        data: "Identity document data and images, review decisions",
       },
       {
         purpose: "Fraud detection and compliance",
@@ -79,6 +95,8 @@ const SECTIONS = [
     list: [
       "DK Bank — transaction data required to process BTN deposits and withdrawals via the bank's merchant API.",
       "Telegram — we receive data from Telegram under their platform terms; we do not send personal data back to Telegram beyond what their Mini App SDK requires.",
+      "Digital asset payment processor — our USDT payment provider receives the data needed to issue deposit addresses, monitor incoming transfers, and send withdrawals to your whitelisted address.",
+      "Blockchain networks — a deposit or withdrawal is recorded on a public blockchain. Addresses, amounts, and timestamps are visible to anyone, permanently, and cannot be edited or deleted by us or by you.",
       "Service providers — infrastructure and hosting providers who process data on our behalf under data processing agreements.",
       "Legal authorities — where required by Bhutanese law or valid legal process.",
     ],
@@ -95,11 +113,15 @@ const SECTIONS = [
         purpose: "Transaction and payment records",
         data: "7 years (financial compliance)",
       },
+      {
+        purpose: "Identity verification documents",
+        data: "Duration of account + 5 years (AML/CFT)",
+      },
       { purpose: "Prediction history", data: "5 years" },
       { purpose: "Session tokens", data: "Until logout or expiry" },
       { purpose: "Usage logs", data: "90 days" },
     ],
-    note: "You may request deletion of your account and associated personal data at any time, subject to legal retention obligations for financial records.",
+    note: "You may request deletion of your account and associated personal data at any time, subject to legal retention obligations for financial records. Data already written to a public blockchain cannot be deleted by us — see Section 10.",
   },
   {
     number: "7",
@@ -110,6 +132,8 @@ const SECTIONS = [
       "2FA (TOTP) — admin access requires time-based one-time password authentication.",
       "Bearer token authentication — API requests require valid JWT tokens.",
       "Redis session management — short-lived session data is stored securely server-side.",
+      "KYC document encryption — identity document images and numbers are encrypted before they are stored, with a separate key used to make them searchable without being readable.",
+      "Withdrawal address whitelisting — USDT can only be sent to an address you registered in advance, so a compromised session cannot redirect funds to an unknown address.",
       "Access controls — administrative functions are restricted to verified admin accounts with full audit logging.",
     ],
   },
@@ -129,6 +153,15 @@ const SECTIONS = [
   },
   {
     number: "10",
+    title: "Blockchain and Digital Asset Data",
+    content: [
+      "USDT deposits and withdrawals settle on public blockchain networks. Once a transaction is confirmed, the sending address, receiving address, amount, and timestamp are recorded permanently on a public ledger that we do not control and cannot alter, correct, or erase.",
+      "Anyone can view that ledger. If an address can be linked to you — for example because you have published it, or because it is also used elsewhere in your name — your Oro deposits and withdrawals may be linked to you by a third party. This is a property of blockchains generally, not of Oro.",
+      "Your rights of correction and erasure under Section 11 apply to the data we hold in our own systems. They cannot be applied to on-chain records.",
+    ],
+  },
+  {
+    number: "11",
     title: "Your Rights",
     list: [
       "Access — request the personal data we hold about you.",
@@ -139,14 +172,14 @@ const SECTIONS = [
     ],
   },
   {
-    number: "11",
+    number: "12",
     title: "Children's Privacy",
     content: [
-      "Oro is not intended for individuals without a valid Bhutanese CID. We do not knowingly collect data from minors. If you believe a minor has registered on our platform, contact us and we will promptly delete the account.",
+      "Oro is not intended for anyone under 18. We do not knowingly collect data from minors. If you believe a minor has registered on our platform, contact us and we will promptly delete the account.",
     ],
   },
   {
-    number: "12",
+    number: "13",
     title: "Changes to This Policy",
     content: [
       `We may update this Privacy Policy from time to time. When we do, we will update the "Last Updated" date at the top. Significant changes will be communicated via in-app notification. Continued use of Oro after changes constitutes acceptance of the updated policy.`,

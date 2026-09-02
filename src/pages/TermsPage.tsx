@@ -76,6 +76,22 @@ const SECTIONS = [
         def: "BTN, stablecoins, or other blockchain-based assets ORO supports for deposits, withdrawals, or in-Platform use from time to time.",
       },
       {
+        term: "USDT",
+        def: "Tether (USDT), a US-dollar-denominated stablecoin issued by a third party unaffiliated with ORO, supported on the Platform as a Digital Asset for deposits, withdrawals, and participation in USDT-denominated Markets.",
+      },
+      {
+        term: "Supported Network",
+        def: "A blockchain network on which ORO accepts or sends USDT, as published on the Platform at the time of the transaction. Supported Networks may be added or withdrawn at ORO's discretion.",
+      },
+      {
+        term: "Deposit Address",
+        def: "A blockchain address issued to a User for a single deposit on a specified Supported Network, valid only for a limited period.",
+      },
+      {
+        term: "Whitelisted Address",
+        def: "A blockchain address a User has registered to their Account in advance and to which USDT withdrawals may be sent.",
+      },
+      {
         term: "Platform",
         def: "The ORO website, mobile applications, APIs, and related services.",
       },
@@ -138,7 +154,11 @@ const SECTIONS = [
         text: "You are solely responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your Account. Notify ORO immediately of any unauthorized use.",
       },
       {
-        heading: "5.4 One Account",
+        heading: "5.4 Verification for USDT",
+        text: "Identity verification is a precondition of USDT use. No USDT deposit may be made until a User has submitted identity documents and those documents have been approved. ORO may decline to approve verification, and may suspend USDT functionality on an Account, without being required to give reasons beyond those required by applicable law.",
+      },
+      {
+        heading: "5.5 One Account",
         text: "One natural person or legal entity may hold only one Account, except where ORO expressly authorizes otherwise (see Section 8 on Prohibited Conduct).",
       },
     ],
@@ -247,7 +267,31 @@ const SECTIONS = [
         text: "ORO initially supports BTN as its native transactional unit. Support for additional Digital Assets or stablecoins will be governed by the Digital Asset Policy (Volume VIII) and does not require amendment of these Terms to take effect.",
       },
       {
-        heading: "10.3 Taxes",
+        heading: "10.3 USDT Deposits",
+        text: "USDT deposits must be sent as the USDT token on a Supported Network, to the Deposit Address issued for that deposit, within the validity period shown. A Deposit Address is single-use and must not be reused. Deposits are credited only after the transaction confirms on the relevant network. Minimum and maximum deposit amounts are published on the Platform and may be changed at any time.",
+      },
+      {
+        heading: "10.4 Wrong-Network and Misdirected Transfers",
+        text: "Blockchain transfers are irreversible and cannot be recalled by ORO. Assets sent on a network other than the one displayed, sent as a token other than USDT, sent to an expired or reused Deposit Address, or sent to an address not issued to you, may be permanently and unrecoverably lost. ORO has no obligation to recover such assets, and recovery may be technically impossible. You are solely responsible for confirming the network and address before sending.",
+      },
+      {
+        heading: "10.5 USDT Withdrawals",
+        text: "USDT withdrawals may be sent only to a Whitelisted Address registered to your Account on a Supported Network. ORO may apply minimum withdrawal amounts, holding periods, and additional verification before processing a withdrawal, and may decline or delay a withdrawal where required for compliance, security, or fraud prevention. Once broadcast to the network, a withdrawal cannot be reversed.",
+      },
+      {
+        heading: "10.6 Network Fees",
+        text: "Blockchain network fees are separate from any ORO fee, are set by the relevant network rather than by ORO, and are borne by the sending party. Network fees may vary substantially between Supported Networks and may exceed the value of a small transfer.",
+      },
+      {
+        heading: "10.7 Currency Segregation",
+        text: "BTN and USDT balances are held and accounted for separately. ORO does not operate an exchange, does not convert between BTN and USDT, and does not publish or apply any exchange rate between them. A position taken in one unit is staked, resolved, and settled in that same unit; balances in one unit can never be used for Markets, bonds, or payouts denominated in the other.",
+      },
+      {
+        heading: "10.8 No Interest or Custody Services",
+        text: "Wallet balances are held for the purpose of participating in Markets and are not a deposit, investment, or interest-bearing account. ORO pays no interest on balances and does not offer custody, staking, lending, or yield services in respect of any Digital Asset.",
+      },
+      {
+        heading: "10.9 Taxes",
         text: "Users are responsible for any taxes arising from their use of ORO.",
       },
     ],
@@ -291,6 +335,18 @@ const SECTIONS = [
       {
         heading: "12.3 Digital Asset Risks",
         text: "Digital Assets are volatile and subject to risks including price fluctuation, regulatory change, and technical failure. ORO is not responsible for losses arising from these risks.",
+      },
+      {
+        heading: "12.4 Stablecoin Risk",
+        text: "USDT is issued and administered by a third party over which ORO has no control. Its value is not guaranteed by ORO. A stablecoin may lose its peg to the US dollar, its issuer may become unable or unwilling to honour redemptions, may freeze or blacklist addresses, or may cease operations. ORO does not insure, guarantee, or underwrite the value or redeemability of USDT, and does not compensate Users for losses arising from issuer conduct or loss of peg.",
+      },
+      {
+        heading: "12.5 Blockchain and Network Risk",
+        text: "Blockchain transactions are irreversible, pseudonymous, and outside ORO's control once broadcast. Networks may congest, fork, halt, reorganise, or fail, and third-party infrastructure ORO relies on may be interrupted. These events may delay or prevent deposits and withdrawals. ORO is not liable for losses arising from network conditions, third-party infrastructure failure, or the irreversibility of blockchain transactions.",
+      },
+      {
+        heading: "12.6 Regulatory Risk",
+        text: "The regulatory treatment of stablecoins and Digital Assets is evolving. Changes in law, regulation, or the requirements of ORO's banking, payment, or infrastructure partners may require ORO to restrict, suspend, or withdraw USDT functionality — including in a particular jurisdiction or for a particular User — with such notice as is reasonably practicable.",
       },
     ],
   },
@@ -399,7 +455,7 @@ const SECTIONS = [
     number: "18",
     title: "Limitation of Liability & Indemnification",
     content: [
-      "Our liability to you is capped, and we're not on the hook for indirect losses. You agree to cover us if your misuse of ORO gets us sued.",
+      "Our liability to you is capped, and we're not on the hook for indirect losses or for mistakes you make when sending crypto. You agree to cover us if your misuse of ORO gets us sued.",
     ],
     subsections: [
       {
@@ -411,7 +467,11 @@ const SECTIONS = [
         text: "ORO's aggregate liability arising from this Agreement will not exceed the greater of (a) the fees you paid to ORO in the twelve (12) months preceding the claim, or (b) the GMCA-equivalent minimum amount specified by applicable law, except where such limitation is unenforceable under mandatory law.",
       },
       {
-        heading: "18.3 Indemnification",
+        heading: "18.3 User Error and Misdirected Transfers",
+        text: "You are solely responsible for the accuracy of every address, network, and amount you enter or confirm. ORO is not liable for any loss arising from a transfer you sent to an incorrect, mistyped, outdated, expired, or third-party address; sent on a network other than the one displayed; sent as a token other than USDT; or sent from or to an address or wallet you do not control, including where the error results from a typing mistake, a copy-and-paste failure, clipboard-altering malware, a phishing message, or an address supplied to you by any person other than ORO. Blockchain transactions are final on confirmation and cannot be reversed, cancelled, or redirected by ORO. ORO does not hold the receiving keys for any address other than its own, has no ability to recover assets that reached an address it does not control, and is under no obligation to attempt recovery, to trace a transfer, or to credit, reimburse, or replace the amount lost. Any assistance ORO chooses to offer in such a case is provided as a courtesy, does not create an obligation or an admission of liability, and carries no guarantee of success. This Section applies notwithstanding any other provision of this Agreement.",
+      },
+      {
+        heading: "18.4 Indemnification",
         text: "You agree to indemnify and hold ORO harmless from claims, losses, or expenses (including reasonable legal fees) arising from your breach of this Agreement, your violation of law, or your Market participation.",
       },
     ],
