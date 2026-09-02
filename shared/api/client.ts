@@ -106,11 +106,71 @@ export interface UserNotification {
   body: string;
   metadata?: Record<string, any> | null;
   createdAt: string;
+  /** Null while unread; set to an ISO timestamp once read/seen. */
+  seenAt?: string | null;
 }
 
 /** Unseen in-app notifications for the current user (popped once on app open). */
 export function getMyNotifications(): Promise<UserNotification[]> {
   return request<UserNotification[]>("/users/me/notifications").catch(() => []);
+}
+
+/** Full notification history for the center, newest first. `before` (the ISO
+ *  createdAt of the last row) pages further back. */
+export function listAllNotifications(opts: {
+  limit?: number;
+  before?: string;
+} = {}): Promise<UserNotification[]> {
+  const qs = new URLSearchParams();
+  if (opts.limit) qs.set("limit", String(opts.limit));
+  if (opts.before) qs.set("before", opts.before);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return request<UserNotification[]>(
+    `/users/me/notifications/list${suffix}`,
+  ).catch(() => []);
+}
+
+/** Unread count for the header bell badge. */
+export function getUnreadNotificationCount(): Promise<number> {
+  return request<{ count: number }>("/users/me/notifications/unread-count")
+    .then((r) => r.count ?? 0)
+    .catch(() => 0);
+}
+
+function bustNotifications() {
+  bustCache("/users/me/notifications");
+  bustCache("/users/me/notifications/list");
+  bustCache("/users/me/notifications/unread-count");
+}
+
+/** Mark the given notifications unread (null their seenAt). */
+export function markNotificationsUnread(
+  ids: string[],
+): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/users/me/notifications/unread", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  })
+    .catch(() => ({ ok: false }))
+    .then((r) => {
+      bustNotifications();
+      return r;
+    });
+}
+
+/** Delete the given notifications, or clear all when `ids` is omitted. */
+export function deleteNotifications(
+  ids?: string[],
+): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>("/users/me/notifications/delete", {
+    method: "POST",
+    body: JSON.stringify(ids?.length ? { ids } : {}),
+  })
+    .catch(() => ({ ok: false }))
+    .then((r) => {
+      bustNotifications();
+      return r;
+    });
 }
 
 /** Mark notifications seen (by id, or all unseen when omitted) so they don't pop again. */
@@ -123,7 +183,7 @@ export function markNotificationsSeen(
   })
     .catch(() => ({ ok: false }))
     .then((r) => {
-      bustCache("/users/me/notifications");
+      bustNotifications();
       return r;
     });
 }

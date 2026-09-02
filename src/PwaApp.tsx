@@ -195,6 +195,7 @@ import {
 } from "lucide-react";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ContactSupport } from "./components/ContactSupport";
+import { NotificationBell } from "./components/NotificationCenter";
 import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
 // Lazy-load HowItWorksModal — only needed on click
 const HowItWorksModal = lazy(() =>
@@ -1522,6 +1523,9 @@ function PwaLayout({
           >
             {/* Compact search icon on mobile (matches desktop search UX) */}
             {isMobile && <PwaSearch compact />}
+
+            {/* Notification bell — signed-in users only */}
+            {authed && <NotificationBell />}
 
             {!isMobile && (
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
