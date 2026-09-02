@@ -355,8 +355,7 @@ function FeaturedMatchCard({
               style={{ flex: 1, padding: "10px 4px", background: "rgba(0,0,0,0.35)", border: "1px solid rgba(0,255,133,0.3)", borderRadius: 10, cursor: locked ? "default" : "pointer", textAlign: "center" }}
             >
               <div style={{ fontSize: 15, fontWeight: 900, color: ACCENT }}>{Math.round(prob * 100)}%</div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.7)", fontWeight: 600, marginTop: 2 }}>{shortEplName(outcome.label)}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 2 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 3 }}>
                 {odds ? `${odds.toFixed(2)}x` : "—"}
               </div>
             </button>
@@ -439,8 +438,7 @@ function EplMatchCard({
               style={{ flex: 1, padding: "9px 4px", background: "rgba(0,255,133,0.06)", border: "1px solid rgba(0,255,133,0.22)", borderRadius: 10, cursor: locked ? "default" : "pointer", textAlign: "center" }}
             >
               <div style={{ fontSize: 14, fontWeight: 900, color: ACCENT }}>{Math.round(prob * 100)}%</div>
-              <div style={{ fontSize: 11, color: "var(--text-muted, #888)", fontWeight: 600, marginTop: 2 }}>{shortEplName(outcome.label)}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 2 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 3 }}>
                   {odds ? `${odds.toFixed(2)}x` : "—"}
                 </div>
             </button>
