@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -83,6 +84,7 @@ export function NotificationBell() {
   const [menu, setMenu] = useState<{ id: string; top: number; right: number } | null>(
     null,
   );
+  const [confirmClear, setConfirmClear] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const refreshCount = useCallback(() => {
@@ -116,7 +118,14 @@ export function NotificationBell() {
   useEffect(() => {
     if (!open) return;
     const onClick = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      const t = e.target as HTMLElement;
+      // The row menu is portaled to <body> (outside rootRef); a click on it must
+      // not be read as an outside-click that closes the whole panel.
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(t) &&
+        !t.closest("[data-notif-menu-root]")
+      ) {
         setOpen(false);
       }
     };
@@ -132,7 +141,10 @@ export function NotificationBell() {
   // The row menu is closed by any panel close, and by a click anywhere that
   // isn't the menu or a "⋯" button (a fixed popover can't rely on overflow).
   useEffect(() => {
-    if (!open) setMenu(null);
+    if (!open) {
+      setMenu(null);
+      setConfirmClear(false);
+    }
   }, [open]);
   useEffect(() => {
     if (!menu) return;
@@ -278,8 +290,6 @@ export function NotificationBell() {
             border: "1px solid var(--glass-border)",
             borderRadius: 14,
             boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
-            backdropFilter: "var(--glass-blur)",
-            WebkitBackdropFilter: "var(--glass-blur)",
             overflow: "hidden",
             zIndex: 3200,
             animation: "notifDrawerIn 0.18s ease-out forwards",
@@ -322,16 +332,55 @@ export function NotificationBell() {
                 Read all
               </button>
               <button
-                onClick={clearAll}
+                onClick={() => setConfirmClear(true)}
                 title="Clear all"
                 disabled={items.length === 0}
                 style={pillBtn(items.length === 0)}
               >
                 <Trash2 size={13} />
-                Clear
+                Clear all
               </button>
             </div>
           </div>
+
+          {/* Clear-all confirmation */}
+          {confirmClear && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "10px 14px",
+                background: "var(--bg-secondary)",
+                borderBottom: "1px solid var(--glass-border)",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: "var(--text-main)",
+                }}
+              >
+                Delete all notifications?
+              </span>
+              <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                <button onClick={() => setConfirmClear(false)} style={confirmBtn(false)}>
+                  No
+                </button>
+                <button
+                  onClick={() => {
+                    clearAll();
+                    setConfirmClear(false);
+                  }}
+                  style={confirmBtn(true)}
+                >
+                  Yes, clear all
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* List */}
           <div
@@ -450,64 +499,65 @@ export function NotificationBell() {
             )}
           </div>
 
-          {/* Row "⋯" menu — fixed to the button's rect, inside the panel so an
-              outside-click doesn't also close the panel. */}
-          {menu &&
-            (() => {
-              const n = items.find((x) => x.id === menu.id);
-              if (!n) return null;
-              const unreadRow = !n.seenAt;
-              return (
-                <div
-                  role="menu"
-                  data-notif-menu-root
-                  onClick={(e) => e.stopPropagation()}
-                  style={{
-                    position: "fixed",
-                    top: menu.top,
-                    right: menu.right,
-                    minWidth: 158,
-                    padding: 5,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 2,
-                    background: "var(--bg-card)",
-                    border: "1px solid var(--glass-border)",
-                    borderRadius: 12,
-                    boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
-                    backdropFilter: "var(--glass-blur)",
-                    WebkitBackdropFilter: "var(--glass-blur)",
-                    zIndex: 3300,
-                    animation: "notifDrawerIn 0.14s ease-out forwards",
-                  }}
-                >
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      toggleRead(n);
-                      setMenu(null);
-                    }}
-                    style={menuItem()}
-                  >
-                    {unreadRow ? <Check size={15} /> : <Dot size={17} />}
-                    {unreadRow ? "Mark as read" : "Mark as unread"}
-                  </button>
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      remove(n.id);
-                      setMenu(null);
-                    }}
-                    style={menuItem("var(--color-danger)")}
-                  >
-                    <Trash2 size={14} />
-                    Delete
-                  </button>
-                </div>
-              );
-            })()}
         </div>
       )}
+
+      {/* Row "⋯" menu — portaled to <body> so no ancestor's transform, filter,
+          or overflow can clip or mis-position it; fixed to the button's rect. */}
+      {open &&
+        menu &&
+        (() => {
+          const n = items.find((x) => x.id === menu.id);
+          if (!n) return null;
+          const unreadRow = !n.seenAt;
+          return createPortal(
+            <div
+              role="menu"
+              data-notif-menu-root
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "fixed",
+                top: menu.top,
+                right: menu.right,
+                minWidth: 158,
+                padding: 5,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+                background: "var(--bg-card)",
+                border: "1px solid var(--glass-border)",
+                borderRadius: 12,
+                boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
+                zIndex: 9999,
+                animation: "notifDrawerIn 0.14s ease-out forwards",
+              }}
+            >
+              <button
+                role="menuitem"
+                onClick={() => {
+                  toggleRead(n);
+                  setMenu(null);
+                }}
+                style={menuItem()}
+              >
+                {unreadRow ? <Check size={15} /> : <Dot size={17} />}
+                {unreadRow ? "Mark as read" : "Mark as unread"}
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  remove(n.id);
+                  setMenu(null);
+                }}
+                style={menuItem("var(--color-danger)")}
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            </div>,
+            document.body,
+          );
+        })()}
     </div>
   );
 }
@@ -539,6 +589,17 @@ const iconBtn: React.CSSProperties = {
   color: "var(--text-muted)",
   cursor: "pointer",
 };
+
+const confirmBtn = (danger: boolean): React.CSSProperties => ({
+  padding: "5px 12px",
+  borderRadius: "var(--radius-full)",
+  border: danger ? "none" : "1px solid var(--glass-border)",
+  background: danger ? "var(--color-danger)" : "var(--bg-card)",
+  color: danger ? "#fff" : "var(--text-muted)",
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: "pointer",
+});
 
 const menuItem = (color?: string): React.CSSProperties => ({
   display: "flex",
