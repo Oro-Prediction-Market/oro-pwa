@@ -996,12 +996,18 @@ export function getMyBets(status?: Bet["status"]): Promise<Bet[]> {
 }
 
 export function getMyResults(): Promise<Bet[]> {
+  // A logged-out visitor has no token; firing the request only 401s and the
+  // browser logs it. Return empty instead — nothing to show when signed out.
+  if (!getToken()) return Promise.resolve([]);
   return request<Bet[]>("/users/me/results");
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 
 export function getMe(): Promise<AuthUser> {
+  // No token → not signed in. Reject without hitting the server (mirrors the
+  // 401 callers already handle) so a logged-out visitor doesn't spam the console.
+  if (!getToken()) return Promise.reject(new Error("Unauthorized"));
   return request<AuthUser>("/users/me");
 }
 export function setFeaturedAchievements(achievementIds: string[]): Promise<{ featuredAchievementIds: string[] }> {
@@ -1027,6 +1033,7 @@ export function getPublicProfile(id: string): Promise<PublicProfile> {
 export function getMyTransactions(
   type?: Transaction["type"],
 ): Promise<Transaction[]> {
+  if (!getToken()) return Promise.resolve([]);
   const qs = type ? `?type=${type}` : "";
   return request<Transaction[]>(`/users/me/transactions${qs}`);
 }
@@ -1227,10 +1234,12 @@ export interface Season {
 }
 
 export function getCurrentSeason(): Promise<Season | null> {
+  if (!getToken()) return Promise.resolve(null);
   return request<Season | null>("/users/seasons/current");
 }
 
 export function getSeasonHistory(limit = 10): Promise<Season[]> {
+  if (!getToken()) return Promise.resolve([]);
   return request<Season[]>(`/users/seasons/history?limit=${limit}`);
 }
 
