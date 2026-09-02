@@ -2,15 +2,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
-  X,
   Trash2,
   CheckCheck,
+  Check,
   Trophy,
   Coins,
   Award,
   TrendingDown,
   Circle,
   Dot,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   listAllNotifications,
@@ -77,6 +78,11 @@ export function NotificationBell() {
   const [items, setItems] = useState<UserNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
+  // The open row "⋯" menu, positioned fixed (from the button's rect) so the
+  // panel's own scroll/overflow can't clip it.
+  const [menu, setMenu] = useState<{ id: string; top: number; right: number } | null>(
+    null,
+  );
   const rootRef = useRef<HTMLDivElement>(null);
 
   const refreshCount = useCallback(() => {
@@ -123,6 +129,32 @@ export function NotificationBell() {
     };
   }, [open]);
 
+  // The row menu is closed by any panel close, and by a click anywhere that
+  // isn't the menu or a "⋯" button (a fixed popover can't rely on overflow).
+  useEffect(() => {
+    if (!open) setMenu(null);
+  }, [open]);
+  useEffect(() => {
+    if (!menu) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-notif-menu-root]")) setMenu(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menu]);
+
+  const openMenu = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (menu?.id === id) return setMenu(null);
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const MENU_H = 92;
+    const below = r.bottom + 4;
+    const top =
+      below + MENU_H > window.innerHeight ? r.top - 4 - MENU_H : below;
+    setMenu({ id, top, right: window.innerWidth - r.right });
+  };
+
   const toggleRead = (n: UserNotification) => {
     if (n.seenAt) {
       markNotificationsUnread([n.id]);
@@ -167,6 +199,7 @@ export function NotificationBell() {
   };
 
   const openItem = (n: UserNotification) => {
+    setMenu(null);
     if (!n.seenAt) {
       markNotificationsSeen([n.id]);
       setUnread((u) => Math.max(0, u - 1));
@@ -283,7 +316,10 @@ export function NotificationBell() {
           </div>
 
           {/* List */}
-          <div style={{ overflowY: "auto", flex: 1 }}>
+          <div
+            style={{ overflowY: "auto", flex: 1 }}
+            onScroll={() => menu && setMenu(null)}
+          >
             {loading && items.length === 0 ? (
               <div style={emptyWrap}>Loading…</div>
             ) : items.length === 0 ? (
@@ -374,24 +410,20 @@ export function NotificationBell() {
                         {timeAgo(n.createdAt)}
                       </div>
                     </div>
-                    {/* Row actions */}
+                    {/* Row actions: a single "⋯" opening a small menu */}
                     <div
-                      style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                      data-notif-menu-root
+                      style={{ flexShrink: 0 }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <button
-                        onClick={() => toggleRead(n)}
-                        title={unreadRow ? "Mark read" : "Mark unread"}
+                        onClick={(e) => openMenu(n.id, e)}
+                        title="More"
+                        aria-label="More options"
+                        aria-haspopup="menu"
                         style={iconBtn}
                       >
-                        {unreadRow ? <Dot size={16} /> : <Circle size={12} />}
-                      </button>
-                      <button
-                        onClick={() => remove(n.id)}
-                        title="Delete"
-                        style={iconBtn}
-                      >
-                        <X size={14} />
+                        <MoreHorizontal size={16} />
                       </button>
                     </div>
                   </div>
@@ -399,6 +431,60 @@ export function NotificationBell() {
               })
             )}
           </div>
+
+          {/* Row "⋯" menu — fixed to the button's rect, inside the panel so an
+              outside-click doesn't also close the panel. */}
+          {menu &&
+            (() => {
+              const n = items.find((x) => x.id === menu.id);
+              if (!n) return null;
+              const unreadRow = !n.seenAt;
+              return (
+                <div
+                  role="menu"
+                  data-notif-menu-root
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: "fixed",
+                    top: menu.top,
+                    right: menu.right,
+                    minWidth: 156,
+                    padding: 4,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                    background: "var(--bg-card)",
+                    border: "1px solid var(--glass-border)",
+                    borderRadius: 10,
+                    boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+                    zIndex: 3300,
+                  }}
+                >
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      toggleRead(n);
+                      setMenu(null);
+                    }}
+                    style={menuItem()}
+                  >
+                    {unreadRow ? <Check size={15} /> : <Dot size={17} />}
+                    {unreadRow ? "Mark as read" : "Mark as unread"}
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      remove(n.id);
+                      setMenu(null);
+                    }}
+                    style={menuItem("#ef4444")}
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              );
+            })()}
         </div>
       )}
     </div>
@@ -424,14 +510,31 @@ const iconBtn: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: 24,
-  height: 24,
-  borderRadius: 6,
+  width: 28,
+  height: 28,
+  borderRadius: 7,
   border: "none",
-  background: "var(--bg-secondary)",
+  background: "none",
   color: "var(--text-muted)",
   cursor: "pointer",
 };
+
+const menuItem = (color?: string): React.CSSProperties => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 9,
+  padding: "9px 11px",
+  borderRadius: 7,
+  border: "none",
+  background: "none",
+  color: color ?? "var(--text-main)",
+  fontSize: 12.5,
+  fontWeight: 600,
+  cursor: "pointer",
+  textAlign: "left",
+  whiteSpace: "nowrap",
+  width: "100%",
+});
 
 const emptyWrap: React.CSSProperties = {
   display: "flex",
