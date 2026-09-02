@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
@@ -96,6 +96,14 @@ export function NotificationBell() {
     null,
   );
   const [confirmClear, setConfirmClear] = useState(false);
+  // Panel is positioned fixed to the viewport and clamped on-screen, so on a
+  // narrow phone it can't overflow the left edge (it was anchored to the bell's
+  // right edge, which is wider than the space to the left edge on mobile).
+  const [panelPos, setPanelPos] = useState<{
+    top: number;
+    right: number;
+    width: number;
+  } | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const refreshCount = useCallback(() => {
@@ -147,6 +155,26 @@ export function NotificationBell() {
   useEffect(() => {
     if (open) loadFirst();
   }, [open, loadFirst]);
+
+  // Place the panel below the bell, aligned to its right edge on desktop, but
+  // clamped so it always keeps a 12px margin from both screen edges on mobile.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const width = Math.min(380, window.innerWidth - 24);
+      const r = rootRef.current?.getBoundingClientRect();
+      if (!r) {
+        setPanelPos({ top: 72, right: 12, width });
+        return;
+      }
+      const maxRight = Math.max(window.innerWidth - width - 12, 12);
+      const right = Math.min(Math.max(window.innerWidth - r.right, 12), maxRight);
+      setPanelPos({ top: r.bottom + 8, right, width });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
 
   // Close on outside click / Escape.
   useEffect(() => {
@@ -314,10 +342,10 @@ export function NotificationBell() {
           role="dialog"
           aria-label="Notifications"
           style={{
-            position: "absolute",
-            top: "calc(100% + 10px)",
-            right: 0,
-            width: "min(380px, calc(100vw - 24px))",
+            position: "fixed",
+            top: panelPos?.top ?? 72,
+            right: panelPos?.right ?? 12,
+            width: panelPos?.width ?? "min(380px, calc(100vw - 24px))",
             maxHeight: "min(70vh, 560px)",
             display: "flex",
             flexDirection: "column",
