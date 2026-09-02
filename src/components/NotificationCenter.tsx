@@ -28,6 +28,12 @@ import {
 // badge and keeps the free-tier backend quiet.
 const UNREAD_POLL_MS = 45_000;
 
+// Notifications load a page at a time and fetch more as the user scrolls, so a
+// long history never blocks the first paint.
+const PAGE_SIZE = 15;
+// Prefetch the next page once the user is within this many px of the bottom.
+const LOAD_MORE_THRESHOLD_PX = 140;
+
 // Per-type visual treatment. Unknown types fall back to the neutral bell.
 function typeStyle(type: string): { Icon: typeof Bell; color: string } {
   switch (type) {
@@ -79,6 +85,11 @@ export function NotificationBell() {
   const [items, setItems] = useState<UserNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  // Guards against firing overlapping "load more" fetches while one is in
+  // flight (state updates are async, so a bare flag can double-fire on scroll).
+  const loadingMoreRef = useRef(false);
   // The open row "⋯" menu, positioned fixed (from the button's rect) so the
   // panel's own scroll/overflow can't clip it.
   const [menu, setMenu] = useState<{ id: string; top: number; right: number } | null>(
@@ -91,16 +102,39 @@ export function NotificationBell() {
     getUnreadNotificationCount().then(setUnread).catch(() => {});
   }, []);
 
-  const loadList = useCallback(async () => {
+  // First page: fast to paint. The unread badge comes from the dedicated count
+  // endpoint, not this partial page, so it reflects the full history.
+  const loadFirst = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await listAllNotifications({ limit: 40 });
-      setItems(list);
-      setUnread(list.filter((n) => !n.seenAt).length);
+      const page = await listAllNotifications({ limit: PAGE_SIZE });
+      setItems(page);
+      setHasMore(page.length === PAGE_SIZE);
+      refreshCount();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshCount]);
+
+  // Next page, keyed on the oldest loaded row's createdAt cursor. Deduped by id
+  // so a createdAt tie at the page boundary can't insert a row twice.
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMore || items.length === 0) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const before = items[items.length - 1].createdAt;
+      const page = await listAllNotifications({ limit: PAGE_SIZE, before });
+      setItems((prev) => {
+        const seen = new Set(prev.map((x) => x.id));
+        return [...prev, ...page.filter((p) => !seen.has(p.id))];
+      });
+      setHasMore(page.length === PAGE_SIZE);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [hasMore, items]);
 
   // Poll the unread count while mounted (signed in).
   useEffect(() => {
@@ -109,10 +143,10 @@ export function NotificationBell() {
     return () => window.clearInterval(id);
   }, [refreshCount]);
 
-  // Load the full list whenever the panel opens.
+  // Load the first page whenever the panel opens.
   useEffect(() => {
-    if (open) loadList();
-  }, [open, loadList]);
+    if (open) loadFirst();
+  }, [open, loadFirst]);
 
   // Close on outside click / Escape.
   useEffect(() => {
@@ -208,6 +242,7 @@ export function NotificationBell() {
     deleteNotifications();
     setItems([]);
     setUnread(0);
+    setHasMore(false);
   };
 
   const openItem = (n: UserNotification) => {
@@ -385,7 +420,16 @@ export function NotificationBell() {
           {/* List */}
           <div
             style={{ overflowY: "auto", flex: 1 }}
-            onScroll={() => menu && setMenu(null)}
+            onScroll={(e) => {
+              if (menu) setMenu(null);
+              const el = e.currentTarget;
+              if (
+                el.scrollHeight - el.scrollTop - el.clientHeight <
+                LOAD_MORE_THRESHOLD_PX
+              ) {
+                loadMore();
+              }
+            }}
           >
             {loading && items.length === 0 ? (
               <div style={emptyWrap}>Loading…</div>
@@ -496,6 +540,19 @@ export function NotificationBell() {
                   </div>
                 );
               })
+            )}
+
+            {items.length > 0 && (loadingMore || !hasMore) && (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  textAlign: "center",
+                  fontSize: 11.5,
+                  color: "var(--text-subtle)",
+                }}
+              >
+                {loadingMore ? "Loading more…" : "That's everything"}
+              </div>
             )}
           </div>
 
