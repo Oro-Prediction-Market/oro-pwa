@@ -31,16 +31,16 @@ const UNREAD_POLL_MS = 45_000;
 function typeStyle(type: string): { Icon: typeof Bell; color: string } {
   switch (type) {
     case "market_won":
-      return { Icon: Trophy, color: "#22c55e" };
+      return { Icon: Trophy, color: "var(--color-success)" };
     case "market_lost":
-      return { Icon: TrendingDown, color: "#ef4444" };
+      return { Icon: TrendingDown, color: "var(--color-danger)" };
     case "season_prize":
-      return { Icon: Trophy, color: "#f5a623" };
+      return { Icon: Trophy, color: "var(--color-warning)" };
     case "achievement":
     case "collectible":
-      return { Icon: Award, color: "#e8c766" };
+      return { Icon: Award, color: "var(--color-warning)" };
     case "transaction":
-      return { Icon: Coins, color: "#2b6bff" };
+      return { Icon: Coins, color: "var(--color-primary)" };
     default:
       return { Icon: Bell, color: "var(--text-muted)" };
   }
@@ -226,32 +226,34 @@ export function NotificationBell() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 38,
-          height: 38,
+          width: 36,
+          height: 36,
           borderRadius: 10,
-          background: open ? "var(--bg-secondary)" : "none",
-          border: "none",
+          background: open ? "var(--bg-card)" : "var(--bg-secondary)",
+          border: "1px solid var(--glass-border)",
           color: "var(--text-main)",
           cursor: "pointer",
+          flexShrink: 0,
         }}
       >
-        <Bell size={19} />
+        <Bell size={18} />
         {unread > 0 && (
           <span
             style={{
               position: "absolute",
-              top: 4,
-              right: 4,
-              minWidth: 16,
-              height: 16,
+              top: -4,
+              right: -4,
+              minWidth: 17,
+              height: 17,
               padding: "0 4px",
               boxSizing: "border-box",
-              borderRadius: 8,
-              background: "#ef4444",
+              borderRadius: "var(--radius-full)",
+              background: "var(--color-danger)",
+              border: "2px solid var(--bg-card)",
               color: "#fff",
               fontSize: 10,
-              fontWeight: 800,
-              lineHeight: "16px",
+              fontWeight: 700,
+              lineHeight: "13px",
               textAlign: "center",
             }}
           >
@@ -266,7 +268,7 @@ export function NotificationBell() {
           aria-label="Notifications"
           style={{
             position: "absolute",
-            top: "calc(100% + 8px)",
+            top: "calc(100% + 10px)",
             right: 0,
             width: "min(380px, calc(100vw - 24px))",
             maxHeight: "min(70vh, 560px)",
@@ -275,11 +277,20 @@ export function NotificationBell() {
             background: "var(--bg-card)",
             border: "1px solid var(--glass-border)",
             borderRadius: 14,
-            boxShadow: "0 20px 50px rgba(0,0,0,0.45)",
+            boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
+            backdropFilter: "var(--glass-blur)",
+            WebkitBackdropFilter: "var(--glass-blur)",
             overflow: "hidden",
             zIndex: 3200,
+            animation: "notifDrawerIn 0.18s ease-out forwards",
           }}
         >
+          <style>{`
+            @keyframes notifDrawerIn {
+              from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+          `}</style>
           {/* Header */}
           <div
             style={{
@@ -290,7 +301,14 @@ export function NotificationBell() {
               borderBottom: "1px solid var(--glass-border)",
             }}
           >
-            <span style={{ fontSize: 15, fontWeight: 800, color: "var(--text-main)" }}>
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "var(--text-lg)",
+                fontWeight: 700,
+                color: "var(--text-main)",
+              }}
+            >
               Notifications
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -351,7 +369,7 @@ export function NotificationBell() {
                         flexShrink: 0,
                         width: 34,
                         height: 34,
-                        borderRadius: 9,
+                        borderRadius: "var(--radius-md)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -371,8 +389,8 @@ export function NotificationBell() {
                       >
                         <span
                           style={{
-                            fontSize: 13,
-                            fontWeight: unreadRow ? 800 : 600,
+                            fontSize: 13.5,
+                            fontWeight: unreadRow ? 700 : 600,
                             color: "var(--text-main)",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
@@ -448,16 +466,19 @@ export function NotificationBell() {
                     position: "fixed",
                     top: menu.top,
                     right: menu.right,
-                    minWidth: 156,
-                    padding: 4,
+                    minWidth: 158,
+                    padding: 5,
                     display: "flex",
                     flexDirection: "column",
                     gap: 2,
                     background: "var(--bg-card)",
                     border: "1px solid var(--glass-border)",
-                    borderRadius: 10,
-                    boxShadow: "0 12px 30px rgba(0,0,0,0.45)",
+                    borderRadius: 12,
+                    boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
+                    backdropFilter: "var(--glass-blur)",
+                    WebkitBackdropFilter: "var(--glass-blur)",
                     zIndex: 3300,
+                    animation: "notifDrawerIn 0.14s ease-out forwards",
                   }}
                 >
                   <button
@@ -477,7 +498,7 @@ export function NotificationBell() {
                       remove(n.id);
                       setMenu(null);
                     }}
-                    style={menuItem("#ef4444")}
+                    style={menuItem("var(--color-danger)")}
                   >
                     <Trash2 size={14} />
                     Delete
@@ -495,13 +516,13 @@ const pillBtn = (disabled: boolean): React.CSSProperties => ({
   display: "flex",
   alignItems: "center",
   gap: 4,
-  padding: "5px 9px",
-  borderRadius: 8,
+  padding: "5px 10px",
+  borderRadius: "var(--radius-full)",
   border: "1px solid var(--glass-border)",
-  background: "none",
+  background: "var(--bg-secondary)",
   color: disabled ? "var(--text-subtle)" : "var(--text-muted)",
   fontSize: 11.5,
-  fontWeight: 700,
+  fontWeight: 600,
   cursor: disabled ? "default" : "pointer",
   opacity: disabled ? 0.5 : 1,
 });
@@ -512,7 +533,7 @@ const iconBtn: React.CSSProperties = {
   justifyContent: "center",
   width: 28,
   height: 28,
-  borderRadius: 7,
+  borderRadius: "var(--radius-md)",
   border: "none",
   background: "none",
   color: "var(--text-muted)",
@@ -524,11 +545,11 @@ const menuItem = (color?: string): React.CSSProperties => ({
   alignItems: "center",
   gap: 9,
   padding: "9px 11px",
-  borderRadius: 7,
+  borderRadius: "var(--radius-sm)",
   border: "none",
   background: "none",
   color: color ?? "var(--text-main)",
-  fontSize: 12.5,
+  fontSize: "var(--text-sm)",
   fontWeight: 600,
   cursor: "pointer",
   textAlign: "left",
