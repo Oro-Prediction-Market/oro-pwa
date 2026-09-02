@@ -137,25 +137,161 @@ const FAQ_DATA: FAQSection[] = [
     ],
   },
   {
-    title: "Wallet & Payments",
+    title: "Results & Bjarog Oracle",
     items: [
       {
         id: "10",
+        question: "How is a market's result decided?",
+        answer: (
+          <>
+            <p style={{ margin: "0 0 8px" }}>
+              By <strong style={{ color: "var(--text-main)" }}>Bjarog</strong> —
+              the raven that sees what happened. When an event ends, a result is
+              proposed and the market enters a short review window (usually one
+              hour, never more than two).
+            </p>
+            <p style={{ margin: 0 }}>
+              If nobody challenges the proposed result before the window closes,
+              it stands and payouts settle automatically. Bjarog is named for the
+              raven of the Raven Crown — the guardian that watches every outcome,
+              so no market settles on a lie.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "11",
+        question: "What if I think a result is wrong?",
+        answer: (
+          <>
+            <p style={{ margin: "0 0 8px" }}>
+              Challenge it before the review window closes. A challenge requires
+              a bond — from Nu 10 on Ngultrum markets, or 0.5 USDT on USDT
+              markets. The first challenger in a market sets the bond, and
+              everyone who joins that contest matches it.
+            </p>
+            <p style={{ margin: 0 }}>
+              If the result is overturned, you get your bond back and share the
+              bonds forfeited by the other side. If the proposed result stands,
+              your bond is forfeited. The bond exists to stop casual objections,
+              not to stop real ones.
+            </p>
+          </>
+        ),
+      },
+      {
+        id: "12",
+        question: "Why is my payout still pending after the event ended?",
+        answer:
+          "The market is in its review window — the result has been proposed but is not final yet. The market card shows the time remaining. Once the window closes with no successful challenge, your payout is credited automatically.",
+      },
+    ],
+  },
+  {
+    title: "Wallet & Payments",
+    items: [
+      {
+        id: "13",
         question: "What is the minimum deposit and withdrawal?",
         answer:
           "The minimum for both deposits and withdrawals is Nu 50 per transaction.",
       },
       {
-        id: "11",
+        id: "14",
         question: "How long does a withdrawal take?",
         answer:
           "Withdrawals are processed through DK Bank and are typically near-instant during bank operating hours. Processing may be slower outside standard hours.",
       },
       {
-        id: "12",
+        id: "15",
         question: "What is a referral bonus?",
         answer:
           "When a friend signs up using your referral link and makes their first prediction, you both receive Oro credits as a bonus. Referral bonuses appear as a 'Referral bonus' entry in your transaction history.",
+      },
+    ],
+  },
+  {
+    title: "USDT & Crypto",
+    items: [
+      {
+        id: "16",
+        question: "Can I use USDT on Oro?",
+        answer:
+          "Yes, where USDT is enabled for your account. USDT accounts hold, predict, and settle entirely in USDT. You must complete identity verification (KYC) and be approved before your first USDT deposit.",
+      },
+      {
+        id: "17",
+        question: "Which networks can I deposit USDT on?",
+        answer: (
+          <>
+            <p style={{ margin: "0 0 8px" }}>
+              Tron (TRC-20), Base, Polygon, Arbitrum, and Ethereum (ERC-20). The
+              deposit screen shows the network name spelled out above the
+              address.
+            </p>
+            <div
+              style={{
+                marginTop: 10,
+                padding: "10px 14px",
+                background: "rgba(220,38,38,0.06)",
+                borderLeft: "2px solid #dc2626",
+                borderRadius: "0 6px 6px 0",
+                display: "flex",
+                gap: 10,
+                alignItems: "flex-start",
+              }}
+            >
+              <Info
+                size={14}
+                color="#dc2626"
+                style={{ marginTop: 2, flexShrink: 0 }}
+              />
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "0.82rem",
+                  color: "var(--text-main)",
+                  fontWeight: 500,
+                  lineHeight: 1.4,
+                }}
+              >
+                Always send on exactly the network shown. Base, Polygon,
+                Arbitrum, and Ethereum all use the same 0x address format —
+                sending on the wrong one is permanent and cannot be recovered.
+              </p>
+            </div>
+          </>
+        ),
+      },
+      {
+        id: "18",
+        question: "What are the USDT limits?",
+        answer:
+          "Deposits are from 1 USDT up to 1,000 USDT per transaction. The minimum withdrawal is 1 USDT. Network fees are paid by you on the sending side — a TRC-20 transfer needs a small amount of TRX in your wallet, and Ethereum fees are high enough that another network is usually the better choice.",
+      },
+      {
+        id: "19",
+        question: "How long does a USDT deposit take?",
+        answer:
+          "Most deposits credit within a minute or two once the transaction confirms — Tron, Base, and Arbitrum are usually under a minute, Polygon and Ethereum a little longer. Your balance updates automatically; there is nothing to submit.",
+      },
+      {
+        id: "20",
+        question: "My deposit address expired, or I sent the wrong amount",
+        answer:
+          "Each deposit gets its own address that is valid for a limited time. If it expires or you send less than you intended, open the same deposit and use the top-up option to continue it — do not reuse an old address from a previous deposit.",
+      },
+      {
+        id: "21",
+        question: "How do I withdraw USDT?",
+        answer:
+          "Add a payout address to your whitelist first — pick the network, paste the address, and it is checked before it is saved. Withdrawals can then only be sent to an address you have already whitelisted, which is what stops a stolen session from draining your wallet to an unknown address.",
+      },
+      {
+        id: "22",
+        question: "Can I move money between my Ngultrum and USDT balances?",
+        answer:
+          "No. Ngultrum and USDT are kept completely separate — separate balances, separate markets, separate pools. There is no exchange rate anywhere in Oro, so the two never mix and a Nu prediction can never be paid out in USDT or the reverse.",
       },
     ],
   },
