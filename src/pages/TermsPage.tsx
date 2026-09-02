@@ -11,7 +11,7 @@ const SECTIONS = [
     subsections: [
       {
         heading: "1.1 Who We Are",
-        text: 'ORO is a collective intelligence and consensus forecasting platform operated by 21 Tech Gelephu Pte. Limited ("ORO," "we," "us," or "the Company"), a company incorporated in Gelephu Mindfulness City Authority (GMCA) and operating under the regulatory framework of the GMCA.',
+        text: 'ORO is a collective intelligence and consensus forecasting platform operated by ORO ("ORO," "we," "us," or "the Company"), operating under the regulatory framework of the Gelephu Mindfulness City Authority (GMCA).',
       },
       {
         heading: "1.2 What ORO Does",
@@ -597,8 +597,8 @@ export function TermsPage() {
             }}
           >
             Collective Intelligence & Prediction Market Platform, operated by
-            21 Tech Gelephu Pte. Limited under the jurisdiction of the Gelephu
-            Mindfulness City Authority (GMCA).
+            ORO under the jurisdiction of the Gelephu Mindfulness City
+            Authority (GMCA).
           </p>
           <p
             style={{
@@ -898,35 +898,14 @@ export function TermsPage() {
             How to reach us for legal notices or general support:
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <a
-              href="mailto:oro@21.tech.bt"
-              style={{
-                color: "var(--color-primary, #2563eb)",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
-            >
-              Legal notices: oro@21.tech.bt
-            </a>
-            <a
-              href="mailto:support@21.tech.bt"
-              style={{
-                color: "var(--color-primary, #2563eb)",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
-            >
-              General support: support@21.tech.bt
-            </a>
             <span
               style={{
                 color: "var(--text-muted)",
                 fontSize: "0.875rem",
               }}
             >
-              Registered address: 21 Tech Gelephu Pte. Limited
+              For legal notices and general support, use the in-app Contact
+              Support (Settings → Support).
             </span>
             <a
               href="https://t.me/OroPredictionMarket"
@@ -963,7 +942,7 @@ export function TermsPage() {
             opacity: 0.4,
           }}
         >
-          © 2026 ORO — 21 Tech Gelephu Pte. Limited. All rights reserved.
+          © 2026 ORO. All rights reserved.
         </p>
       </div>
     </div>
