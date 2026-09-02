@@ -73,8 +73,12 @@ export function TmaBetModal({
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
-  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  const [viewportOffsetTop, setViewportOffsetTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(
+    () => window.visualViewport?.height ?? window.innerHeight,
+  );
+  const [viewportOffsetTop, setViewportOffsetTop] = useState(
+    () => window.visualViewport?.offsetTop ?? 0,
+  );
   const [streak, setStreak] = useState<BetStreak | null>(null);
   // How much the user has ALREADY staked on this exact pick (active positions).
   // Adding more to a side you already hold enlarges the group you'd split the
@@ -108,7 +112,11 @@ export function TmaBetModal({
       .catch(() => setExistingStake(0));
   }, [isOpen, outcomeId]);
 
-  // Track visual viewport so the bottom sheet follows the keyboard precisely
+  // Track visual viewport so the bottom sheet follows the keyboard precisely.
+  // Re-syncs whenever the sheet opens — on a mobile browser window.innerHeight
+  // can be taller than the visible area (URL bar), so without an immediate sync
+  // the sheet opened oversized and its top (the market title) sat off-screen
+  // with no way to scroll up to it.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
@@ -116,13 +124,14 @@ export function TmaBetModal({
       setViewportHeight(vv.height);
       setViewportOffsetTop(vv.offsetTop);
     };
+    handle();
     vv.addEventListener("resize", handle);
     vv.addEventListener("scroll", handle);
     return () => {
       vv.removeEventListener("resize", handle);
       vv.removeEventListener("scroll", handle);
     };
-  }, []);
+  }, [isOpen]);
 
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
 
@@ -342,7 +351,7 @@ export function TmaBetModal({
         top: viewportOffsetTop,
         left: 0,
         right: 0,
-        height: viewportHeight,
+        height: `min(${viewportHeight}px, 100dvh)`,
         zIndex: 1100,
         background: "rgba(0,0,0,0.45)",
         display: "flex",
@@ -395,7 +404,7 @@ export function TmaBetModal({
           boxSizing: "border-box",
           boxShadow: "0 -4px 32px rgba(0,0,0,0.22)",
           animation: "tmaSheetUp 0.32s cubic-bezier(0.32,0.72,0,1) forwards",
-          maxHeight: `${viewportHeight * 0.92}px`,
+          maxHeight: `min(${viewportHeight * 0.92}px, 92dvh)`,
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
