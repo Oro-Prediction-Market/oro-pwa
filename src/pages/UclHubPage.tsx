@@ -11,6 +11,7 @@ import {
   Handshake,
   Swords,
 } from "lucide-react";
+import { calcProb } from "./WorldCupHubPage";
 import type {
   Market,
   UclStandings,
@@ -304,15 +305,12 @@ function SeasonTab({
   );
 }
 
-// Laplace-smoothed share of the pool → a 0–100 win-probability per outcome.
+// A 0–100 win-probability per outcome, via the shared calcProb — the same
+// smoothing (and currency-awareness) the market detail and every other hub use.
+// A local prior here (300) made the UCL hub read differently from its own detail
+// view for the identical market.
 function outcomeShares(m: Market): number[] {
-  const outs = m.outcomes ?? [];
-  const prior = 300;
-  const n = outs.length || 1;
-  const pool = Number(m.totalPool) || outs.reduce((s, o) => s + Number(o.totalBetAmount ?? 0), 0);
-  return outs.map((o) =>
-    Math.round((100 * (Number(o.totalBetAmount ?? 0) + prior / n)) / (pool + prior)),
-  );
+  return (m.outcomes ?? []).map((o) => Math.round(calcProb(m, o.id) * 100));
 }
 
 // A match leaves "Upcoming" only once its result is FINAL — resolved or
