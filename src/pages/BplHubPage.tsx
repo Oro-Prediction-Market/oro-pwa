@@ -541,7 +541,7 @@ export function BplHubPage() {
                 <div style={{ fontWeight: 700, fontSize: 15 }}>No matches scheduled for this day</div>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14 }}>
                 {filteredMatchMarkets.map((market) => (
                   <BplMatchCard
                     key={market.id}

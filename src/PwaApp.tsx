@@ -1458,6 +1458,10 @@ function PwaLayout({
           left: 0,
           right: 0,
           zIndex: 3000,
+          /* viewport-fit=cover lets the header slide under the notch/status bar
+             on installed iOS PWAs — pad the top so the logo/search/bell clear
+             it. The card background fills the inset strip. */
+          paddingTop: "env(safe-area-inset-top, 0px)",
         }}
       >
         {/* ROW 1: Logo, Search, Actions */}
@@ -1750,7 +1754,11 @@ function PwaLayout({
         style={{
           flex: 1,
           position: "relative",
-          paddingTop: isMobile ? 106 : 112,
+          // Add the top safe-area inset so content still clears the header,
+          // which now grows by that inset under the notch.
+          paddingTop: isMobile
+            ? "calc(106px + env(safe-area-inset-top, 0px))"
+            : "calc(112px + env(safe-area-inset-top, 0px))",
           paddingBottom: isMobile
             ? "calc(70px + env(safe-area-inset-bottom))"
             : 0,

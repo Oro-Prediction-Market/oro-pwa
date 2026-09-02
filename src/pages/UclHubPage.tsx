@@ -582,7 +582,7 @@ function MatchesTab({
             const featuredIds = new Set(featured.map((m) => m.id));
             const rest = upcoming.filter((m) => !featuredIds.has(m.id));
             return (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
                 {featured.map((m) => (
                   <div key={m.id} style={{ gridColumn: "1 / -1" }}>
                     <MatchCard m={m} onOpen={onOpen} onBet={onBet} featured />

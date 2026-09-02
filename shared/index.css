@@ -137,6 +137,9 @@ html.dark {
 
 html {
   scroll-behavior: smooth;
+  /* Safety net: a stray wide element should never turn the whole page into a
+     sideways-scrolling one on a phone. Clip horizontal overflow at the root. */
+  overflow-x: hidden;
 }
 
 body {

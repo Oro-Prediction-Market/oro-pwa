@@ -978,7 +978,7 @@ export function EplHubPage() {
               upcomingMatches.length === 0 ? (
                 emptyState("⚽", "No upcoming fixtures yet", "Check back when the 2026/27 fixtures are announced")
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14, marginTop: 12 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14, marginTop: 12 }}>
                   {upcomingRest.map((market) => (
                     <EplMatchCard key={market.id} market={market} onBet={openBet} />
                   ))}

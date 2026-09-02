@@ -1095,7 +1095,7 @@ export function WorldCupHubPage() {
               {filteredMatchMarkets.length === 0 ? (
                 <EmptyState msg="No matches scheduled for this day" />
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14 }}>
                   {filteredMatchMarkets.map((market) => (
                     <MatchMarketCard
                       key={market.id}

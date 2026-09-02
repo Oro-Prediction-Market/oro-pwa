@@ -1237,10 +1237,13 @@ function PinnedSelfRow({
       onClick={onTap}
       style={{
         position: "fixed",
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 64px)",
+        // Clear the PWA bottom nav (70px + safe-area, z-index 1000). The old
+        // 64px was tuned for Telegram's own bar and left this tucked under the
+        // PWA nav.
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 82px)",
         left: 0,
         right: 0,
-        zIndex: 500,
+        zIndex: 900,
         margin: "0 12px",
         borderRadius: 16,
         background: `linear-gradient(135deg, ${color}22, ${color}0d)`,
