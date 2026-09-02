@@ -365,30 +365,25 @@ function ContactSupportModal({ onClose }: { onClose: () => void }) {
         zIndex: 1100,
         background: "rgba(0,0,0,0.7)",
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
       }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
+          width: "100%",
+          maxWidth: 420,
           background: "var(--bg-card)",
-          borderRadius: "20px 20px 0 0",
+          borderRadius: 16,
           maxHeight: "88vh",
           overflowY: "auto",
-          padding: "14px 16px calc(env(safe-area-inset-bottom) + 24px)",
+          padding: "20px 20px 22px",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.5)",
         }}
       >
-        <div
-          style={{
-            width: 36,
-            height: 4,
-            borderRadius: 2,
-            background: "var(--glass-border)",
-            margin: "0 auto 14px",
-          }}
-        />
         <div
           style={{
             display: "flex",
