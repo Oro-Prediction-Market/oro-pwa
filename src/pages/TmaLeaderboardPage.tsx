@@ -10,7 +10,7 @@ import {
   getCurrentSeason,
   getSeasonHistory,
   getMyTransactions,
-  avatarUrl,
+  avatarFallback,
   type LeaderboardEntry,
   type LeaderboardResponse,
   type Bet,
@@ -238,7 +238,8 @@ function TableRow({
       >
         {entry.photoUrl ? (
           <img
-            src={avatarUrl(entry.id)}
+            src={entry.photoUrl}
+            onError={avatarFallback(entry.id)}
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
@@ -1312,7 +1313,8 @@ function PinnedSelfRow({
       >
         {entry.photoUrl ? (
           <img
-            src={avatarUrl(entry.id)}
+            src={entry.photoUrl}
+            onError={avatarFallback(entry.id)}
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
