@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { X, Trophy, Target } from "lucide-react";
-import { getPublicProfile, type PublicProfile } from "@shared/api/client";
+import { getPublicProfile, avatarUrl, type PublicProfile } from "@shared/api/client";
 
 export function PublicProfileDialog({ userId, onClose }: { userId: string | null; onClose: () => void }) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
@@ -12,7 +12,7 @@ export function PublicProfileDialog({ userId, onClose }: { userId: string | null
       <button onClick={onClose} aria-label="Close profile" style={{position:"absolute",right:14,top:14,border:0,background:"transparent",color:"var(--text-muted)",cursor:"pointer"}}><X size={20}/></button>
       {!profile ? <div style={{padding:"48px 0",textAlign:"center",color:"var(--text-muted)",fontWeight:700}}>Loading predictor…</div> : <>
         <div style={{display:"flex",alignItems:"center",gap:14}}>
-          <div style={{width:64,height:64,borderRadius:"50%",overflow:"hidden",display:"grid",placeItems:"center",background:"var(--bg-secondary)",fontWeight:900,fontSize:24}}>{profile.photoUrl ? <img src={profile.photoUrl} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : name[0]}</div>
+          <div style={{width:64,height:64,borderRadius:"50%",overflow:"hidden",display:"grid",placeItems:"center",background:"var(--bg-secondary)",fontWeight:900,fontSize:24}}>{profile.photoUrl ? <img src={avatarUrl(profile.id)} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : name[0]}</div>
           <div><div style={{fontSize:20,fontWeight:900,color:"var(--text-main)"}}>{name}</div><div style={{marginTop:4,color:"var(--color-primary)",fontSize:12,fontWeight:800,textTransform:"uppercase"}}>{profile.reputationTier.replace("_"," ")} predictor</div></div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginTop:24}}>

@@ -3,6 +3,7 @@ import {
   getLeaderboard,
   getMe,
   getCurrentSeason,
+  avatarUrl,
   type LeaderboardEntry,
   type LeaderboardResponse,
   type AuthUser,
@@ -387,7 +388,7 @@ export function PwaLeaderboardPage() {
                         >
                           {me.photoUrl ? (
                             <img
-                              src={me.photoUrl}
+                              src={avatarUrl(me.id)}
                               alt=""
                               style={{
                                 width: "100%",
@@ -678,7 +679,7 @@ export function PwaLeaderboardPage() {
                   }}
                 >
                   {me.photoUrl ? (
-                    <img src={me.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <img src={avatarUrl(me.id)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
                     <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", fontWeight: 900 }}>
                       {me.firstName?.[0]}
@@ -911,7 +912,7 @@ function EnhancedPodiumCard({
           >
             {entry.photoUrl ? (
               <img
-                src={entry.photoUrl}
+                src={avatarUrl(entry.id)}
                 alt=""
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
@@ -1068,7 +1069,7 @@ function PremiumEntryRow({
           >
             {entry.photoUrl ? (
               <img
-                src={entry.photoUrl}
+                src={avatarUrl(entry.id)}
                 alt=""
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
