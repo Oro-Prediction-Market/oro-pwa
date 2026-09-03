@@ -860,29 +860,54 @@ function buildColumns(rounds: UclBracketRound[]): BracketCol[] {
   const r16 = byKey.r16 ?? [];
   const qf = byKey.qf ?? [];
   const sf = byKey.sf ?? [];
+  const final = byKey.final ?? [];
   const at = (arr: UclBracketMatch[], i: number): UclBracketMatch | undefined => arr[i];
 
-  const leaf = (matches: UclBracketMatch[]): BNode[] => {
+  // Every club that LOST a decided tie, by round — so a team dims in the exact
+  // column of the round it went out (a team can be bright in R16 and dull in
+  // the QF it then lost). Undecided ties leave both teams bright (still alive).
+  const lostIn = (matches: UclBracketMatch[]): Set<string> => {
+    const s = new Set<string>();
+    for (const m of matches) {
+      if (m.winner === "a" && m.b) s.add(m.b.name);
+      else if (m.winner === "b" && m.a) s.add(m.a.name);
+    }
+    return s;
+  };
+  const r16Lost = lostIn(r16);
+  const qfLost = lostIn(qf);
+  const sfLost = lostIn(sf);
+  const finalLost = lostIn(final);
+
+  const leaf = (matches: UclBracketMatch[], lost: Set<string>): BNode[] => {
     const nodes: BNode[] = [];
     for (const m of matches) {
-      nodes.push({ club: m.a, out: m.winner === "b" });
-      nodes.push({ club: m.b, out: m.winner === "a" });
+      nodes.push({ club: m.a, out: !!m.a && lost.has(m.a.name) });
+      nodes.push({ club: m.b, out: !!m.b && lost.has(m.b.name) });
     }
     return nodes;
   };
-  const wins = (matches: (UclBracketMatch | undefined)[]): BNode[] =>
-    matches.map((m) => ({ club: winnerTeam(m), out: false }));
+  // Winners of `matches` are the participants of the next round; a participant
+  // dims once it loses that round (its name is in `lost`).
+  const advancers = (
+    matches: (UclBracketMatch | undefined)[],
+    lost: Set<string>,
+  ): BNode[] =>
+    matches.map((m) => {
+      const club = winnerTeam(m);
+      return { club, out: !!club && lost.has(club.name) };
+    });
 
   return [
-    { key: "lR16", label: "R16", nodes: leaf(r16.slice(0, 4)) },
-    { key: "lQF", label: "QF", nodes: wins([at(r16, 0), at(r16, 1), at(r16, 2), at(r16, 3)]) },
-    { key: "lSF", label: "SF", nodes: wins([at(qf, 0), at(qf, 1)]) },
-    { key: "lF", label: "", nodes: wins([at(sf, 0)]) },
+    { key: "lR16", label: "R16", nodes: leaf(r16.slice(0, 4), r16Lost) },
+    { key: "lQF", label: "QF", nodes: advancers([at(r16, 0), at(r16, 1), at(r16, 2), at(r16, 3)], qfLost) },
+    { key: "lSF", label: "SF", nodes: advancers([at(qf, 0), at(qf, 1)], sfLost) },
+    { key: "lF", label: "", nodes: advancers([at(sf, 0)], finalLost) },
     { key: "center", label: "", center: true, nodes: [] },
-    { key: "rF", label: "", nodes: wins([at(sf, 1)]) },
-    { key: "rSF", label: "SF", nodes: wins([at(qf, 2), at(qf, 3)]) },
-    { key: "rQF", label: "QF", nodes: wins([at(r16, 4), at(r16, 5), at(r16, 6), at(r16, 7)]) },
-    { key: "rR16", label: "R16", nodes: leaf(r16.slice(4, 8)) },
+    { key: "rF", label: "", nodes: advancers([at(sf, 1)], finalLost) },
+    { key: "rSF", label: "SF", nodes: advancers([at(qf, 2), at(qf, 3)], sfLost) },
+    { key: "rQF", label: "QF", nodes: advancers([at(r16, 4), at(r16, 5), at(r16, 6), at(r16, 7)], qfLost) },
+    { key: "rR16", label: "R16", nodes: leaf(r16.slice(4, 8), r16Lost) },
   ];
 }
 
@@ -901,6 +926,14 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
   const innerRef = useRef<HTMLDivElement>(null);
   const refs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [paths, setPaths] = useState<{ d: string; kind: PathKind }[]>([]);
+  // Scale the whole tree down to fit the viewport width so the full bracket is
+  // always visible with NO left/right scrolling. w/h are the natural (unscaled)
+  // dimensions; the wrapper is then sized to the scaled footprint.
+  const [koFit, setKoFit] = useState<{ scale: number; w: number; h: number }>({
+    scale: 1,
+    w: 0,
+    h: 0,
+  });
 
   const setRef = (key: string) => (el: HTMLDivElement | null) => {
     if (el) refs.current.set(key, el);
@@ -953,10 +986,39 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
     };
   }, [computePaths]);
 
-  // Start scrolled to the centre so the trophy is what you see first.
+  // Fit the bracket to the viewport width (scale down only; never enlarge), so
+  // the whole tree shows without any horizontal scroll.
+  const measureFit = useCallback(() => {
+    const view = scrollRef.current;
+    const inner = innerRef.current;
+    if (!view || !inner) return;
+    const avail = view.clientWidth;
+    const w = inner.scrollWidth;
+    const h = inner.scrollHeight;
+    const scale = w > 0 ? Math.min(1, avail / w) : 1;
+    setKoFit((prev) =>
+      prev.scale === scale && prev.w === w && prev.h === h
+        ? prev
+        : { scale, w, h },
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    measureFit();
+    const ro = new ResizeObserver(measureFit);
+    if (scrollRef.current) ro.observe(scrollRef.current);
+    window.addEventListener("resize", measureFit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measureFit);
+    };
+  }, [measureFit, columns]);
+
+  // (No initial centre-scroll: the bracket now always fits, so there's nothing
+  // to scroll.)
   useLayoutEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+    if (el) el.scrollLeft = 0;
   }, []);
 
   const strokeFor = (kind: PathKind) =>
@@ -1051,45 +1113,8 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
       <div style={{ fontSize: 11, color: SILVER, marginTop: -6, marginBottom: 12 }}>
         {bracket.decided ? "The road to Munich" : "The road to Munich · swipe to explore"}
       </div>
-      {/* Modern stage: layered navy, centre glow, a light beam and a faint grid. */}
-      <div
-        style={{
-          position: "relative",
-          borderRadius: 20,
-          overflow: "hidden",
-          border: "1px solid rgba(43,107,255,0.28)",
-          background: "linear-gradient(180deg, #0b1750 0%, #081130 55%, #060b22 100%)",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-        }}
-      >
-        {/* faint grid */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            backgroundImage:
-              "linear-gradient(rgba(90,120,200,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(90,120,200,0.06) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-            WebkitMaskImage: "radial-gradient(120% 100% at 50% 40%, #000 38%, transparent 82%)",
-            maskImage: "radial-gradient(120% 100% at 50% 40%, #000 38%, transparent 82%)",
-          }}
-        />
-        {/* light beam */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            top: "-25%",
-            left: "50%",
-            width: 300,
-            height: "150%",
-            transform: "translateX(-50%) rotate(8deg)",
-            pointerEvents: "none",
-            background: "radial-gradient(closest-side, rgba(43,107,255,0.16), transparent)",
-          }}
-        />
+      {/* Sits directly on the page — no framed panel/grid, just a soft glow. */}
+      <div style={{ position: "relative" }}>
         {/* centre glow */}
         <div
           aria-hidden
@@ -1103,17 +1128,38 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
         />
         <div
           ref={scrollRef}
+          className="ucl-ko-scroll"
           style={{
             position: "relative",
-            overflowX: "auto",
-            overflowY: "hidden",
-            padding: "16px 10px 14px",
+            overflow: "hidden",
+            padding: "16px 0 14px",
             display: "flex",
-            justifyContent: "safe center",
-            WebkitOverflowScrolling: "touch",
+            justifyContent: "center",
           }}
         >
-          <div ref={innerRef} style={{ position: "relative", display: "flex", gap: KO_GAP, width: "min-content" }}>
+          {/* Sized to the SCALED footprint so the layout never claims more width
+              than fits — that's what keeps the page from scrolling sideways. */}
+          <div
+            style={{
+              position: "relative",
+              flexShrink: 0,
+              width: koFit.w ? koFit.w * koFit.scale : "min-content",
+              height: koFit.h ? koFit.h * koFit.scale : undefined,
+            }}
+          >
+          <div
+            ref={innerRef}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              transformOrigin: "top left",
+              transform: `scale(${koFit.scale})`,
+              display: "flex",
+              gap: KO_GAP,
+              width: "min-content",
+            }}
+          >
             {/* Connector elbows (behind the medallions) */}
             <svg
               style={{
@@ -1227,7 +1273,7 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
                     <div style={{ height: KO_BODY_H, display: "flex", flexDirection: "column" }}>
                       {col.nodes.map((n, i) => (
                         <div key={i} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {medallion(n, `${ci}-${i}`, finalist)}
+                          {medallion(n, `${ci}-${i}`, finalist && !n.out)}
                         </div>
                       ))}
                     </div>
@@ -1235,6 +1281,7 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
                 </div>
               );
             })}
+          </div>
           </div>
         </div>
       </div>
