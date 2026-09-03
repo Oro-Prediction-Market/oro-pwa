@@ -1,7 +1,7 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Target, Trophy } from "lucide-react";
-import { getPublicProfile, type PublicProfile } from "@shared/api/client";
+import { getPublicProfile, avatarFallback, type PublicProfile } from "@shared/api/client";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   buildBadges,
@@ -13,14 +13,8 @@ export function PublicProfilePage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  // A stored Telegram photo URL can go dead (temporary Bot-API link expired, or
-  // the user changed/removed their photo). Without this, a failed load shows the
-  // browser's broken-image glyph; instead we fall back to initials, exactly like
-  // a user with no photo at all.
-  const [avatarFailed, setAvatarFailed] = useState(false);
 
   useEffect(() => {
-    setAvatarFailed(false);
     getPublicProfile(id)
       .then(setProfile)
       .catch(() => setProfile(null));
@@ -86,11 +80,11 @@ export function PublicProfilePage() {
                 flexShrink: 0,
               }}
             >
-              {profile.photoUrl && !avatarFailed ? (
+              {profile.photoUrl ? (
                 <img
                   src={profile.photoUrl}
+                  onError={avatarFallback(profile.id)}
                   alt=""
-                  onError={() => setAvatarFailed(true)}
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               ) : (

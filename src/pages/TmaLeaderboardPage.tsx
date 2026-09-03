@@ -10,6 +10,7 @@ import {
   getCurrentSeason,
   getSeasonHistory,
   getMyTransactions,
+  avatarFallback,
   type LeaderboardEntry,
   type LeaderboardResponse,
   type Bet,
@@ -40,22 +41,6 @@ import {
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-// A stored Telegram photo URL can go dead (an expired temporary Bot-API link,
-// or a photo the user changed/removed). Render the image, but on load failure
-// fall back to the initials instead of the browser's broken-image glyph.
-function AvatarImg({ src, fallback }: { src?: string | null; fallback: string }) {
-  const [failed, setFailed] = useState(false);
-  if (!src || failed) return <>{fallback}</>;
-  return (
-    <img
-      src={src}
-      alt=""
-      onError={() => setFailed(true)}
-      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-    />
-  );
-}
 
 // ── Tier helpers ──────────────────────────────────────────────────────────────
 
@@ -251,10 +236,16 @@ function TableRow({
           flexShrink: 0,
         }}
       >
-        <AvatarImg
-          src={entry.photoUrl}
-          fallback={(entry.firstName?.[0] ?? "?").toUpperCase()}
-        />
+        {entry.photoUrl ? (
+          <img
+            src={entry.photoUrl}
+            onError={avatarFallback(entry.id)}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          (entry.firstName?.[0] ?? "?").toUpperCase()
+        )}
       </div>
 
       {/* Name + tier */}
@@ -1320,10 +1311,16 @@ function PinnedSelfRow({
           flexShrink: 0,
         }}
       >
-        <AvatarImg
-          src={entry.photoUrl}
-          fallback={(entry.firstName?.[0] ?? "?").toUpperCase()}
-        />
+        {entry.photoUrl ? (
+          <img
+            src={entry.photoUrl}
+            onError={avatarFallback(entry.id)}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          (entry.firstName?.[0] ?? "?").toUpperCase()
+        )}
       </div>
 
       {/* Name + tier */}
