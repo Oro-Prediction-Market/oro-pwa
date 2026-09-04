@@ -1,0 +1,49 @@
+# Traefik routes for oro.fun. Transcribed verbatim from the live cluster objects,
+# with ONE change: oro-pwa-secure now uses `pwa-headers` instead of the shared
+# `secure-headers`, so the public site is indexable.
+#
+# `secure-headers` is left untouched — grafana-secure, oro-admin-secure and
+# oro-api-secure all reference it and must stay noindex.
+#
+# Apply:  kubectl apply -f k8s/pwa-headers-middleware.yaml \
+#                       -f k8s/oro-pwa-ingressroute.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: oro-pwa
+  namespace: prod
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`oro.fun`)
+      middlewares:
+        - name: redirect-https
+          namespace: traefik
+      services:
+        - name: oro-pwa
+          port: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: oro-pwa-secure
+  namespace: prod
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`oro.fun`)
+      middlewares:
+        # Was `secure-headers`; that one forces X-Robots-Tag: noindex, nofollow.
+        - name: pwa-headers
+          namespace: traefik
+        - name: compress
+          namespace: traefik
+      services:
+        - name: oro-pwa
+          port: 80
+  tls:
+    secretName: oro-pwa-tls
