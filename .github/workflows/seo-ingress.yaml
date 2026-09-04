@@ -1,12 +1,9 @@
 name: seo — inspect ingress robots header
 
-# Read-only. Changes nothing. Finds where `X-Robots-Tag: noindex, nofollow`
-# is injected in front of oro.fun so it can be removed from the PWA ingress.
+# Read-only. Changes nothing. Locates the Traefik IngressRoute serving oro.fun
+# and the middleware chain that injects `X-Robots-Tag: noindex, nofollow`.
 on:
   workflow_dispatch:
-
-env:
-  NS: prod
 
 jobs:
   look:
@@ -21,34 +18,28 @@ jobs:
           chmod 600 $RUNNER_TEMP/.kube/config
           echo "KUBECONFIG=$RUNNER_TEMP/.kube/config" >> $GITHUB_ENV
 
-      - name: Which ingresses exist, and which serves oro.fun
-        run: kubectl -n $NS get ingress -o wide || true
-
-      - name: Full annotations of every prod ingress
+      - name: IngressRoutes — host to middleware mapping
         run: |
-          for i in $(kubectl -n $NS get ingress -o name); do
-            echo "════════ $i ════════"
-            kubectl -n $NS get $i -o jsonpath='{.metadata.annotations}' | tr ',' '\n' || true
-            echo
-            echo "── hosts ──"
-            kubectl -n $NS get $i -o jsonpath='{.spec.rules[*].host}' || true
-            echo
+          kubectl get ingressroute -A -o custom-columns=\
+          'NS:.metadata.namespace,NAME:.metadata.name,MATCH:.spec.routes[*].match,MW:.spec.routes[*].middlewares[*].name' || true
+
+      - name: Which IngressRoute mentions oro.fun (full spec)
+        run: |
+          for ir in $(kubectl get ingressroute -A -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | tr -s ' ' '/'); do
+            ns=${ir%%/*}; name=${ir##*/}
+            if kubectl -n $ns get ingressroute $name -o yaml | grep -q "oro.fun"; then
+              echo "════════ $ns/$name ════════"
+              kubectl -n $ns get ingressroute $name -o yaml \
+                | grep -viE "^\s*(creationTimestamp|resourceVersion|uid|generation|managedFields|last-applied)" || true
+            fi
           done
 
-      - name: Grep every ingress in the cluster for the header
-        run: kubectl get ingress -A -o yaml | grep -inE "robots|more_set_headers|configuration-snippet|server-snippet" -B2 -A2 || echo "no match in ingress objects"
-
-      - name: Ingress controller — which one, and its global config
+      - name: Every Traefik middleware, full spec
         run: |
-          kubectl get ingressclass || true
-          echo "── controller pods ──"
-          kubectl get pods -A | grep -iE "ingress|traefik" || true
-          echo "── controller ConfigMaps (global headers live here) ──"
-          for cm in $(kubectl get cm -A -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | grep -iE "ingress|traefik" | tr -s ' ' '/'); do
-            echo "──── $cm ────"
-            kubectl -n ${cm%%/*} get cm ${cm##*/} -o yaml | grep -viE "^\s*(creationTimestamp|resourceVersion|uid|managedFields)" || true
+          kubectl get middleware -A -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name || true
+          echo "──────── specs ────────"
+          for mw in $(kubectl get middleware -A -o custom-columns=NS:.metadata.namespace,N:.metadata.name --no-headers | tr -s ' ' '/'); do
+            echo "════════ $mw ════════"
+            kubectl -n ${mw%%/*} get middleware ${mw##*/} -o jsonpath='{.spec}' | tr ',' '\n' || true
+            echo
           done
-
-      - name: Traefik middlewares (if Traefik is the edge)
-        run: |
-          kubectl get middleware -A -o yaml 2>/dev/null | grep -inE "robots|customResponseHeaders" -B3 -A3 || echo "no Traefik middlewares / no match"

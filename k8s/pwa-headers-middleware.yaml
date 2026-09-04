@@ -1,0 +1,25 @@
+# Identical to traefik/secure-headers, except the PWA is meant to be indexed.
+#
+# `secure-headers` is shared by api.oro.fun and admin.oro.fun, which SHOULD stay
+# noindex — so oro.fun gets its own copy rather than the shared one being edited.
+#
+# Apply:  kubectl apply -f k8s/pwa-headers-middleware.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: pwa-headers
+  namespace: traefik
+spec:
+  headers:
+    browserXssFilter: true
+    contentTypeNosniff: true
+    customResponseHeaders:
+      Server: ""
+      # The only line that differs from secure-headers.
+      X-Robots-Tag: "index, follow"
+    forceSTSHeader: true
+    frameDeny: true
+    referrerPolicy: strict-origin-when-cross-origin
+    stsIncludeSubdomains: true
+    stsPreload: true
+    stsSeconds: 31536000
