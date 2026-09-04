@@ -864,7 +864,7 @@ export function WorldCupHubPage() {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div
         style={{
-          backgroundImage: "url('/background.svg')",
+          backgroundImage: "url('/background.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           padding: "20px 24px 22px",
@@ -902,7 +902,7 @@ export function WorldCupHubPage() {
               Prediction Hub
             </div>
           </div>
-          <img src="/worldcup.svg" alt="FIFA World Cup 2026" style={{ width: 72, height: 72, objectFit: "contain", flexShrink: 0 }} />
+          <img src="/worldcup.webp" alt="FIFA World Cup 2026" style={{ width: 72, height: 72, objectFit: "contain", flexShrink: 0 }} />
         </div>
 
         <div style={{ display: "flex", gap: 12, marginTop: 18, position: "relative", maxWidth: 860, margin: "18px auto 0" }}>

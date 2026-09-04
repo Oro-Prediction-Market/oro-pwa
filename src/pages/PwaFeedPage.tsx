@@ -1706,7 +1706,7 @@ export function PwaFeedPage({
                   overflow: "hidden",
                   cursor: "pointer",
                   position: "relative",
-                  backgroundImage: "url('/background.svg')",
+                  backgroundImage: "url('/background.webp')",
                   backgroundSize: "cover",
                   backgroundPosition: "right bottom",
                   outline: "none",
@@ -1714,7 +1714,7 @@ export function PwaFeedPage({
                 }}
               >
                 <img
-                  src="/football.svg"
+                  src="/football.webp"
                   alt=""
                   aria-hidden="true"
                   decoding="async"
@@ -1792,7 +1792,7 @@ export function PwaFeedPage({
                     }}
                   >
                     <img
-                      src="/worldcup.svg"
+                      src="/worldcup.webp"
                       alt="FIFA World Cup 2026"
                       decoding="async"
                       width={160}

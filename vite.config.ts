@@ -61,7 +61,7 @@ export default defineConfig(async (): Promise<UserConfig> => {
           ],
         },
         workbox: {
-          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          globPatterns: ["**/*.{js,css,html,woff2}", "oro_favicon.ico", "icons/*.png"],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           runtimeCaching: [
             {
@@ -70,6 +70,26 @@ export default defineConfig(async (): Promise<UserConfig> => {
               options: {
                 cacheName: "google-fonts-cache",
                 expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: "CacheFirst",
+              options: {
+                cacheName: "google-fonts-webfonts",
+                expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+            {
+              // Images cache the first time they are actually shown, rather
+              // than all of them up front.
+              urlPattern: /\.(?:png|jpe?g|gif|webp|avif|svg|ico)$/i,
+              handler: "StaleWhileRevalidate",
+              options: {
+                cacheName: "image-cache",
+                expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
                 cacheableResponse: { statuses: [0, 200] },
               },
             },
