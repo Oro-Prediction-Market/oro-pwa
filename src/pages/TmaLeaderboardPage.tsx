@@ -92,7 +92,19 @@ function StreakBadge({ count }: { count?: number }) {
 
 // ── Table helpers ─────────────────────────────────────────────────────────────
 
-const COL = "32px 26px 1fr 34px 48px 48px 44px";
+// Rank | avatar | name (flex) | Picks | Win % | Insight | Vol
+//
+// Each numeric column is sized to the WIDER of its header and its widest real
+// value, because either one overflowing crowds its neighbour:
+//   Picks    "PICKS" ~35px  beats "314"
+//   Win %    "WIN %" ~35px  beats "83%"
+//   Insight  "INSIGHT" ~49px beats "100" — the header is what sets this one
+//   Vol      "Nu 94.2K" ~46px beats "VOL" — the value sets this one
+//
+// Vol was previously 44px, which "Nu 94.2K" overflowed into the Insight column.
+// Total fixed width is 4px narrower than before, so the name column gained
+// room rather than losing it.
+const COL = "32px 26px 1fr 36px 36px 50px 48px";
 
 function fmtVol(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -292,6 +304,7 @@ function TableRow({
       <div
         style={{
           textAlign: "right",
+          whiteSpace: "nowrap",
           fontSize: 12,
           fontWeight: 700,
           color: "var(--text-muted)",
@@ -301,7 +314,7 @@ function TableRow({
       </div>
 
       {/* Win % */}
-      <div style={{ textAlign: "right" }}>
+      <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
         <span
           style={{
             fontSize: 13,
@@ -318,7 +331,7 @@ function TableRow({
           the one column that explains the ordering. Career-wide on both tabs,
           unlike Win % which is window-scoped on the weekly tab. Null until a
           user has a settled prediction. */}
-      <div style={{ textAlign: "right" }}>
+      <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
         <span
           style={{
             fontSize: 13,
@@ -334,7 +347,7 @@ function TableRow({
       </div>
 
       {/* Volume */}
-      <div style={{ textAlign: "right" }}>
+      <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
         <span
           style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)" }}
         >
