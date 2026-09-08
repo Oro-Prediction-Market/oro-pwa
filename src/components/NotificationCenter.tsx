@@ -12,7 +12,10 @@ import {
   TrendingDown,
   Circle,
   Dot,
+  Heart,
+  MessageSquare,
   MoreHorizontal,
+  ShieldAlert,
 } from "lucide-react";
 import {
   listAllNotifications,
@@ -48,6 +51,12 @@ function typeStyle(type: string): { Icon: typeof Bell; color: string } {
       return { Icon: Award, color: "var(--color-warning)" };
     case "transaction":
       return { Icon: Coins, color: "var(--color-primary)" };
+    case "comment_reply":
+      return { Icon: MessageSquare, color: "var(--color-primary)" };
+    case "comment_like":
+      return { Icon: Heart, color: "var(--color-danger)" };
+    case "comment_removed":
+      return { Icon: ShieldAlert, color: "var(--color-warning)" };
     default:
       return { Icon: Bell, color: "var(--text-muted)" };
   }
