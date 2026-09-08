@@ -399,7 +399,13 @@ export function UclMarketDetail({
             {/* ── Outcomes ── */}
             <div style={{ marginTop: 14 }}>
               {isMatch ? (
-                <MatchBlock market={market} locked={locked} winnerId={winnerId} onBet={onBet} />
+                <MatchBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
+                  part={isWide ? "actions" : undefined}
+                />
               ) : (
                 <FieldBlock market={market} locked={locked} winnerId={winnerId} onBet={onBet} />
               )}
@@ -407,6 +413,20 @@ export function UclMarketDetail({
 
           </>}
           main={<>
+            {/* The pictures belong beside the market, not in the action rail —
+                only the buttons pin to the right. Narrow screens render the
+                whole card in the panel above instead, so this stays empty. */}
+            {isWide && isMatch && (
+              <div style={{ marginBottom: 14 }}>
+                <MatchBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
+                  part="header"
+                />
+              </div>
+            )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />
             <YourPositionCard bets={myBets ?? []} resolved={resolved} />
@@ -580,11 +600,18 @@ function MatchBlock({
   locked,
   winnerId,
   onBet,
+  part,
 }: {
   market: Market;
   locked: boolean;
   winnerId: string | null;
   onBet: (outcomeId: string) => void;
+  /**
+   * Which half to draw. Omitted renders the whole card, which is what the
+   * narrow layout wants — there the market is one column and splitting it
+   * would only separate a picture from its own button.
+   */
+  part?: "header" | "actions";
 }) {
   const outcomes = market.outcomes ?? [];
   const teams = outcomes.filter((o) => !isDrawOutcome(o.label ?? ""));
@@ -603,73 +630,81 @@ function MatchBlock({
 
   return (
     <div style={{ border: "1px solid rgba(43,107,255,0.25)", borderRadius: 16, overflow: "hidden", background: "#0a1130" }}>
-      {/* Crest header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-around",
-          gap: 10,
-          padding: "22px 16px 16px",
-          background: `linear-gradient(135deg, ${NAVY} 0%, rgba(43,107,255,0.16) 100%)`,
-        }}
-      >
-        <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <UclCrest src={crestFor(market, 0)} label={name1} size={58} />
+        {/* Crests, names and the probability bar. Split from the
+            buttons so the pictures can stay with the market on the
+            left while only the action pins to the right. */}
+        {part !== "actions" && (
+          <>
+          {/* Crest header */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-around",
+              gap: 10,
+              padding: "22px 16px 16px",
+              background: `linear-gradient(135deg, ${NAVY} 0%, rgba(43,107,255,0.16) 100%)`,
+            }}
+          >
+            <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <UclCrest src={crestFor(market, 0)} label={name1} size={58} />
+              </div>
+              <div style={{ marginTop: 8, fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name1}</div>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 8, padding: "5px 11px", flexShrink: 0 }}>VS</div>
+            <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <UclCrest src={crestFor(market, 1)} label={name2} size={58} />
+              </div>
+              <div style={{ marginTop: 8, fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name2}</div>
+            </div>
           </div>
-          <div style={{ marginTop: 8, fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name1}</div>
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 900, color: "#fff", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 8, padding: "5px 11px", flexShrink: 0 }}>VS</div>
-        <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <UclCrest src={crestFor(market, 1)} label={name2} size={58} />
+
+          {/* Probability bar */}
+          <div style={{ display: "flex", height: 5 }}>
+            {segs.map((s) => (
+              <div key={s.id} style={{ width: `${s.pct}%`, background: s.color }} />
+            ))}
           </div>
-          <div style={{ marginTop: 8, fontSize: 14, fontWeight: 800, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name2}</div>
-        </div>
-      </div>
 
-      {/* Probability bar */}
-      <div style={{ display: "flex", height: 5 }}>
-        {segs.map((s) => (
-          <div key={s.id} style={{ width: `${s.pct}%`, background: s.color }} />
-        ))}
-      </div>
-
-      {/* Outcome buttons */}
-      <div style={{ display: "flex", gap: 8, padding: "14px 14px 16px" }}>
-        {outcomes.map((outcome, idx) => {
-          const draw = isDrawOutcome(outcome.label ?? "");
-          const teamIdx = teams.indexOf(outcome);
-          const color = outcomeColor(outcome.label ?? "", teamIdx === -1 ? idx : teamIdx);
-          const pct = Math.round(calcProb(market, outcome.id) * 100);
-          const odds = calcOdds(market, outcome.id);
-          const won = winnerId === outcome.id;
-          const label = draw ? "Draw" : shortName(idx === 0 ? name1 : idx === outcomes.length - 1 ? name2 : outcome.label);
-          return (
-            <button
-              key={outcome.id}
-              disabled={locked}
-              onClick={() => !locked && onBet(outcome.id)}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                padding: "12px 6px",
-                background: won ? "rgba(232,199,102,0.14)" : `${color}14`,
-                border: `1px solid ${won ? GOLD : color}55`,
-                borderRadius: 12,
-                cursor: locked ? "default" : "pointer",
-                textAlign: "center",
-                opacity: locked && winnerId && !won ? 0.5 : 1,
-              }}
-            >
-              <div style={{ fontSize: 22, fontWeight: 900, color: won ? GOLD : color, lineHeight: 1 }}>{pct}%</div>
-              <div style={{ marginTop: 5, fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
-              <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>{won ? "WON" : formatOdds(odds)}</div>
-            </button>
-          );
-        })}
-      </div>
+          </>
+        )}
+        {part !== "header" && (
+          <div style={{ display: "flex", gap: 8, padding: "14px 14px 16px" }}>
+            {outcomes.map((outcome, idx) => {
+              const draw = isDrawOutcome(outcome.label ?? "");
+              const teamIdx = teams.indexOf(outcome);
+              const color = outcomeColor(outcome.label ?? "", teamIdx === -1 ? idx : teamIdx);
+              const pct = Math.round(calcProb(market, outcome.id) * 100);
+              const odds = calcOdds(market, outcome.id);
+              const won = winnerId === outcome.id;
+              const label = draw ? "Draw" : shortName(idx === 0 ? name1 : idx === outcomes.length - 1 ? name2 : outcome.label);
+              return (
+                <button
+                  key={outcome.id}
+                  disabled={locked}
+                  onClick={() => !locked && onBet(outcome.id)}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    padding: "12px 6px",
+                    background: won ? "rgba(232,199,102,0.14)" : `${color}14`,
+                    border: `1px solid ${won ? GOLD : color}55`,
+                    borderRadius: 12,
+                    cursor: locked ? "default" : "pointer",
+                    textAlign: "center",
+                    opacity: locked && winnerId && !won ? 0.5 : 1,
+                  }}
+                >
+                  <div style={{ fontSize: 22, fontWeight: 900, color: won ? GOLD : color, lineHeight: 1 }}>{pct}%</div>
+                  <div style={{ marginTop: 5, fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
+                  <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>{won ? "WON" : formatOdds(odds)}</div>
+                </button>
+              );
+            })}
+          </div>
+        )}
     </div>
   );
 }

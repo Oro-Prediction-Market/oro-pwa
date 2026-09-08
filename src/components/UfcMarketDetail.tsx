@@ -487,6 +487,7 @@ export function UfcMarketDetail({
                   locked={locked}
                   winnerId={winnerId}
                   onBet={onBet}
+                  part={isWide ? "actions" : undefined}
                 />
               ) : (
                 <FieldBlock
@@ -500,6 +501,20 @@ export function UfcMarketDetail({
 
           </>}
           main={<>
+            {/* The pictures belong beside the market, not in the action rail —
+                only the buttons pin to the right. Narrow screens render the
+                whole card in the panel above instead, so this stays empty. */}
+            {isWide && isFight && (
+              <div style={{ marginBottom: 14 }}>
+                <FightBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
+                  part="header"
+                />
+              </div>
+            )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />
             <YourPositionCard bets={myBets ?? []} resolved={resolved} />
@@ -763,11 +778,18 @@ function FightBlock({
   locked,
   winnerId,
   onBet,
+  part,
 }: {
   market: Market;
   locked: boolean;
   winnerId: string | null;
   onBet: (outcomeId: string) => void;
+  /**
+   * Which half to draw. Omitted renders the whole card, which is what the
+   * narrow layout wants — there the fight is one column and splitting it would
+   * only separate a fighter from his own button.
+   */
+  part?: "header" | "actions";
 }) {
   const fighters = (market.outcomes ?? []).filter(
     (o) => !isDrawOutcome(o.label ?? ""),
@@ -796,6 +818,8 @@ function FightBlock({
     const left = idx === 0;
     const name = shortFighterName(nameOf(outcome.label, idx));
     const won = winnerId === outcome.id;
+    // The picture half keeps the fighter; the button moves to the pinned rail.
+    const showAction = part !== "header";
     return (
       <div
         style={{
@@ -886,7 +910,7 @@ function FightBlock({
         >
           <PoolAmount outcome={outcome} />
         </div>
-        {won ? (
+        {showAction && (won ? (
           <div
             style={{
               width: "100%",
@@ -927,7 +951,7 @@ function FightBlock({
               Predict
             </button>
           )
-        )}
+        ))}
       </div>
     );
   };
@@ -941,6 +965,60 @@ function FightBlock({
         background: "#131013",
       }}
     >
+      {/* Actions-only: the fighters stay on the left, so this half is just the
+          two picks stacked in the rail. */}
+      {part === "actions" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
+          {[
+            { o: fa, color: RED, dim: RED_DIM, pct: pctA },
+            { o: fb, color: BLUE, dim: BLUE_DIM, pct: 100 - pctA },
+          ].map(({ o, color, dim, pct }, i) =>
+            !o ? null : winnerId === o.id ? (
+              <div
+                key={o.id}
+                style={{
+                  textAlign: "center",
+                  border: `1px solid ${GOLD}`,
+                  borderRadius: 9,
+                  padding: "12px 0",
+                  color: GOLD,
+                  fontSize: 11,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                {shortFighterName(nameOf(o.label, i))} won
+              </div>
+            ) : (
+              !locked && (
+                <button
+                  key={o.id}
+                  onClick={() => onBet(o.id)}
+                  style={{
+                    width: "100%",
+                    padding: "13px 10px",
+                    background: `linear-gradient(180deg, ${color} 0%, ${dim} 100%)`,
+                    border: "none",
+                    borderRadius: 10,
+                    color: "#fff",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  {shortFighterName(nameOf(o.label, i))} · {pct}%
+                </button>
+              )
+            ),
+          )}
+        </div>
+      )}
+      {part !== "actions" && (
+      <>
       <div
         style={{
           display: "flex",
@@ -998,12 +1076,13 @@ function FightBlock({
         </div>
         {corner(fb, 1, BLUE, BLUE_DIM, 100 - pctA)}
       </div>
-      {/* Probability bar */}
       <div style={{ display: "flex", height: 5 }}>
         <div style={{ width: `${pctA}%`, background: RED }} />
         <div style={{ width: `${100 - pctA}%`, background: BLUE }} />
       </div>
-      {draw && (
+      </>
+      )}
+      {draw && part !== "header" && (
         <div
           style={{
             display: "flex",

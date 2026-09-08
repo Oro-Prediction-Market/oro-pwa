@@ -474,6 +474,7 @@ export function EsportsMarketDetail({
                   locked={locked}
                   winnerId={winnerId}
                   onBet={onBet}
+                  part={isWide ? "actions" : undefined}
                 />
               ) : (
                 <FieldBlock
@@ -487,6 +488,20 @@ export function EsportsMarketDetail({
 
           </>}
           main={<>
+            {/* The pictures belong beside the market, not in the action rail —
+                only the buttons pin to the right. Narrow screens render the
+                whole card in the panel above instead, so this stays empty. */}
+            {isWide && isMatch && (
+              <div style={{ marginBottom: 14 }}>
+                <MatchBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
+                  part="header"
+                />
+              </div>
+            )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />
             <YourPositionCard bets={myBets ?? []} resolved={resolved} />
@@ -674,11 +689,18 @@ function MatchBlock({
   locked,
   winnerId,
   onBet,
+  part,
 }: {
   market: Market;
   locked: boolean;
   winnerId: string | null;
   onBet: (outcomeId: string) => void;
+  /**
+   * Which half to draw. Omitted renders the whole card, which is what the
+   * narrow layout wants — there the match is one column and splitting it would
+   * only separate a team from its own button.
+   */
+  part?: "header" | "actions";
 }) {
   const sides = (market.outcomes ?? []).filter(
     (o) => !isDrawOutcome(o.label ?? ""),
@@ -701,6 +723,8 @@ function MatchBlock({
     const left = idx === 0;
     const name = shortTeamName(nameOf(outcome.label, idx));
     const won = winnerId === outcome.id;
+    // The picture half keeps the team; the button moves to the pinned rail.
+    const showAction = part !== "header";
     return (
       <div
         style={{
@@ -756,7 +780,7 @@ function MatchBlock({
             <PoolAmount outcome={outcome} suffix="" />
           </Label>
         </div>
-        {won ? (
+        {showAction && (won ? (
           <div
             style={{
               width: "100%",
@@ -796,7 +820,7 @@ function MatchBlock({
               Predict
             </button>
           )
-        )}
+        ))}
       </div>
     );
   };
@@ -809,6 +833,57 @@ function MatchBlock({
         background: EWC.surface,
       }}
     >
+      {/* Actions-only: the team pictures stay on the left, so this half is
+          just the two picks stacked in the rail. */}
+      {part === "actions" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: 14 }}>
+          {[sa, sb].map((o, i) =>
+            !o ? null : winnerId === o.id ? (
+              <div
+                key={o.id}
+                style={{
+                  textAlign: "center",
+                  border: `1px solid ${EWC.goldLine}`,
+                  clipPath: notch(8),
+                  padding: "12px 0",
+                  color: EWC.goldBright,
+                  fontSize: 11,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: EWC.trackTiny,
+                }}
+              >
+                {shortTeamName(nameOf(o.label, i))} won
+              </div>
+            ) : (
+              !locked && (
+                <button
+                  key={o.id}
+                  className={i === 0 ? "ewc-btn-gold" : "ewc-btn-green"}
+                  onClick={() => onBet(o.id)}
+                  style={{
+                    width: "100%",
+                    padding: "13px 10px",
+                    border: "none",
+                    clipPath: notch(8),
+                    color: i === 0 ? "#1a1400" : "#00160c",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    textTransform: "uppercase",
+                    letterSpacing: EWC.trackTiny,
+                    cursor: "pointer",
+                  }}
+                >
+                  {shortTeamName(nameOf(o.label, i))} ·{" "}
+                  {Math.round(calcProb(market, o.id) * 100)}%
+                </button>
+              )
+            ),
+          )}
+        </div>
+      )}
+      {part !== "actions" && (
+      <>
       <div
         style={{
           display: "flex",
@@ -847,7 +922,9 @@ function MatchBlock({
         <div style={{ width: `${pctA}%`, background: EWC.gold }} />
         <div style={{ width: `${100 - pctA}%`, background: EWC.green }} />
       </div>
-      {draw && (
+      </>
+      )}
+      {draw && part !== "header" && (
         <div
           style={{
             display: "flex",
