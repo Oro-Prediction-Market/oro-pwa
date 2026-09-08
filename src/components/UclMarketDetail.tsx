@@ -223,6 +223,43 @@ export function UclMarketDetail({
 
   const onBet = (outcomeId: string) => setActiveBet(outcomeId);
 
+  // Held in a variable because it moves between columns: it rides in the
+  // prediction rail on a split match, and sits inline above the thread
+  // everywhere else. Rendering it in both places would duplicate the DOM.
+  const resolutionCard =
+    market.resolutionCriteria || market.settlementSource ? (
+      <div
+        style={{
+          marginTop: 14,
+          border: "1px solid rgba(43,107,255,0.25)",
+          borderRadius: 12,
+          padding: "14px 15px",
+          background: "rgba(43,107,255,0.05)",
+        }}
+      >
+        <SectionLabel>How this resolves</SectionLabel>
+        {market.resolutionCriteria && (
+          <p style={{ margin: "9px 0 0", fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,0.72)" }}>
+            {market.resolutionCriteria}
+          </p>
+        )}
+        {market.settlementSource && (
+          <div style={{ marginTop: 10 }}>
+            <MutedLabel>Settlement source</MutedLabel>
+            <div style={{ marginTop: 3, fontSize: 12, fontWeight: 700, color: "#fff" }}>{market.settlementSource}</div>
+          </div>
+        )}
+        {resolved && market.evidenceNote && (
+          <div style={{ marginTop: 10 }}>
+            <MutedLabel>Resolution note</MutedLabel>
+            <p style={{ margin: "3px 0 0", fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,0.72)" }}>
+              {market.evidenceNote}
+            </p>
+          </div>
+        )}
+      </div>
+    ) : null;
+
   const iconBtn: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -431,6 +468,7 @@ export function UclMarketDetail({
               )}
             </div>
 
+            {splitLayout && resolutionCard}
           </>}
           main={<>
             {/* The pictures belong beside the market, not in the action rail —
@@ -451,38 +489,7 @@ export function UclMarketDetail({
             <DisputeResultBanner dispute={myDispute ?? null} />
             <YourPositionCard bets={myBets ?? []} resolved={resolved} />
 
-            {(market.resolutionCriteria || market.settlementSource) && (
-              <div
-                style={{
-                  marginTop: 14,
-                  border: "1px solid rgba(43,107,255,0.25)",
-                  borderRadius: 12,
-                  padding: "14px 15px",
-                  background: "rgba(43,107,255,0.05)",
-                }}
-              >
-                <SectionLabel>How this resolves</SectionLabel>
-                {market.resolutionCriteria && (
-                  <p style={{ margin: "9px 0 0", fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,0.72)" }}>
-                    {market.resolutionCriteria}
-                  </p>
-                )}
-                {market.settlementSource && (
-                  <div style={{ marginTop: 10 }}>
-                    <MutedLabel>Settlement source</MutedLabel>
-                    <div style={{ marginTop: 3, fontSize: 12, fontWeight: 700, color: "#fff" }}>{market.settlementSource}</div>
-                  </div>
-                )}
-                {resolved && market.evidenceNote && (
-                  <div style={{ marginTop: 10 }}>
-                    <MutedLabel>Resolution note</MutedLabel>
-                    <p style={{ margin: "3px 0 0", fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,0.72)" }}>
-                      {market.evidenceNote}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            {!splitLayout && resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (

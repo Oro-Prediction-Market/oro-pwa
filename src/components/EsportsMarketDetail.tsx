@@ -217,6 +217,68 @@ export function EsportsMarketDetail({
 
   const onBet = (outcomeId: string) => setActiveBet(outcomeId);
 
+  // Held in a variable because it moves between columns: it rides in the
+  // prediction rail on a split match, and sits inline above the thread
+  // everywhere else. Rendering it in both places would duplicate the DOM.
+  const resolutionCard =
+    market.resolutionCriteria || market.settlementSource ? (
+      <div
+        style={{
+          marginTop: 14,
+          border: `1px solid ${EWC.border}`,
+          clipPath: notch(9),
+          padding: "14px 15px",
+          background: EWC.panel,
+        }}
+      >
+        <Label color={EWC.gold} size={10}>
+          How this resolves
+        </Label>
+        {market.resolutionCriteria && (
+          <p
+            style={{
+              margin: "9px 0 0",
+              fontSize: 12.5,
+              lineHeight: 1.55,
+              color: EWC.textSecondary,
+            }}
+          >
+            {market.resolutionCriteria}
+          </p>
+        )}
+        {market.settlementSource && (
+          <div style={{ marginTop: 10 }}>
+            <Label size={8}>Settlement source</Label>
+            <div
+              style={{
+                marginTop: 3,
+                fontSize: 12,
+                fontWeight: 700,
+                color: EWC.text,
+              }}
+            >
+              {market.settlementSource}
+            </div>
+          </div>
+        )}
+        {resolved && market.evidenceNote && (
+          <div style={{ marginTop: 10 }}>
+            <Label size={8}>Resolution note</Label>
+            <p
+              style={{
+                margin: "3px 0 0",
+                fontSize: 12,
+                lineHeight: 1.5,
+                color: EWC.textSecondary,
+              }}
+            >
+              {market.evidenceNote}
+            </p>
+          </div>
+        )}
+      </div>
+    ) : null;
+
   const pageTitle = `${market.title} | Oro Esports`;
 
   return (
@@ -501,6 +563,7 @@ export function EsportsMarketDetail({
               )}
             </div>
 
+            {splitLayout && resolutionCard}
           </>}
           main={<>
             {/* The pictures belong beside the market, not in the action rail —
@@ -521,63 +584,7 @@ export function EsportsMarketDetail({
             <DisputeResultBanner dispute={myDispute ?? null} />
             <YourPositionCard bets={myBets ?? []} resolved={resolved} />
 
-            {(market.resolutionCriteria || market.settlementSource) && (
-              <div
-                style={{
-                  marginTop: 14,
-                  border: `1px solid ${EWC.border}`,
-                  clipPath: notch(9),
-                  padding: "14px 15px",
-                  background: EWC.panel,
-                }}
-              >
-                <Label color={EWC.gold} size={10}>
-                  How this resolves
-                </Label>
-                {market.resolutionCriteria && (
-                  <p
-                    style={{
-                      margin: "9px 0 0",
-                      fontSize: 12.5,
-                      lineHeight: 1.55,
-                      color: EWC.textSecondary,
-                    }}
-                  >
-                    {market.resolutionCriteria}
-                  </p>
-                )}
-                {market.settlementSource && (
-                  <div style={{ marginTop: 10 }}>
-                    <Label size={8}>Settlement source</Label>
-                    <div
-                      style={{
-                        marginTop: 3,
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: EWC.text,
-                      }}
-                    >
-                      {market.settlementSource}
-                    </div>
-                  </div>
-                )}
-                {resolved && market.evidenceNote && (
-                  <div style={{ marginTop: 10 }}>
-                    <Label size={8}>Resolution note</Label>
-                    <p
-                      style={{
-                        margin: "3px 0 0",
-                        fontSize: 12,
-                        lineHeight: 1.5,
-                        color: EWC.textSecondary,
-                      }}
-                    >
-                      {market.evidenceNote}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            {!splitLayout && resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (
