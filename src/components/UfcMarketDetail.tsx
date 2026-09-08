@@ -613,7 +613,11 @@ export function UfcMarketDetail({
             )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />
-            <YourPositionCard bets={myBets ?? []} resolved={resolved} />
+            <YourPositionCard
+              bets={myBets ?? []}
+              resolved={resolved}
+              theme={{ accent: RED, border: "rgba(210,10,10,0.25)", background: "rgba(255,255,255,0.02)" }}
+            />
 
             {resolutionCard}
 

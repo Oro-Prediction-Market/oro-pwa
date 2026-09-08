@@ -602,7 +602,11 @@ export function EsportsMarketDetail({
             )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />
-            <YourPositionCard bets={myBets ?? []} resolved={resolved} />
+            <YourPositionCard
+              bets={myBets ?? []}
+              resolved={resolved}
+              theme={{ accent: EWC.gold, border: EWC.border, background: EWC.panel }}
+            />
 
             {resolutionCard}
 

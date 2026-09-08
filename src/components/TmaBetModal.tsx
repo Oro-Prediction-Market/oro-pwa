@@ -79,6 +79,9 @@ export function TmaBetModal({
   const [viewportOffsetTop, setViewportOffsetTop] = useState(
     () => window.visualViewport?.offsetTop ?? 0,
   );
+  const [viewportWidth, setViewportWidth] = useState(
+    () => window.visualViewport?.width ?? window.innerWidth,
+  );
   const [streak, setStreak] = useState<BetStreak | null>(null);
   // How much the user has ALREADY staked on this exact pick (active positions).
   // Adding more to a side you already hold enlarges the group you'd split the
@@ -123,6 +126,7 @@ export function TmaBetModal({
     const handle = () => {
       setViewportHeight(vv.height);
       setViewportOffsetTop(vv.offsetTop);
+      setViewportWidth(vv.width);
     };
     handle();
     vv.addEventListener("resize", handle);
@@ -132,6 +136,9 @@ export function TmaBetModal({
       vv.removeEventListener("scroll", handle);
     };
   }, [isOpen]);
+
+  /** Phones at or below ~380px: the stake row is the tightest thing here. */
+  const narrow = viewportWidth < 380;
 
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
 
@@ -398,14 +405,23 @@ export function TmaBetModal({
         style={{
           background: "var(--bg-card)",
           borderRadius: "20px 20px 0 0",
-          padding: "0 20px calc(28px + env(safe-area-inset-bottom))",
+          // 14px of side padding on a small phone. At 20px a 320px-wide screen
+          // gave the stake row only 280px to hold two 48px steppers, the
+          // input and two gaps.
+          padding: `0 ${narrow ? 14 : 20}px calc(28px + env(safe-area-inset-bottom))`,
           width: "100%",
           maxWidth: 500,
           boxSizing: "border-box",
           boxShadow: "0 -4px 32px rgba(0,0,0,0.22)",
           animation: "tmaSheetUp 0.32s cubic-bezier(0.32,0.72,0,1) forwards",
           maxHeight: `min(${viewportHeight * 0.92}px, 92dvh)`,
-          overflowY: "auto",
+          // NOT `auto`. With the sheet scrolling itself, its "fixed footer"
+          // child was not fixed to anything: the whole sheet scrolled as one,
+          // the inner scroll region never engaged, and on a short screen the
+          // Predict button sat below the fold with the header scrolling away
+          // above it. Clipping here hands the scrolling to the inner region,
+          // which is what keeps the footer on screen.
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
         }}
@@ -872,9 +888,11 @@ export function TmaBetModal({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 8,
                 }}
               >
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div
                     style={{
                       fontSize: 11,
@@ -887,14 +905,19 @@ export function TmaBetModal({
                     Available Balance
                   </div>
                   <div
-                    style={{ fontSize: 20, fontWeight: 800, color: "#10b981" }}
+                    style={{
+                      fontSize: narrow ? 17 : 20,
+                      fontWeight: 800,
+                      color: "#10b981",
+                      overflowWrap: "anywhere",
+                    }}
                   >
                     {unit}{" "}
                     {creditsBalance !== null ? fmtMoney(walletBalance) : "…"}
                   </div>
                 </div>
                 {betAmount > 0 && creditsBalance !== null && (
-                  <div style={{ textAlign: "right" }}>
+                  <div style={{ textAlign: "right", minWidth: 0 }}>
                     <div
                       style={{
                         fontSize: 11,
@@ -986,7 +1009,7 @@ export function TmaBetModal({
                     setAmountStr(next.toString());
                   }}
                   style={{
-                    width: 48,
+                    width: narrow ? 40 : 48,
                     flexShrink: 0,
                     borderRadius: 12,
                     border: "1px solid var(--border)",
@@ -1009,10 +1032,10 @@ export function TmaBetModal({
                   <span
                     style={{
                       position: "absolute",
-                      left: 14,
+                      left: narrow ? 10 : 14,
                       top: "50%",
                       transform: "translateY(-50%)",
-                      fontSize: 16,
+                      fontSize: narrow ? 14 : 16,
                       fontWeight: 700,
                       color: "var(--text-subtle)",
                       pointerEvents: "none",
@@ -1036,13 +1059,15 @@ export function TmaBetModal({
                     style={{
                       width: "100%",
                       boxSizing: "border-box",
-                      padding: "16px 12px 16px 44px",
+                      padding: narrow
+                        ? "14px 8px 14px 36px"
+                        : "16px 12px 16px 44px",
                       borderRadius: 12,
                       border:
                         isValidAmount || !betAmount
                           ? "2px solid var(--glass-border)"
                           : "2px solid #fca5a5",
-                      fontSize: 22,
+                      fontSize: narrow ? 18 : 22,
                       fontWeight: 800,
                       color: "var(--text-main)",
                       background: "var(--bg-main)",
@@ -1064,7 +1089,7 @@ export function TmaBetModal({
                     setAmountStr(next.toString());
                   }}
                   style={{
-                    width: 48,
+                    width: narrow ? 40 : 48,
                     flexShrink: 0,
                     borderRadius: 12,
                     border: "1px solid var(--border)",
@@ -1083,7 +1108,14 @@ export function TmaBetModal({
                 </button>
               </div>
               {/* Quick-fill chips */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: narrow ? 6 : 8,
+                  marginBottom: 16,
+                  flexWrap: "wrap",
+                }}
+              >
                 {QUICK_AMOUNTS.map((q) => (
                   <button
                     key={q}
@@ -1091,6 +1123,10 @@ export function TmaBetModal({
                     className="tma-outcome-btn"
                     style={{
                       flex: 1,
+                      // Without this a flex item refuses to shrink past its
+                      // own text, and five chips push the row wider than the
+                      // sheet instead of wrapping.
+                      minWidth: 0,
                       padding: "8px 0",
                       borderRadius: 10,
                       border:
@@ -1228,9 +1264,11 @@ export function TmaBetModal({
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 8,
                     }}
                   >
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div
                       style={{
                         fontSize: 11,
@@ -1244,15 +1282,16 @@ export function TmaBetModal({
                     </div>
                     <div
                       style={{
-                        fontSize: 18,
+                        fontSize: narrow ? 16 : 18,
                         fontWeight: 800,
                         color: estProfit >= 0 ? "#16a34a" : "var(--text-muted)",
+                        overflowWrap: "anywhere",
                       }}
                     >
                       {estProfit >= 0 ? `${unit} ${fmtMoney(estPayout)}` : "—"}
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div style={{ textAlign: "right", minWidth: 0 }}>
                     <div
                       style={{
                         fontSize: 11,

@@ -532,7 +532,15 @@ export const PriceMarketDetail: FC<Props> = ({
 
         {/* ── Resolved winner (full width) ── */}
         <DisputeResultBanner dispute={myDispute ?? null} />
-        <YourPositionCard bets={myBets ?? []} resolved={!!resolvedOutcome} />
+        <YourPositionCard
+          bets={myBets ?? []}
+          resolved={!!resolvedOutcome}
+          theme={{
+            accent: P.accent,
+            border: `${P.accent}40`,
+            background: "rgba(255,255,255,0.02)",
+          }}
+        />
 
         {resolvedOutcome && (
           <div
@@ -582,7 +590,12 @@ export const PriceMarketDetail: FC<Props> = ({
             ) : (
               <TerMarketCard market={market} onBet={onBet} />
             )}
-            {commentsSlot}
+            {/* Desktop only. Stacked on a phone this cell comes first, which
+                put the entire thread between the chart and the price rail.
+                It is re-mounted below the grid instead. On desktop it has to
+                stay here: the rail beside it is sticky and the thread is what
+                gives it something to pin against. */}
+            {isDesktop && commentsSlot}
           </div>
           {/* Unlike the other views this rail is market info, not the
               prediction UI — Higher/Lower lives inside the chart card, which
@@ -604,6 +617,8 @@ export const PriceMarketDetail: FC<Props> = ({
             {sidebar}
           </div>
         </div>
+
+        {!isDesktop && commentsSlot}
       </div>
 
       {activeBet && (

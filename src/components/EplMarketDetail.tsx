@@ -520,7 +520,11 @@ export function EplMarketDetail({
             )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />
-            <YourPositionCard bets={myBets ?? []} resolved={resolved} />
+            <YourPositionCard
+              bets={myBets ?? []}
+              resolved={resolved}
+              theme={{ accent: ACCENT, border: "rgba(0,255,133,0.25)", background: "rgba(255,255,255,0.02)" }}
+            />
 
             {resolutionCard}
 
