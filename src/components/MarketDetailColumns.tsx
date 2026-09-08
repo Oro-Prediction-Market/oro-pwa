@@ -2,6 +2,32 @@ import React from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 
 /**
+ * Height of the fixed site header on desktop: the 64px logo/search row plus the
+ * 48px category row, and the notch inset the header pads itself by. Kept in
+ * step with `<header>` and `<main>`'s paddingTop in PwaApp.tsx.
+ *
+ * A sticky panel measures `top` from the VIEWPORT, not from the scroll
+ * container, so a bare `top: 16` pins it 16px from the top of the screen —
+ * which on this site is 112px underneath the header. Every pinned prediction
+ * panel has to clear it explicitly.
+ *
+ * `--header-height` in shared/index.css says 80px and is wrong for this app,
+ * but that file is hand-copied into oro-tma, whose header is a different
+ * height. Fixing it there would move the TMA's layout, so the correct value
+ * lives here instead.
+ */
+const HEADER = "112px + env(safe-area-inset-top, 0px)";
+
+/** `top` for a panel pinned below the site header, with breathing room. */
+export const STICKY_TOP = `calc(${HEADER} + 16px)`;
+
+/**
+ * Cap for the same panel. A pinned panel taller than the space below the
+ * header would have its bottom permanently out of reach, so it scrolls itself.
+ */
+export const STICKY_MAX_HEIGHT = `calc(100vh - (${HEADER}) - 32px)`;
+
+/**
  * The two-column body every market detail view shares on desktop: the market
  * and its conversation scroll on the left, the prediction panel stays pinned
  * on the right.
@@ -59,11 +85,8 @@ export function MarketDetailColumns({
       <div
         style={{
           position: "sticky",
-          top: 16,
-          // Pinned, a panel taller than the screen would have its bottom
-          // permanently out of reach — the page scrolls it along. Give it its
-          // own scroll instead.
-          maxHeight: "calc(100vh - 32px)",
+          top: STICKY_TOP,
+          maxHeight: STICKY_MAX_HEIGHT,
           overflowY: "auto",
         }}
       >

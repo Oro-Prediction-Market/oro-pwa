@@ -44,6 +44,7 @@ import { EplMarketDetail } from "../components/EplMarketDetail";
 import { isUclMarket } from "./UclHubPage";
 import { UclMarketDetail } from "../components/UclMarketDetail";
 import { PriceMarketDetail } from "../components/PriceMarketDetail";
+import { STICKY_TOP, STICKY_MAX_HEIGHT } from "../components/MarketDetailColumns";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -1260,7 +1261,9 @@ export function PwaMarketDetailPage() {
           style={{
             flex: 1,
             position: bp === "mobile" ? "static" : "sticky",
-            top: "calc(var(--header-height) + var(--space-md))",
+            // Was `var(--header-height)`, which is 80px — 32px short of this
+            // app's 112px header, so the top of the panel sat under the nav.
+            top: STICKY_TOP,
             width: "100%",
             // A pinned panel taller than the screen would have its bottom
             // permanently out of reach — scrolling the page moves the panel
@@ -1269,8 +1272,7 @@ export function PwaMarketDetailPage() {
             ...(bp === "mobile"
               ? {}
               : {
-                  maxHeight:
-                    "calc(100vh - var(--header-height) - var(--space-xl))",
+                  maxHeight: STICKY_MAX_HEIGHT,
                   overflowY: "auto" as const,
                 }),
           }}

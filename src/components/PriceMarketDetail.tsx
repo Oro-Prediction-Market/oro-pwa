@@ -22,6 +22,7 @@ import {
   type DisputeContestControls,
 } from "./DisputeContestFields";
 import { TerMarketCard } from "./TerMarketCard";
+import { STICKY_TOP, STICKY_MAX_HEIGHT } from "./MarketDetailColumns";
 import { BtcMarketCard } from "./BtcMarketCard";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
@@ -593,8 +594,8 @@ export const PriceMarketDetail: FC<Props> = ({
               isDesktop
                 ? {
                     position: "sticky",
-                    top: 16,
-                    maxHeight: "calc(100vh - 32px)",
+                    top: STICKY_TOP,
+                    maxHeight: STICKY_MAX_HEIGHT,
                     overflowY: "auto",
                   }
                 : undefined
