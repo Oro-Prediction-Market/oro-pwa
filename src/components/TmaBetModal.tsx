@@ -115,6 +115,21 @@ export function TmaBetModal({
       .catch(() => setExistingStake(0));
   }, [isOpen, outcomeId]);
 
+  // Freeze the page behind the sheet. Without this the market detail scrolls
+  // under your finger whenever a swipe starts outside the sheet's own scroll
+  // region, and on iOS the scroll chains through to the document as soon as
+  // the inner region hits its end.
+  useEffect(() => {
+    if (!isOpen) return;
+    const { overflow, touchAction } = document.body.style;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = overflow;
+      document.body.style.touchAction = touchAction;
+    };
+  }, [isOpen]);
+
   // Track visual viewport so the bottom sheet follows the keyboard precisely.
   // Re-syncs whenever the sheet opens — on a mobile browser window.innerHeight
   // can be taller than the visible area (URL bar), so without an immediate sync
@@ -342,7 +357,8 @@ export function TmaBetModal({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
-        zIndex: 2000,
+        // Above the sheet it is celebrating, which is now 10050.
+        zIndex: 10060,
       });
     } catch (err: any) {
       setError(err.message || "Failed to place prediction");
@@ -359,7 +375,13 @@ export function TmaBetModal({
         left: 0,
         right: 0,
         height: `min(${viewportHeight}px, 100dvh)`,
-        zIndex: 1100,
+        // Above the PWA's fixed header, which is zIndex 3000. At 1100 the
+        // header painted straight over the top of this sheet: on a phone that
+        // is 106px of the sheet gone, taking the drag handle, the market title
+        // and the close button with it — the sheet looked cut off at the top
+        // and there was no way to dismiss it but the backdrop. The app's own
+        // overlays sit at 9990-10000; the toast at 99999 stays above.
+        zIndex: 10050,
         background: "rgba(0,0,0,0.45)",
         display: "flex",
         alignItems: "flex-end",

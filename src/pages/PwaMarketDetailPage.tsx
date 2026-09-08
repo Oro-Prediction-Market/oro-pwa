@@ -24,6 +24,7 @@ import {
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
 import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { PwaBetForm } from "../components/PwaBetForm";
+import { TmaBetModal } from "../components/TmaBetModal";
 import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
@@ -247,6 +248,8 @@ export function PwaMarketDetailPage() {
   const [myBets, setMyBets] = useState<Bet[]>([]);
   // Bumped whenever a bet lands, to re-read the position card.
   const [betsNonce, setBetsNonce] = useState(0);
+  // Outcome the phone sheet is open on, if any.
+  const [activeBet, setActiveBet] = useState<string | null>(null);
 
   // Open the detail view at the top, not at the feed's scroll position
   useEffect(() => {
@@ -1322,7 +1325,18 @@ export function PwaMarketDetailPage() {
                 backdropFilter: "var(--glass-blur)",
               }}
             >
-              <PwaBetForm market={displayMarket} onBetPlaced={refreshMarket} />
+              {/* Phones get the bottom sheet, like every other market type in
+                  this app. The inline form is a desktop pattern: it belongs in
+                  a rail beside the market, and stacked on a phone it is just a
+                  long form buried under the market info. */}
+              {bp === "mobile" ? (
+                <PredictLauncher
+                  market={displayMarket}
+                  onPick={(outcomeId) => setActiveBet(outcomeId)}
+                />
+              ) : (
+                <PwaBetForm market={displayMarket} onBetPlaced={refreshMarket} />
+              )}
             </div>
           ) : isResolving ? (
             <div
@@ -1830,6 +1844,136 @@ export function PwaMarketDetailPage() {
         </div>
 
         {bp === "mobile" && embeddedComments}
+      </div>
+
+      {activeBet && (
+        <TmaBetModal
+          isOpen={true}
+          onClose={() => setActiveBet(null)}
+          market={displayMarket}
+          outcomeId={activeBet}
+          onSuccess={() => {
+            setActiveBet(null);
+            refreshMarket();
+          }}
+          onFailure={(e: string) => console.error(e)}
+          onGoToWallet={() => navigate("/wallet")}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The phone entry point to the prediction sheet: one button per outcome with
+ * its current price. Deliberately not a form — the stake, the wallet and the
+ * payout estimate all live in the sheet, which is the pattern every themed
+ * market view already uses on a phone.
+ */
+function PredictLauncher({
+  market,
+  onPick,
+}: {
+  market: Market;
+  onPick: (outcomeId: string) => void;
+}) {
+  const pool = Number(market.totalPool) || 0;
+  const edge = Number(market.houseEdgePct) || 0;
+
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: "0.75rem",
+          fontWeight: 900,
+          letterSpacing: "0.1em",
+          color: "var(--text-subtle)",
+          marginBottom: "var(--space-md)",
+          textTransform: "uppercase",
+        }}
+      >
+        Make Your Prediction
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr",
+          gap: "var(--space-sm)",
+        }}
+      >
+        {market.outcomes.map((outcome) => {
+          const eliminated = !!outcome.isEliminated;
+          const stake = Number(outcome.totalBetAmount) || 0;
+          const pct = Math.round(calcProb(market, outcome.id) * 100);
+          const odds =
+            pool > 0 && stake > 0
+              ? Math.min(99, (pool * (1 - edge / 100)) / stake)
+              : Math.min(99, 100 / Math.max(pct, 1));
+          return (
+            <button
+              key={outcome.id}
+              disabled={eliminated}
+              onClick={() => !eliminated && onPick(outcome.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "var(--space-md)",
+                borderRadius: "var(--radius-md)",
+                border: "1.5px solid var(--border)",
+                background: "var(--bg-secondary)",
+                color: "var(--text-main)",
+                cursor: eliminated ? "not-allowed" : "pointer",
+                opacity: eliminated ? 0.45 : 1,
+                textAlign: "left",
+                width: "100%",
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 800,
+                  fontSize: "0.95rem",
+                  minWidth: 0,
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {outcome.label}
+                {eliminated && (
+                  <span style={{ fontSize: "0.7rem", opacity: 0.8 }}> · Out</span>
+                )}
+              </span>
+              <span
+                style={{
+                  flexShrink: 0,
+                  textAlign: "right",
+                  lineHeight: 1.15,
+                }}
+              >
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.9rem",
+                    fontWeight: 900,
+                    color: "var(--color-primary)",
+                  }}
+                >
+                  {odds.toFixed(2)}x
+                </span>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    color: "var(--text-subtle)",
+                  }}
+                >
+                  {pct}%
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
