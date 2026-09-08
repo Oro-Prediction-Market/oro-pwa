@@ -139,7 +139,7 @@ function useClosesAt(closesAt: string | null | undefined): string {
  * enough to break the list up — a fixture grid reads as one continuous block
  * without a horizontal line through it.
  */
-function RoundHeading({ label, count }: { label: string; count: number }) {
+function RoundHeading({ label }: { label: string }) {
   return (
     <div
       style={{
@@ -160,9 +160,6 @@ function RoundHeading({ label, count }: { label: string; count: number }) {
         }}
       >
         {label}
-      </span>
-      <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
-        {count}
       </span>
       <div style={{ flex: 1, height: 1, background: "rgba(0,255,133,0.18)" }} />
     </div>
@@ -1018,7 +1015,7 @@ export function EplHubPage() {
                   ))}
                   {groupByMatchday(upcomingRest, "Gameweek").map((g) => (
                     <div key={g.key}>
-                      <RoundHeading label={g.label} count={g.markets.length} />
+                      <RoundHeading label={g.label} />
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14 }}>
                         {g.markets.map((market) => (
                           <EplMatchCard key={market.id} market={market} onBet={openBet} />
@@ -1033,7 +1030,7 @@ export function EplHubPage() {
             ) : (
               groupByMatchday(previousMatches, "Gameweek").map((g) => (
                 <div key={g.key}>
-                  <RoundHeading label={g.label} count={g.markets.length} />
+                  <RoundHeading label={g.label} />
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {g.markets.map((market) => (
                       <EplResultCard key={market.id} market={market} />

@@ -366,7 +366,7 @@ function useClosesAt(closesAt: string | null | undefined): string {
  * The rule that separates one matchday from the next, so a long fixture list
  * reads as rounds rather than one block.
  */
-function RoundHeading({ label, count }: { label: string; count: number }) {
+function RoundHeading({ label }: { label: string }) {
   return (
     <div
       style={{
@@ -387,9 +387,6 @@ function RoundHeading({ label, count }: { label: string; count: number }) {
         }}
       >
         {label}
-      </span>
-      <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
-        {count}
       </span>
       <div style={{ flex: 1, height: 1, background: "rgba(43,107,255,0.22)" }} />
     </div>
@@ -657,7 +654,7 @@ function MatchesTab({
                 )}
                 {groupByMatchday(rest, "Matchday").map((g) => (
                   <div key={g.key}>
-                    <RoundHeading label={g.label} count={g.markets.length} />
+                    <RoundHeading label={g.label} />
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
                       {g.markets.map((m) => (
                         <MatchCard key={m.id} m={m} onOpen={onOpen} onBet={onBet} />
@@ -678,7 +675,7 @@ function MatchesTab({
       ) : (
         groupByMatchday(previous, "Matchday").map((g) => (
           <div key={g.key}>
-            <RoundHeading label={g.label} count={g.markets.length} />
+            <RoundHeading label={g.label} />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {g.markets.map((m) => (
                 <UclResultCard key={m.id} m={m} onOpen={onOpen} />
