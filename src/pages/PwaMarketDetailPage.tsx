@@ -500,14 +500,23 @@ export function PwaMarketDetailPage() {
   //
   // `user` comes from this page's own useAuth() — there is no auth context, so
   // a useAuth() call inside MarketComments would fire another getMe().
-  const commentsSection = (
-    <MarketComments
-      marketId={displayMarket.id}
-      marketStatus={displayMarket.status}
-      currentUserId={user?.id ?? null}
-      onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
-    />
-  );
+  const commentsProps = {
+    marketId: displayMarket.id,
+    marketStatus: displayMarket.status,
+    currentUserId: user?.id ?? null,
+    onOpenProfile: (userId: string) => navigate(`/profile/${userId}`),
+  };
+
+  // The themed detail views are a single 760px column, so the thread sits under
+  // them at page level and matches their measure.
+  const commentsSection = <MarketComments {...commentsProps} />;
+
+  // The generic view is two columns with a sticky prediction panel, so the
+  // thread goes INSIDE the scrolling left column instead. Mounted below the
+  // row, it would end the sticky element's containing block — the panel would
+  // unpin the moment you scrolled into the comments, which is the whole reason
+  // to keep it on screen.
+  const embeddedComments = <MarketComments {...commentsProps} embedded />;
 
   // TER / BTC price markets get the dedicated trading-styled detail view with
   // the live chart, price-to-beat and Higher/Lower.
@@ -1246,15 +1255,27 @@ export function PwaMarketDetailPage() {
               })}
             </div>
           </div>
+          {embeddedComments}
         </div>
 
-        {/* Right Column: Interaction */}
+        {/* Right Column: Interaction — pinned while the left column scrolls. */}
         <div
           style={{
             flex: 1,
             position: bp === "mobile" ? "static" : "sticky",
             top: "calc(var(--header-height) + var(--space-md))",
             width: "100%",
+            // A pinned panel taller than the screen would have its bottom
+            // permanently out of reach — scrolling the page moves the panel
+            // with it. The dispute form is the tall one. Give it its own
+            // scroll instead, on desktop only, where it is actually sticky.
+            ...(bp === "mobile"
+              ? {}
+              : {
+                  maxHeight:
+                    "calc(100vh - var(--header-height) - var(--space-xl))",
+                  overflowY: "auto" as const,
+                }),
           }}
         >
           {isOpen ? (
@@ -1777,7 +1798,6 @@ export function PwaMarketDetailPage() {
           )}
         </div>
       </div>
-      {commentsSection}
     </div>
   );
 }
