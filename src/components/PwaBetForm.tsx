@@ -18,6 +18,13 @@ import { Check } from "lucide-react";
 interface PwaBetFormProps {
   market: Market;
   onBetPlaced?: (updatedMarket?: Market) => void;
+  /**
+   * The market's own colour, for the themed views. Used in two places only —
+   * the section heading and the selected outcome — so the panel reads as
+   * belonging to the page it sits beside without becoming a second brand.
+   * Omitted, the form keeps its neutral rotating palette.
+   */
+  accent?: string;
 }
 
 const DEFAULT_AMOUNT = 100;
@@ -132,7 +139,11 @@ function Row({
   );
 }
 
-export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
+export const PwaBetForm: FC<PwaBetFormProps> = ({
+  market,
+  onBetPlaced,
+  accent,
+}) => {
   const navigate = useNavigate();
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(
     null,
@@ -511,7 +522,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
             fontSize: "0.75rem",
             fontWeight: 900,
             letterSpacing: "0.1em",
-            color: "var(--text-subtle)",
+            color: accent ?? "var(--text-subtle)",
             marginBottom: "var(--space-md)",
             textTransform: "uppercase",
           }}
@@ -535,7 +546,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
               "#06b6d4",
               "#f97316",
             ];
-            const baseColor = colors[idx % colors.length];
+            const baseColor = accent ?? colors[idx % colors.length];
 
             return (
               <button

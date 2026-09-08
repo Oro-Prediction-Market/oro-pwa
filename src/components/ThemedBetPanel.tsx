@@ -51,7 +51,7 @@ export function ThemedBetPanel({
         } as React.CSSProperties
       }
     >
-      <PwaBetForm market={market} onBetPlaced={onBetPlaced} />
+      <PwaBetForm market={market} onBetPlaced={onBetPlaced} accent={accent} />
     </div>
   );
 }
