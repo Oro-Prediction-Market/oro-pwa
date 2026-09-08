@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { TmaBetModal } from "@/components/TmaBetModal";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
-import { isWCMarket, calcProb, calcOdds } from "./WorldCupHubPage";
+import { isWCMarket, calcProb, calcOdds, formatOdds} from "./WorldCupHubPage";
 import { isBplMarket, isDrawOutcome } from "./BplHubPage";
 import { isUfcMarket } from "./UfcHubPage";
 import { isEplMarket } from "./EplHubPage";
@@ -1007,7 +1007,7 @@ function EsportsEventMarket({
                   {pct}%
                 </div>
                 <div style={{ marginTop: 3 }}>
-                  <Label size={8}>{odds ? `${odds.toFixed(2)}x` : "—"}</Label>
+                  <Label size={8}>{formatOdds(odds)}</Label>
                 </div>
               </div>
               {eliminated ? (

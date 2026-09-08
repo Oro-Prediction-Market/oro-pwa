@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
@@ -634,7 +635,7 @@ function MatchBlock({
             >
               <div style={{ fontSize: 22, fontWeight: 900, color: won ? GOLD : color, lineHeight: 1 }}>{pct}%</div>
               <div style={{ marginTop: 5, fontSize: 12, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{label}</div>
-              <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>{won ? "WON" : odds ? `${odds.toFixed(2)}x` : "—"}</div>
+              <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>{won ? "WON" : formatOdds(odds)}</div>
             </button>
           );
         })}
@@ -700,7 +701,7 @@ function FieldBlock({
             </div>
             <div style={{ textAlign: "center", flexShrink: 0, minWidth: 46 }}>
               <div style={{ fontSize: 17, fontWeight: 900, color: eliminated ? "#777" : "#7fa8ff", lineHeight: 1 }}>{pct}%</div>
-              <div style={{ marginTop: 3, fontSize: 11, fontWeight: 900, color: GOLD }}>{odds ? `${odds.toFixed(2)}x` : "—"}</div>
+              <div style={{ marginTop: 3, fontSize: 11, fontWeight: 900, color: GOLD }}>{formatOdds(odds)}</div>
             </div>
             {won ? (
               <span style={{ fontSize: 10, fontWeight: 900, color: GOLD, flexShrink: 0 }}>Winner</span>

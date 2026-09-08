@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Share2, Clock, ShieldAlert } from "lucide-react";
@@ -1151,7 +1152,7 @@ function FieldBlock({
                   color: GOLD,
                 }}
               >
-                {odds ? `${odds.toFixed(2)}x` : "—"}
+                {formatOdds(odds)}
               </div>
             </div>
             {won ? (

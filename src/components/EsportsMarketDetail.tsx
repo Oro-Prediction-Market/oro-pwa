@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
@@ -967,7 +968,7 @@ function FieldBlock({
                 {pct}%
               </div>
               <div style={{ marginTop: 3 }}>
-                <Label size={8}>{odds ? `${odds.toFixed(2)}x` : "—"}</Label>
+                <Label size={8}>{formatOdds(odds)}</Label>
               </div>
             </div>
             {won ? (

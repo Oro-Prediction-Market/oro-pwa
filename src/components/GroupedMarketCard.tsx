@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, type FC } from "react";
+import { formatOdds } from "@/pages/WorldCupHubPage";
 import { useCurrency, type Currency } from "@shared/currency/currency";
 import {
   bookEdge,
@@ -242,7 +243,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
           </span>
           {o && (
             <span style={{ fontSize: "0.55rem", fontWeight: 700, opacity: 0.8 }}>
-              {odds ? `${odds.toFixed(2)}x` : "—"}
+              {formatOdds(odds)}
             </span>
           )}
         </button>

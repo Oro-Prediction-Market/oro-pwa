@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense, useTransition } from "react
 import { useNavigate } from "react-router-dom";
 import { getMarkets, type Market } from "@shared/api/client";
 import { Clock, CalendarDays } from "lucide-react";
-import { isWCMarket, calcProb, calcOdds } from "./WorldCupHubPage";
+import { isWCMarket, calcProb, calcOdds, formatOdds} from "./WorldCupHubPage";
 
 const TmaBetModal = lazy(() =>
   import("../components/TmaBetModal").then((m) => ({ default: m.TmaBetModal })),
@@ -236,7 +236,7 @@ function BplMatchCard({
               <div style={{ fontSize: 14, fontWeight: 900, color: ACCENT }}>{Math.round(prob * 100)}%</div>
               <div style={{ fontSize: 11, color: "var(--text-muted, #888)", fontWeight: 600, marginTop: 2 }}>{shortClubName(outcome.label)}</div>
               <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 2 }}>
-                  {odds ? `${odds.toFixed(2)}x` : "—"}
+                  {formatOdds(odds)}
                 </div>
             </button>
           );
@@ -321,7 +321,7 @@ function BplSeasonMarket({
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                 <div style={{ textAlign: "center", minWidth: 52 }}>
                   <div style={{ fontSize: 13, fontWeight: 900, color: "#fbbf24", lineHeight: 1 }}>
-                    {odds ? `${odds.toFixed(2)}x` : "—"}
+                    {formatOdds(odds)}
                   </div>
                 </div>
                 {!locked && (

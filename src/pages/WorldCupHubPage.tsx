@@ -256,7 +256,7 @@ function WinnerMarketGroup({
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                 <div style={{ textAlign: "center", minWidth: 52 }}>
                   <div style={{ fontSize: 13, fontWeight: 900, color: "#fbbf24", lineHeight: 1 }}>
-                    {odds ? `${odds.toFixed(2)}x` : "—"}
+                    {formatOdds(odds)}
                   </div>
                 </div>
                 {eliminated ? (
@@ -342,11 +342,26 @@ export function calcProb(
 }
 
 /**
+ * Winners are guaranteed at least this multiple of their stake at settlement,
+ * funded by reducing the house edge. Mirrors the payout floor in the backend's
+ * parimutuel engine — keep the two in step.
+ */
+export const MIN_PAYOUT_MULTIPLE = 1.05;
+
+/**
  * The multiple a stake would return, quoted from the viewer's own book.
  *
  * `stake` is a notional probe and defaults per currency: a Nu 100 probe
  * against a one-dollar book would swamp the pool and report a multiple nobody
  * could ever be paid.
+ *
+ * Parimutuel, so the probe joins the pool it is claiming from: the bigger the
+ * bet relative to the pool, the more it dilutes itself. A quoted multiplier is
+ * therefore only true for the stake it was computed with. On a Nu 1,900 pool
+ * the same outcome pays 12x at Nu 100 and 1.2x at Nu 5,000, so callers listing
+ * odds must present them as indicative (see formatOdds) rather than as what
+ * the viewer will receive. The exact figure comes from the amount actually
+ * entered on the bet page.
  *
  * Returns null when the viewer's book is empty — there is no pool to quote
  * against, and borrowing the other currency's would be inventing a rate.
@@ -364,7 +379,25 @@ export function calcOdds(
   const own = outcomePool(o, currency);
   const houseEdge = bookEdge(market, currency);
   if (total <= 0) return null;
-  return ((total + probe) * (1 - houseEdge / 100)) / (own + probe);
+  const raw = ((total + probe) * (1 - houseEdge / 100)) / (own + probe);
+  // Settlement guarantees winners 1.05x their stake, funded out of the house
+  // edge. Without this the card shows a sub-1.0x multiple ("bet 100, win 90")
+  // on any outcome holding most of the pool — a guaranteed loss for being
+  // right, which is not what would actually be paid.
+  return Math.max(raw, MIN_PAYOUT_MULTIPLE);
+}
+
+/**
+ * Renders a listed multiplier for display.
+ *
+ * The leading "~" is load-bearing, not decoration: listed odds are quoted for
+ * a small reference stake, and the multiple a viewer actually receives falls
+ * as their own stake grows. Printing a bare "12.00x" reads as a promise;
+ * "~12.00x" reads as an indication, which is all a card without a stake box
+ * can honestly offer.
+ */
+export function formatOdds(odds: number | null | undefined): string {
+  return odds ? `~${odds.toFixed(2)}x` : "—";
 }
 
 
@@ -447,7 +480,7 @@ function GroupMarketSection({
               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                 <div style={{ textAlign: "center", minWidth: 52 }}>
                   <div style={{ fontSize: 13, fontWeight: 900, color: "#fbbf24", lineHeight: 1 }}>
-                    {odds ? `${odds.toFixed(2)}x` : "—"}
+                    {formatOdds(odds)}
                   </div>
                 </div>
                 {eliminated ? (
@@ -559,7 +592,7 @@ function PropMarketSection({
               <span style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                 <span style={{ fontSize: 11, fontWeight: 800, color: "#A78BFA" }}>{Math.round(prob * 100)}%</span>
                 <span style={{ fontSize: 12, fontWeight: 900, color: "#fbbf24" }}>
-                  {odds ? `${odds.toFixed(2)}x` : "—"}
+                  {formatOdds(odds)}
                 </span>
               </span>
             </button>
@@ -653,7 +686,7 @@ function MatchMarketCard({
               <div style={{ fontSize: 14, fontWeight: 900, color: "#A78BFA" }}>{Math.round(prob * 100)}%</div>
               <div style={{ fontSize: 11, color: "var(--text-muted, #888)", fontWeight: 600, marginTop: 2 }}>{outcome.label}</div>
               <div style={{ fontSize: 9, fontWeight: 700, color: "#fbbf24", marginTop: 2 }}>
-                  {odds ? `${odds.toFixed(2)}x` : "—"}
+                  {formatOdds(odds)}
                 </div>
             </button>
           );

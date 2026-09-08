@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
@@ -797,7 +798,7 @@ function MatchBlock({
                 {label}
               </div>
               <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>
-                {won ? "WON" : odds ? `${odds.toFixed(2)}x` : "—"}
+                {won ? "WON" : formatOdds(odds)}
               </div>
             </button>
           );
@@ -925,7 +926,7 @@ function FieldBlock({
                 {pct}%
               </div>
               <div style={{ marginTop: 3, fontSize: 11, fontWeight: 900, color: GOLD }}>
-                {odds ? `${odds.toFixed(2)}x` : "—"}
+                {formatOdds(odds)}
               </div>
             </div>
             {won ? (
