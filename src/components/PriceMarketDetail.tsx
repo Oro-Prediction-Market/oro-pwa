@@ -444,7 +444,7 @@ export const PriceMarketDetail: FC<Props> = ({
         style={{
           maxWidth: isDesktop ? 1080 : 760,
           margin: "0 auto",
-          padding: "16px 16px 120px",
+          padding: "16px 16px 4px",
         }}
       >
         {/* ── Top bar ── */}
