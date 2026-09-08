@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import MarketComments from "@shared/components/MarketComments";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import {
   getMarket,
@@ -233,6 +234,7 @@ function TerPricePanel({ market }: { market: Market }) {
 
 export function PwaMarketDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const referralId = String(user?.telegramId ?? user?.id ?? "");
   const [shareOpen, setShareOpen] = useState(false);
@@ -491,6 +493,22 @@ export function PwaMarketDetailPage() {
     `Predict the outcome of "${displayMarket.title}" and win real money on Oro.`;
   const pageUrl = `https://oro.fun/markets/${displayMarket.id}`;
 
+  // Mounted here rather than inside each themed detail component: every branch
+  // below renders one of six near-duplicate components (and the TMA repeats the
+  // same six), so putting the thread in the page gives every market type
+  // comments from one place instead of ten.
+  //
+  // `user` comes from this page's own useAuth() — there is no auth context, so
+  // a useAuth() call inside MarketComments would fire another getMe().
+  const commentsSection = (
+    <MarketComments
+      marketId={displayMarket.id}
+      marketStatus={displayMarket.status}
+      currentUserId={user?.id ?? null}
+      onOpenProfile={(userId) => navigate(`/profile/${userId}`)}
+    />
+  );
+
   // TER / BTC price markets get the dedicated trading-styled detail view with
   // the live chart, price-to-beat and Higher/Lower.
   if (
@@ -498,6 +516,7 @@ export function PwaMarketDetailPage() {
     displayMarket.externalSource === "btc"
   ) {
     return (
+    <>
       <PriceMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -515,12 +534,15 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         myBets={myBets}
       />
+      {commentsSection}
+    </>
     );
   }
 
   // UFC markets get the dedicated /ufc-styled detail view
   if (isUfcMarket(displayMarket)) {
     return (
+    <>
       <UfcMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -538,12 +560,15 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         myBets={myBets}
       />
+      {commentsSection}
+    </>
     );
   }
 
   // Esports markets get the dedicated /esports-styled detail view
   if (isEsportsMarket(displayMarket)) {
     return (
+    <>
       <EsportsMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -561,12 +586,15 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         myBets={myBets}
       />
+      {commentsSection}
+    </>
     );
   }
 
   // Champions League markets get the dedicated /ucl-styled detail view
   if (isUclMarket(displayMarket)) {
     return (
+    <>
       <UclMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -584,12 +612,15 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         myBets={myBets}
       />
+      {commentsSection}
+    </>
     );
   }
 
   // EPL markets get the dedicated /epl-styled detail view
   if (isEplMarket(displayMarket)) {
     return (
+    <>
       <EplMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -607,6 +638,8 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         myBets={myBets}
       />
+      {commentsSection}
+    </>
     );
   }
 
@@ -1744,6 +1777,7 @@ export function PwaMarketDetailPage() {
           )}
         </div>
       </div>
+      {commentsSection}
     </div>
   );
 }
