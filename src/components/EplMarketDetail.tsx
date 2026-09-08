@@ -844,49 +844,108 @@ function MatchBlock({
                     idx === 0 ? name1 : idx === outcomes.length - 1 ? name2 : outcome.label,
                   );
               return (
-                <button
+                <PredictButton
                   key={outcome.id}
-                  disabled={locked}
-                  onClick={() => !locked && onBet(outcome.id)}
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    padding: "12px 6px",
-                    background: won
-                      ? "rgba(251,191,36,0.14)"
-                      : `${color}14`,
-                    border: `1px solid ${won ? GOLD : color}55`,
-                    borderRadius: 12,
-                    cursor: locked ? "default" : "pointer",
-                    textAlign: "center",
-                    opacity: locked && winnerId && !won ? 0.5 : 1,
-                  }}
-                >
-                  <div style={{ fontSize: 22, fontWeight: 900, color: won ? GOLD : color, lineHeight: 1 }}>
-                    {pct}%
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 5,
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: "#fff",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {label}
-                  </div>
-                  <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>
-                    {won ? "WON" : formatOdds(odds)}
-                  </div>
-                </button>
+                  color={won ? GOLD : color}
+                  locked={locked}
+                  dimmed={locked && !!winnerId && !won}
+                  pct={pct}
+                  label={label}
+                  footer={won ? "WON" : formatOdds(odds)}
+                  onClick={() => onBet(outcome.id)}
+                />
               );
             })}
           </div>
         )}
     </div>
+  );
+}
+
+/**
+ * One outcome, styled to read as a button rather than a stat tile.
+ *
+ * The old treatment was an 8%-alpha wash with a faint border, which was
+ * legible enough inside the match card but stopped reading as pressable once
+ * the buttons were pinned alone in the desktop rail. What makes it a button:
+ * a filled gradient body, a full-strength border in the outcome's colour, and
+ * a coloured lip beneath it that compresses when pressed.
+ */
+function PredictButton({
+  color,
+  locked,
+  dimmed,
+  pct,
+  label,
+  footer,
+  onClick,
+}: {
+  color: string;
+  locked: boolean;
+  /** Settled and this one lost — held back so the winner reads first. */
+  dimmed: boolean;
+  pct: number;
+  label: string;
+  footer: string;
+  onClick: () => void;
+}) {
+  const [hover, setHover] = useState(false);
+  const [down, setDown] = useState(false);
+  const live = !locked;
+  const lift = live && hover && !down;
+
+  return (
+    <button
+      disabled={locked}
+      onClick={() => live && onClick()}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => {
+        setHover(false);
+        setDown(false);
+      }}
+      onMouseDown={() => setDown(true)}
+      onMouseUp={() => setDown(false)}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        padding: "12px 6px",
+        background: `linear-gradient(180deg, ${color}${lift ? "4d" : "33"} 0%, ${color}1a 100%)`,
+        border: `1.5px solid ${color}${lift ? "ff" : "b3"}`,
+        borderRadius: 12,
+        cursor: live ? "pointer" : "default",
+        textAlign: "center",
+        opacity: dimmed ? 0.5 : 1,
+        // The lip is what sells it as a physical button: a solid colour edge
+        // under the border that collapses on press.
+        boxShadow: live
+          ? down
+            ? `0 1px 0 ${color}66, 0 2px 6px rgba(0,0,0,0.35)`
+            : `0 3px 0 ${color}66, 0 6px 16px rgba(0,0,0,0.35)`
+          : "none",
+        transform: live ? `translateY(${down ? 2 : lift ? -1 : 0}px)` : "none",
+        transition: "transform 90ms ease, box-shadow 90ms ease, background 120ms ease, border-color 120ms ease",
+      }}
+    >
+      <div style={{ fontSize: 22, fontWeight: 900, color, lineHeight: 1 }}>
+        {pct}%
+      </div>
+      <div
+        style={{
+          marginTop: 5,
+          fontSize: 12,
+          fontWeight: 700,
+          color: "#fff",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ marginTop: 3, fontSize: 10, fontWeight: 800, color: GOLD }}>
+        {footer}
+      </div>
+    </button>
   );
 }
 
