@@ -495,6 +495,7 @@ export function UfcMarketDetail({
                   locked={locked}
                   winnerId={winnerId}
                   onBet={onBet}
+                  part={isWide ? "actions" : undefined}
                 />
               )}
             </div>
@@ -504,15 +505,25 @@ export function UfcMarketDetail({
             {/* The pictures belong beside the market, not in the action rail —
                 only the buttons pin to the right. Narrow screens render the
                 whole card in the panel above instead, so this stays empty. */}
-            {isWide && isFight && (
+            {isWide && (
               <div style={{ marginBottom: 14 }}>
-                <FightBlock
-                  market={market}
-                  locked={locked}
-                  winnerId={winnerId}
-                  onBet={onBet}
-                  part="header"
-                />
+                {isFight ? (
+                  <FightBlock
+                    market={market}
+                    locked={locked}
+                    winnerId={winnerId}
+                    onBet={onBet}
+                    part="header"
+                  />
+                ) : (
+                  <FieldBlock
+                    market={market}
+                    locked={locked}
+                    winnerId={winnerId}
+                    onBet={onBet}
+                    part="header"
+                  />
+                )}
               </div>
             )}
             {/* ── Resolution info ── */}
@@ -1145,11 +1156,18 @@ function FieldBlock({
   locked,
   winnerId,
   onBet,
+  part,
 }: {
   market: Market;
   locked: boolean;
   winnerId: string | null;
   onBet: (outcomeId: string) => void;
+  /**
+   * Which half to draw. Omitted renders the whole list, which is what the
+   * narrow layout wants — there the market is one column and splitting it
+   * would only separate a runner from its own button.
+   */
+  part?: "header" | "actions";
 }) {
   const ranked = useMemo(() => {
     const list = [...(market.outcomes ?? [])];
@@ -1160,6 +1178,57 @@ function FieldBlock({
       return calcProb(market, b.id) - calcProb(market, a.id);
     });
   }, [market]);
+
+  // Actions half: the standings stay on the left with their artwork, so the
+  // rail is just the picks. Eliminated and already-won runners are dropped
+  // rather than shown disabled — a rail of dead buttons is noise, and their
+  // status is already visible in the list beside it.
+  if (part === "actions") {
+    const pickable = ranked.filter((o) => !o.isEliminated && winnerId !== o.id);
+    if (locked || pickable.length === 0) return null;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {pickable.map((outcome) => (
+          <button
+            key={outcome.id}
+            onClick={() => onBet(outcome.id)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              width: "100%",
+              border: "none",
+              borderRadius: 10,
+              padding: "11px 14px",
+              background: RED,
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              cursor: "pointer",
+              textAlign: "left",
+            }}
+          >
+            <span
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                minWidth: 0,
+              }}
+            >
+              {shortFighterName(outcome.label ?? "")}
+            </span>
+            <span style={{ flexShrink: 0, opacity: 0.75 }}>
+              {Math.round(calcProb(market, outcome.id) * 100)}%
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1287,7 +1356,8 @@ function FieldBlock({
                 Out
               </span>
             ) : (
-              !locked && (
+              !locked &&
+              part !== "header" && (
                 <button
                   onClick={() => onBet(outcome.id)}
                   style={{
