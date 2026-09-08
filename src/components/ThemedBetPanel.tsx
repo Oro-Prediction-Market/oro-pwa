@@ -18,16 +18,25 @@ export function ThemedBetPanel({
   market,
   onBetPlaced,
   accent,
+  ctaAccent,
   border,
   background,
 }: {
   market: Market;
   onBetPlaced: () => void;
-  /** Drives the form's primary button and selected-outcome highlight. */
+  /** The market's brand colour: heading, selected outcome, hairlines. */
   accent: string;
+  /**
+   * The Predict button's fill, when the brand colour is too loud as a solid
+   * block. PL neon green and UFC red are fine as a 12px label or a 1.5px
+   * border and glaring as a full-width button; UCL blue is fine as both.
+   * Defaults to `accent`.
+   */
+  ctaAccent?: string;
   border: string;
   background: string;
 }) {
+  const cta = ctaAccent ?? accent;
   return (
     <div
       style={
@@ -47,7 +56,7 @@ export function ThemedBetPanel({
           // Let each view's accent drive the call to action rather than the
           // app's generic blue.
           "--color-primary": accent,
-          "--grad-primary": `linear-gradient(135deg, ${accent} 0%, ${accent} 100%)`,
+          "--grad-primary": `linear-gradient(160deg, ${cta} 0%, ${cta}d9 100%)`,
         } as React.CSSProperties
       }
     >

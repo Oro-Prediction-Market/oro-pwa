@@ -571,6 +571,7 @@ export function UfcMarketDetail({
                   market={market}
                   onBetPlaced={onBetPlaced}
                   accent={RED}
+                  ctaAccent="#9b1116"
                   border="rgba(210,10,10,0.25)"
                   background="rgba(255,255,255,0.02)"
                 />

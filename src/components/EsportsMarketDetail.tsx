@@ -560,6 +560,7 @@ export function EsportsMarketDetail({
                   market={market}
                   onBetPlaced={onBetPlaced}
                   accent={EWC.gold}
+                  ctaAccent={EWC.goldDeep}
                   border={EWC.border}
                   background="rgba(255,255,255,0.02)"
                 />

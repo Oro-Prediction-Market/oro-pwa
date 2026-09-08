@@ -479,6 +479,7 @@ export function EplMarketDetail({
                   market={market}
                   onBetPlaced={onBetPlaced}
                   accent={ACCENT}
+                  ctaAccent="#00a854"
                   border="rgba(0,255,133,0.25)"
                   background="rgba(255,255,255,0.02)"
                 />

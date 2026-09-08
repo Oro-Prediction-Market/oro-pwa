@@ -528,10 +528,28 @@ export function PwaMarketDetailPage() {
   //
   // `user` comes from this page's own useAuth() — there is no auth context, so
   // a useAuth() call inside MarketComments would fire another getMe().
+  /**
+   * The thread's accent, matching whichever themed view is about to render it.
+   * Derived here rather than passed per branch because `embeddedComments` is
+   * built once and handed to all of them — the branch order below is the same
+   * order these predicates are tested in.
+   */
+  const threadAccent = (() => {
+    if (displayMarket.externalSource === "btc") return "#f7931a";
+    if (displayMarket.externalSource === "ter") return "#F4AF39";
+    if (isUfcMarket(displayMarket)) return "#d20a0a";
+    if (isEsportsMarket(displayMarket)) return "#be9e59";
+    if (isUclMarket(displayMarket)) return "#2b6bff";
+    if (isEplMarket(displayMarket)) return "#00ff85";
+    // The generic view keeps the app's own primary.
+    return undefined;
+  })();
+
   const commentsProps = {
     marketId: displayMarket.id,
     marketStatus: displayMarket.status,
     currentUserId: user?.id ?? null,
+    accent: threadAccent,
     onOpenProfile: (userId: string) => navigate(`/profile/${userId}`),
   };
 
