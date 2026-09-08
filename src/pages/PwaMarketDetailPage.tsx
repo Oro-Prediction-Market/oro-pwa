@@ -245,6 +245,8 @@ export function PwaMarketDetailPage() {
   const [_disputes, setDisputes] = useState<Dispute[]>([]);
   const [myDispute, setMyDispute] = useState<MyDispute | null>(null);
   const [myBets, setMyBets] = useState<Bet[]>([]);
+  // Bumped whenever a bet lands, to re-read the position card.
+  const [betsNonce, setBetsNonce] = useState(0);
 
   // Open the detail view at the top, not at the feed's scroll position
   useEffect(() => {
@@ -284,6 +286,9 @@ export function PwaMarketDetailPage() {
 
   const refreshMarket = useCallback(
     (updatedMarket?: Market) => {
+      // Before the early return below: a bet was just placed either way, and
+      // the position card has to see it.
+      setBetsNonce((n) => n + 1);
       if (updatedMarket) {
         setMarket(updatedMarket);
         return;
@@ -359,11 +364,28 @@ export function PwaMarketDetailPage() {
     getMyDispute(id)
       .then(setMyDispute)
       .catch(() => setMyDispute(null));
-    // The caller's own bets on this market — powers the "Your position" card.
+  }, [id, market?.status]);
+
+  /**
+   * The caller's own bets on this market — what "Your position" renders.
+   *
+   * Deliberately NOT gated on the market being settled. This used to sit
+   * inside the dispute effect above, behind its `if (!settled) return`, so an
+   * open market never loaded them at all: you could place a prediction, come
+   * back, and the page would show no trace of it. That is precisely when
+   * knowing what you hold matters most.
+   *
+   * `betsNonce` re-runs it after a bet is placed; the GET cache is busted
+   * first because placing a bet POSTs to a different path and so leaves this
+   * one's cached response in place.
+   */
+  useEffect(() => {
+    if (!id) return;
+    bustCache("/users/me/bets");
     getMyBets()
       .then((all) => setMyBets(all.filter((b) => b.marketId === id)))
       .catch(() => setMyBets([]));
-  }, [id, market?.status]);
+  }, [id, betsNonce]);
 
   const handleSubmitDispute = async () => {
     if (!id) return;
@@ -473,6 +495,8 @@ export function PwaMarketDetailPage() {
 
   const isOpen = market.status === "open";
   const isResolving = market.status === "resolving";
+  const isSettled =
+    market.status === "resolved" || market.status === "settled";
 
   const proposedOutcome =
     isResolving && market.proposedOutcomeId
@@ -800,6 +824,11 @@ export function PwaMarketDetailPage() {
             width: "100%",
           }}
         >
+          {/* What you already hold here. This used to render only in the
+              right column's market-closed branch, so an open market — the one
+              you can still act on — showed no sign that you were in it. */}
+          <YourPositionCard bets={myBets} resolved={isSettled} />
+
           <div>
             <h1
               style={{
@@ -1253,7 +1282,12 @@ export function PwaMarketDetailPage() {
               })}
             </div>
           </div>
-          {embeddedComments}
+          {/* Desktop only. On a phone the columns stack, and the thread sitting
+              inside this one would put every comment above the prediction form
+              — the form is what you came for. It is re-mounted after the right
+              column instead. On desktop it must stay here: the right column is
+              sticky, and the thread is what gives it something to pin against. */}
+          {bp !== "mobile" && embeddedComments}
         </div>
 
         {/* Right Column: Interaction — pinned while the left column scrolls. */}
@@ -1790,12 +1824,12 @@ export function PwaMarketDetailPage() {
                 </div>
               </div>
 
-              <YourPositionCard bets={myBets} resolved={true} />
-
               <DisputeResultBanner dispute={myDispute} />
             </div>
           )}
         </div>
+
+        {bp === "mobile" && embeddedComments}
       </div>
     </div>
   );

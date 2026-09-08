@@ -13,6 +13,7 @@ import {
 } from "@shared/api/client";
 import { useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { Check } from "lucide-react";
 
 interface PwaBetFormProps {
   market: Market;
@@ -84,6 +85,53 @@ function calcWin(
   return Math.max(parimutuel, bet * 1.05);
 }
 
+/** One line of the confirmation receipt. */
+function Row({
+  label,
+  value,
+  strong,
+  accent,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  accent?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "baseline",
+        justifyContent: "space-between",
+        gap: 12,
+      }}
+    >
+      <span
+        style={{
+          fontSize: "0.78rem",
+          color: "var(--text-muted)",
+          fontWeight: 700,
+          flexShrink: 0,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: strong ? "0.95rem" : "0.88rem",
+          fontWeight: 800,
+          color: accent ?? "var(--text-main)",
+          textAlign: "right",
+          minWidth: 0,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   const navigate = useNavigate();
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(
@@ -91,6 +139,18 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   );
   const [amount, setAmount] = useState(DEFAULT_AMOUNT.toString());
   const [betSuccess, setBetSuccess] = useState(false);
+  /**
+   * What the confirmation screen reports back. Captured at submit time rather
+   * than re-derived: by the time it renders the pool has already moved, and
+   * quoting a payout from the new pool would show a number the user never
+   * agreed to.
+   */
+  const [placed, setPlaced] = useState<{
+    label: string;
+    amount: number;
+    unit: string;
+    payout: number;
+  } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -178,6 +238,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
   // they add to a side they already hold (which lowers their own payout).
   const [heldByOutcome, setHeldByOutcome] = useState<Record<string, number>>({});
   useEffect(() => {
+    // Placing a bet POSTs to a different path, so it leaves this GET's cached
+    // response in place — the re-read right after would be served stale.
+    bustCache("/users/me/bets");
     getMyBets()
       .then((bets) => {
         const map: Record<string, number> = {};
@@ -307,6 +370,14 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
         );
       }
       window.dispatchEvent(new CustomEvent("oro:balance-changed"));
+      setPlaced({
+        label:
+          market.outcomes.find((o) => o.id === selectedOutcomeId)?.label ??
+          "your pick",
+        amount: betAmount,
+        unit,
+        payout: winAmount,
+      });
       setBetSuccess(true);
       if (onBetPlaced) {
         bustCache(`/markets/${market.id}`);
@@ -324,44 +395,103 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({ market, onBetPlaced }) => {
     }
   }
 
-  if (betSuccess) {
+  if (betSuccess && placed) {
     return (
       <div
         style={{
-          background: "var(--bg-card)",
-          border: "2px solid var(--color-success)",
-          borderRadius: "var(--radius-lg)",
-          padding: "48px 24px",
+          // No card chrome of its own: every caller already wraps this form in
+          // a panel, and the old 2px border plus 48px of padding drew a second
+          // box inside the first.
           textAlign: "center",
-          boxShadow: "var(--shadow-lg)",
-          animation: "tickerSlideUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          padding: "8px 0 4px",
+          animation: "tickerSlideUp 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)",
         }}
       >
-        <div style={{ fontSize: 64, marginBottom: 20 }}>🌌</div>
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            margin: "0 auto 16px",
+            borderRadius: "50%",
+            background: "rgba(34,197,94,0.12)",
+            border: "1.5px solid var(--color-success)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Check size={26} strokeWidth={3} color="var(--color-success)" />
+        </div>
+
         <div
           style={{
             fontWeight: 900,
-            fontSize: "1.6rem",
-            color: "var(--color-success)",
-            marginBottom: 12,
-            fontFamily: "var(--font-display)",
-            letterSpacing: "-0.04em",
+            fontSize: "1.15rem",
+            color: "var(--text-main)",
+            letterSpacing: "-0.02em",
           }}
         >
           Prediction placed
         </div>
+
+        {/* The receipt. What you backed, for how much, and what it pays —
+            the three things you actually want confirmed back to you. */}
         <div
           style={{
-            fontSize: "1rem",
+            marginTop: 16,
+            textAlign: "left",
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            padding: "var(--space-md)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <Row label="Your pick" value={placed.label} strong />
+          <Row label="Stake" value={`${placed.unit} ${fmt(placed.amount)}`} />
+          <Row
+            label="Pays if it wins"
+            value={`${placed.unit} ${fmt(placed.payout)}`}
+            accent="var(--color-success)"
+          />
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: "0.8rem",
             color: "var(--text-muted)",
             fontWeight: 600,
             lineHeight: 1.5,
           }}
         >
-          Your prediction is live in the pool.
-          <br />
-          Results update when the market closes.
+          Final rewards are set by the pool at market close.
         </div>
+
+        <button
+          onClick={() => {
+            setBetSuccess(false);
+            setPlaced(null);
+            setSelectedOutcomeId(null);
+            setAmount(DEFAULT_AMOUNT.toString());
+          }}
+          style={{
+            marginTop: "var(--space-md)",
+            width: "100%",
+            padding: "12px",
+            fontSize: "0.9rem",
+            fontWeight: 800,
+            background: "transparent",
+            color: "var(--text-main)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer",
+          }}
+        >
+          Make another prediction
+        </button>
       </div>
     );
   }
