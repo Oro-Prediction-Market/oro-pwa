@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useBreakpoint } from "../hooks/useBreakpoint";
+import { MarketDetailColumns } from "./MarketDetailColumns";
 import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
@@ -118,6 +120,13 @@ function StatTile({ label, value }: { label: string; value: string }) {
 // ── Component ───────────────────────────────────────────────────────────────
 
 export interface EsportsMarketDetailProps {
+  /**
+   * The comment thread, rendered inside the scrolling column beside the pinned
+   * prediction panel. Passed in rather than mounted by the page below this
+   * component: below, it would sit outside the sticky panel's containing block
+   * and the panel would unpin as soon as you scrolled into it.
+   */
+  commentsSlot?: React.ReactNode;
   market: Market;
   onBetPlaced: () => void;
   isResolving: boolean;
@@ -151,8 +160,11 @@ export function EsportsMarketDetail({
   myDispute,
   myBets,
   referralId,
+  commentsSlot,
 }: EsportsMarketDetailProps) {
   const navigate = useNavigate();
+  // Two columns only where there is room for them.
+  const isWide = useBreakpoint() === "desktop";
   const [activeBet, setActiveBet] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -222,7 +234,18 @@ export function EsportsMarketDetail({
         .ewc-btn-green:hover:not(:disabled) { background: ${EWC.greenButtonHover}; }
       `}</style>
 
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 4px" }}>
+      <div
+        style={{
+          // Widens on desktop to hold the pinned prediction rail beside the
+          // conversation; unchanged on narrower screens, where the layout
+          // collapses back to the single 760px column.
+          maxWidth: isWide ? 1100 : 760,
+          margin: "0 auto",
+          // Outermost again now the thread renders inside this view, so the
+          // fixed-nav clearance belongs back here.
+          padding: "16px 16px 120px",
+        }}
+      >
         {/* ── Top bar ── */}
         <div
           style={{
@@ -416,207 +439,214 @@ export function EsportsMarketDetail({
           </div>
         </div>
 
-        {/* ── Locked banner ── */}
-        {locked && (
-          <div
-            style={{
-              marginTop: 14,
-              border: `1px solid ${EWC.goldLine}`,
-              background: EWC.glass,
-              clipPath: notch(9),
-              padding: "11px 14px",
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-            }}
-          >
-            <ShieldAlert size={15} color={EWC.gold} />
-            <Label color={EWC.text} size={10}>
-              {resolved
-                ? "This market has been resolved"
-                : isResolving
-                  ? "Resolving — predictions are closed"
-                  : "Predictions are locked"}
-            </Label>
-          </div>
-        )}
-
-        {/* ── Outcomes ── */}
-        <div style={{ marginTop: 14 }}>
-          {isMatch ? (
-            <MatchBlock
-              market={market}
-              locked={locked}
-              winnerId={winnerId}
-              onBet={onBet}
-            />
-          ) : (
-            <FieldBlock
-              market={market}
-              locked={locked}
-              winnerId={winnerId}
-              onBet={onBet}
-            />
-          )}
-        </div>
-
-        {/* ── Resolution info ── */}
-        <DisputeResultBanner dispute={myDispute ?? null} />
-        <YourPositionCard bets={myBets ?? []} resolved={resolved} />
-
-        {(market.resolutionCriteria || market.settlementSource) && (
-          <div
-            style={{
-              marginTop: 14,
-              border: `1px solid ${EWC.border}`,
-              clipPath: notch(9),
-              padding: "14px 15px",
-              background: EWC.panel,
-            }}
-          >
-            <Label color={EWC.gold} size={10}>
-              How this resolves
-            </Label>
-            {market.resolutionCriteria && (
-              <p
-                style={{
-                  margin: "9px 0 0",
-                  fontSize: 12.5,
-                  lineHeight: 1.55,
-                  color: EWC.textSecondary,
-                }}
-              >
-                {market.resolutionCriteria}
-              </p>
-            )}
-            {market.settlementSource && (
-              <div style={{ marginTop: 10 }}>
-                <Label size={8}>Settlement source</Label>
-                <div
-                  style={{
-                    marginTop: 3,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: EWC.text,
-                  }}
-                >
-                  {market.settlementSource}
-                </div>
-              </div>
-            )}
-            {resolved && market.evidenceNote && (
-              <div style={{ marginTop: 10 }}>
-                <Label size={8}>Resolution note</Label>
-                <p
-                  style={{
-                    margin: "3px 0 0",
-                    fontSize: 12,
-                    lineHeight: 1.5,
-                    color: EWC.textSecondary,
-                  }}
-                >
-                  {market.evidenceNote}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── Dispute (resolving) ── */}
-        {isResolving && (
-          <div
-            style={{
-              marginTop: 14,
-              border: `1px solid ${EWC.goldLine}`,
-              clipPath: notch(9),
-              padding: "14px 15px",
-              background: EWC.panel,
-            }}
-          >
-            <Label color={EWC.gold} size={10}>
-              Proposed result
-            </Label>
-            {proposedOutcome && (
+        <MarketDetailColumns
+          panel={<>
+            {/* ── Locked banner ── */}
+            {locked && (
               <div
                 style={{
-                  marginTop: 8,
-                  fontSize: 15,
-                  fontWeight: 900,
-                  color: EWC.text,
-                  fontFamily: DISPLAY_FONT,
+                  marginTop: 14,
+                  border: `1px solid ${EWC.goldLine}`,
+                  background: EWC.glass,
+                  clipPath: notch(9),
+                  padding: "11px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 9,
                 }}
               >
-                {proposedOutcome.label}
-              </div>
-            )}
-            {disputeTimeLeft && (
-              <div style={{ marginTop: 6 }}>
-                <Label size={9}>{disputeTimeLeft}</Label>
+                <ShieldAlert size={15} color={EWC.gold} />
+                <Label color={EWC.text} size={10}>
+                  {resolved
+                    ? "This market has been resolved"
+                    : isResolving
+                      ? "Resolving — predictions are closed"
+                      : "Predictions are locked"}
+                </Label>
               </div>
             )}
 
-            {disputeSuccess ? (
-              <div style={{ marginTop: 12 }}>
-                <Label color={EWC.green} size={10}>
-                  Dispute submitted — under review
-                </Label>
-              </div>
-            ) : (
-              <div style={{ marginTop: 12 }}>
-                {disputeContest && (
-                  <div style={{ marginBottom: 12 }}>
-                    <DisputeContestFields {...disputeContest} accent="#22d3ee" />
-                  </div>
-                )}
-                <textarea
-                  value={disputeReason}
-                  onChange={(e) => setDisputeReason(e.target.value)}
-                  placeholder="Explain why the proposed result is incorrect…"
-                  rows={3}
-                  style={{
-                    width: "100%",
-                    resize: "vertical",
-                    background: EWC.bg,
-                    border: `1px solid ${EWC.border}`,
-                    clipPath: notch(7),
-                    color: EWC.text,
-                    padding: "10px 12px",
-                    fontSize: 13,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
+            {/* ── Outcomes ── */}
+            <div style={{ marginTop: 14 }}>
+              {isMatch ? (
+                <MatchBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
                 />
-                {disputeError && (
-                  <div style={{ marginTop: 7 }}>
-                    <Label color={EWC.danger} size={9}>
-                      {disputeError}
-                    </Label>
+              ) : (
+                <FieldBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
+                />
+              )}
+            </div>
+
+          </>}
+          main={<>
+            {/* ── Resolution info ── */}
+            <DisputeResultBanner dispute={myDispute ?? null} />
+            <YourPositionCard bets={myBets ?? []} resolved={resolved} />
+
+            {(market.resolutionCriteria || market.settlementSource) && (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: `1px solid ${EWC.border}`,
+                  clipPath: notch(9),
+                  padding: "14px 15px",
+                  background: EWC.panel,
+                }}
+              >
+                <Label color={EWC.gold} size={10}>
+                  How this resolves
+                </Label>
+                {market.resolutionCriteria && (
+                  <p
+                    style={{
+                      margin: "9px 0 0",
+                      fontSize: 12.5,
+                      lineHeight: 1.55,
+                      color: EWC.textSecondary,
+                    }}
+                  >
+                    {market.resolutionCriteria}
+                  </p>
+                )}
+                {market.settlementSource && (
+                  <div style={{ marginTop: 10 }}>
+                    <Label size={8}>Settlement source</Label>
+                    <div
+                      style={{
+                        marginTop: 3,
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: EWC.text,
+                      }}
+                    >
+                      {market.settlementSource}
+                    </div>
                   </div>
                 )}
-                <button
-                  className="ewc-btn-gold"
-                  disabled={disputeSubmitting}
-                  onClick={handleSubmitDispute}
-                  style={{
-                    marginTop: 10,
-                    border: "none",
-                    clipPath: notch(8),
-                    padding: "10px 16px",
-                    color: "#1a1400",
-                    fontSize: 11,
-                    fontWeight: 900,
-                    textTransform: "uppercase",
-                    letterSpacing: EWC.trackTiny,
-                    cursor: disputeSubmitting ? "default" : "pointer",
-                    opacity: disputeSubmitting ? 0.5 : 1,
-                  }}
-                >
-                  {disputeSubmitting ? "Submitting…" : "Submit dispute"}
-                </button>
+                {resolved && market.evidenceNote && (
+                  <div style={{ marginTop: 10 }}>
+                    <Label size={8}>Resolution note</Label>
+                    <p
+                      style={{
+                        margin: "3px 0 0",
+                        fontSize: 12,
+                        lineHeight: 1.5,
+                        color: EWC.textSecondary,
+                      }}
+                    >
+                      {market.evidenceNote}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
+
+            {/* ── Dispute (resolving) ── */}
+            {isResolving && (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: `1px solid ${EWC.goldLine}`,
+                  clipPath: notch(9),
+                  padding: "14px 15px",
+                  background: EWC.panel,
+                }}
+              >
+                <Label color={EWC.gold} size={10}>
+                  Proposed result
+                </Label>
+                {proposedOutcome && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 15,
+                      fontWeight: 900,
+                      color: EWC.text,
+                      fontFamily: DISPLAY_FONT,
+                    }}
+                  >
+                    {proposedOutcome.label}
+                  </div>
+                )}
+                {disputeTimeLeft && (
+                  <div style={{ marginTop: 6 }}>
+                    <Label size={9}>{disputeTimeLeft}</Label>
+                  </div>
+                )}
+
+                {disputeSuccess ? (
+                  <div style={{ marginTop: 12 }}>
+                    <Label color={EWC.green} size={10}>
+                      Dispute submitted — under review
+                    </Label>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 12 }}>
+                    {disputeContest && (
+                      <div style={{ marginBottom: 12 }}>
+                        <DisputeContestFields {...disputeContest} accent="#22d3ee" />
+                      </div>
+                    )}
+                    <textarea
+                      value={disputeReason}
+                      onChange={(e) => setDisputeReason(e.target.value)}
+                      placeholder="Explain why the proposed result is incorrect…"
+                      rows={3}
+                      style={{
+                        width: "100%",
+                        resize: "vertical",
+                        background: EWC.bg,
+                        border: `1px solid ${EWC.border}`,
+                        clipPath: notch(7),
+                        color: EWC.text,
+                        padding: "10px 12px",
+                        fontSize: 13,
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    {disputeError && (
+                      <div style={{ marginTop: 7 }}>
+                        <Label color={EWC.danger} size={9}>
+                          {disputeError}
+                        </Label>
+                      </div>
+                    )}
+                    <button
+                      className="ewc-btn-gold"
+                      disabled={disputeSubmitting}
+                      onClick={handleSubmitDispute}
+                      style={{
+                        marginTop: 10,
+                        border: "none",
+                        clipPath: notch(8),
+                        padding: "10px 16px",
+                        color: "#1a1400",
+                        fontSize: 11,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                        letterSpacing: EWC.trackTiny,
+                        cursor: disputeSubmitting ? "default" : "pointer",
+                        opacity: disputeSubmitting ? 0.5 : 1,
+                      }}
+                    >
+                      {disputeSubmitting ? "Submitting…" : "Submit dispute"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {commentsSlot}
+          </>}
+        />
       </div>
 
       {activeBet && (

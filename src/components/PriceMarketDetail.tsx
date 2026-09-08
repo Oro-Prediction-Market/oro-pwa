@@ -40,6 +40,8 @@ const C = {
 };
 
 interface Props {
+  /** The comment thread, rendered in the scrolling column beside the sidebar. */
+  commentsSlot?: React.ReactNode;
   market: Market;
   onBetPlaced: () => void;
   isResolving: boolean;
@@ -114,6 +116,7 @@ export const PriceMarketDetail: FC<Props> = ({
   myDispute,
   myBets,
   referralId,
+  commentsSlot,
 }) => {
   const navigate = useNavigate();
   const bp = useBreakpoint();
@@ -444,7 +447,9 @@ export const PriceMarketDetail: FC<Props> = ({
         style={{
           maxWidth: isDesktop ? 1080 : 760,
           margin: "0 auto",
-          padding: "16px 16px 4px",
+          // Outermost again now the thread renders inside this view, so the
+          // fixed-nav clearance belongs back here.
+          padding: "16px 16px 120px",
         }}
       >
         {/* ── Top bar ── */}
@@ -560,14 +565,33 @@ export const PriceMarketDetail: FC<Props> = ({
             alignItems: "start",
           }}
         >
-          <div>
+          <div style={{ minWidth: 0 }}>
             {isBtc ? (
               <BtcMarketCard market={market} onBet={onBet} />
             ) : (
               <TerMarketCard market={market} onBet={onBet} />
             )}
+            {commentsSlot}
           </div>
-          {sidebar}
+          {/* Unlike the other views this rail is market info, not the
+              prediction UI — Higher/Lower lives inside the chart card, which
+              needs the width. Pinning it is still the right behaviour: the
+              reference price should stay readable while you scroll the
+              conversation. */}
+          <div
+            style={
+              isDesktop
+                ? {
+                    position: "sticky",
+                    top: 16,
+                    maxHeight: "calc(100vh - 32px)",
+                    overflowY: "auto",
+                  }
+                : undefined
+            }
+          >
+            {sidebar}
+          </div>
         </div>
       </div>
 

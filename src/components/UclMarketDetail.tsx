@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useBreakpoint } from "../hooks/useBreakpoint";
+import { MarketDetailColumns } from "./MarketDetailColumns";
 import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
@@ -131,6 +133,13 @@ function useCountdown(target: string | null | undefined): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export interface UclMarketDetailProps {
+  /**
+   * The comment thread, rendered inside the scrolling column beside the pinned
+   * prediction panel. Passed in rather than mounted by the page below this
+   * component: below, it would sit outside the sticky panel's containing block
+   * and the panel would unpin as soon as you scrolled into it.
+   */
+  commentsSlot?: React.ReactNode;
   market: Market;
   onBetPlaced: () => void;
   isResolving: boolean;
@@ -164,8 +173,11 @@ export function UclMarketDetail({
   myDispute,
   myBets,
   referralId,
+  commentsSlot,
 }: UclMarketDetailProps) {
   const navigate = useNavigate();
+  // Two columns only where there is room for them.
+  const isWide = useBreakpoint() === "desktop";
   const [activeBet, setActiveBet] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -224,7 +236,18 @@ export function UclMarketDetail({
 
   return (
     <div style={{ minHeight: "100vh", background: BG }}>
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "16px 16px 4px" }}>
+      <div
+        style={{
+          // Widens on desktop to hold the pinned prediction rail beside the
+          // conversation; unchanged on narrower screens, where the layout
+          // collapses back to the single 760px column.
+          maxWidth: isWide ? 1100 : 760,
+          margin: "0 auto",
+          // Outermost again now the thread renders inside this view, so the
+          // fixed-nav clearance belongs back here.
+          padding: "16px 16px 120px",
+        }}
+      >
         {/* ── Top bar ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <button onClick={() => navigate(-1)} style={iconBtn}>
@@ -350,151 +373,158 @@ export function UclMarketDetail({
           </div>
         </div>
 
-        {/* ── Locked banner ── */}
-        {locked && (
-          <div
-            style={{
-              marginTop: 14,
-              border: "1px solid rgba(232,199,102,0.35)",
-              background: "rgba(232,199,102,0.06)",
-              borderRadius: 12,
-              padding: "11px 14px",
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-            }}
-          >
-            <ShieldAlert size={15} color={GOLD} />
-            <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {resolved ? "This market has been settled" : isResolving ? "Resolving — predictions are closed" : "Predictions are locked"}
-            </span>
-          </div>
-        )}
-
-        {/* ── Outcomes ── */}
-        <div style={{ marginTop: 14 }}>
-          {isMatch ? (
-            <MatchBlock market={market} locked={locked} winnerId={winnerId} onBet={onBet} />
-          ) : (
-            <FieldBlock market={market} locked={locked} winnerId={winnerId} onBet={onBet} />
-          )}
-        </div>
-
-        {/* ── Resolution info ── */}
-        <DisputeResultBanner dispute={myDispute ?? null} />
-        <YourPositionCard bets={myBets ?? []} resolved={resolved} />
-
-        {(market.resolutionCriteria || market.settlementSource) && (
-          <div
-            style={{
-              marginTop: 14,
-              border: "1px solid rgba(43,107,255,0.25)",
-              borderRadius: 12,
-              padding: "14px 15px",
-              background: "rgba(43,107,255,0.05)",
-            }}
-          >
-            <SectionLabel>How this resolves</SectionLabel>
-            {market.resolutionCriteria && (
-              <p style={{ margin: "9px 0 0", fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,0.72)" }}>
-                {market.resolutionCriteria}
-              </p>
-            )}
-            {market.settlementSource && (
-              <div style={{ marginTop: 10 }}>
-                <MutedLabel>Settlement source</MutedLabel>
-                <div style={{ marginTop: 3, fontSize: 12, fontWeight: 700, color: "#fff" }}>{market.settlementSource}</div>
+        <MarketDetailColumns
+          panel={<>
+            {/* ── Locked banner ── */}
+            {locked && (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: "1px solid rgba(232,199,102,0.35)",
+                  background: "rgba(232,199,102,0.06)",
+                  borderRadius: 12,
+                  padding: "11px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 9,
+                }}
+              >
+                <ShieldAlert size={15} color={GOLD} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {resolved ? "This market has been settled" : isResolving ? "Resolving — predictions are closed" : "Predictions are locked"}
+                </span>
               </div>
             )}
-            {resolved && market.evidenceNote && (
-              <div style={{ marginTop: 10 }}>
-                <MutedLabel>Resolution note</MutedLabel>
-                <p style={{ margin: "3px 0 0", fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,0.72)" }}>
-                  {market.evidenceNote}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* ── Dispute (resolving) ── */}
-        {isResolving && (
-          <div
-            style={{
-              marginTop: 14,
-              border: "1px solid rgba(232,199,102,0.35)",
-              borderRadius: 12,
-              padding: "14px 15px",
-              background: "rgba(232,199,102,0.05)",
-            }}
-          >
-            <SectionLabel color={GOLD}>Proposed result</SectionLabel>
-            {proposedOutcome && (
-              <div style={{ marginTop: 8, fontSize: 16, fontWeight: 900, color: "#fff" }}>{shortName(proposedOutcome.label)}</div>
-            )}
-            {disputeTimeLeft && (
-              <div style={{ marginTop: 6 }}>
-                <MutedLabel>{disputeTimeLeft}</MutedLabel>
-              </div>
-            )}
-            {disputeSuccess ? (
-              <div style={{ marginTop: 12 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, color: "#3ddc97" }}>Dispute submitted — under review</span>
-              </div>
-            ) : (
-              <div style={{ marginTop: 12 }}>
-                {disputeContest && (
-                  <div style={{ marginBottom: 12 }}>
-                    <DisputeContestFields {...disputeContest} accent="#3ddc97" />
+            {/* ── Outcomes ── */}
+            <div style={{ marginTop: 14 }}>
+              {isMatch ? (
+                <MatchBlock market={market} locked={locked} winnerId={winnerId} onBet={onBet} />
+              ) : (
+                <FieldBlock market={market} locked={locked} winnerId={winnerId} onBet={onBet} />
+              )}
+            </div>
+
+          </>}
+          main={<>
+            {/* ── Resolution info ── */}
+            <DisputeResultBanner dispute={myDispute ?? null} />
+            <YourPositionCard bets={myBets ?? []} resolved={resolved} />
+
+            {(market.resolutionCriteria || market.settlementSource) && (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: "1px solid rgba(43,107,255,0.25)",
+                  borderRadius: 12,
+                  padding: "14px 15px",
+                  background: "rgba(43,107,255,0.05)",
+                }}
+              >
+                <SectionLabel>How this resolves</SectionLabel>
+                {market.resolutionCriteria && (
+                  <p style={{ margin: "9px 0 0", fontSize: 12.5, lineHeight: 1.55, color: "rgba(255,255,255,0.72)" }}>
+                    {market.resolutionCriteria}
+                  </p>
+                )}
+                {market.settlementSource && (
+                  <div style={{ marginTop: 10 }}>
+                    <MutedLabel>Settlement source</MutedLabel>
+                    <div style={{ marginTop: 3, fontSize: 12, fontWeight: 700, color: "#fff" }}>{market.settlementSource}</div>
                   </div>
                 )}
-                <textarea
-                  value={disputeReason}
-                  onChange={(e) => setDisputeReason(e.target.value)}
-                  placeholder="Explain why the proposed result is incorrect…"
-                  rows={3}
-                  style={{
-                    width: "100%",
-                    resize: "vertical",
-                    background: BG,
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: 8,
-                    color: "#fff",
-                    padding: "10px 12px",
-                    fontSize: 13,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                {disputeError && (
-                  <div style={{ marginTop: 7 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: AWAY }}>{disputeError}</span>
+                {resolved && market.evidenceNote && (
+                  <div style={{ marginTop: 10 }}>
+                    <MutedLabel>Resolution note</MutedLabel>
+                    <p style={{ margin: "3px 0 0", fontSize: 12, lineHeight: 1.5, color: "rgba(255,255,255,0.72)" }}>
+                      {market.evidenceNote}
+                    </p>
                   </div>
                 )}
-                <button
-                  disabled={disputeSubmitting}
-                  onClick={handleSubmitDispute}
-                  style={{
-                    marginTop: 10,
-                    border: "none",
-                    borderRadius: 9,
-                    padding: "10px 16px",
-                    background: `linear-gradient(180deg, ${GOLD} 0%, #c9a53a 100%)`,
-                    color: "#1a1400",
-                    fontSize: 11,
-                    fontWeight: 900,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
-                    cursor: disputeSubmitting ? "default" : "pointer",
-                    opacity: disputeSubmitting ? 0.5 : 1,
-                  }}
-                >
-                  {disputeSubmitting ? "Submitting…" : "Submit dispute"}
-                </button>
               </div>
             )}
-          </div>
-        )}
+
+            {/* ── Dispute (resolving) ── */}
+            {isResolving && (
+              <div
+                style={{
+                  marginTop: 14,
+                  border: "1px solid rgba(232,199,102,0.35)",
+                  borderRadius: 12,
+                  padding: "14px 15px",
+                  background: "rgba(232,199,102,0.05)",
+                }}
+              >
+                <SectionLabel color={GOLD}>Proposed result</SectionLabel>
+                {proposedOutcome && (
+                  <div style={{ marginTop: 8, fontSize: 16, fontWeight: 900, color: "#fff" }}>{shortName(proposedOutcome.label)}</div>
+                )}
+                {disputeTimeLeft && (
+                  <div style={{ marginTop: 6 }}>
+                    <MutedLabel>{disputeTimeLeft}</MutedLabel>
+                  </div>
+                )}
+                {disputeSuccess ? (
+                  <div style={{ marginTop: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "#3ddc97" }}>Dispute submitted — under review</span>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 12 }}>
+                    {disputeContest && (
+                      <div style={{ marginBottom: 12 }}>
+                        <DisputeContestFields {...disputeContest} accent="#3ddc97" />
+                      </div>
+                    )}
+                    <textarea
+                      value={disputeReason}
+                      onChange={(e) => setDisputeReason(e.target.value)}
+                      placeholder="Explain why the proposed result is incorrect…"
+                      rows={3}
+                      style={{
+                        width: "100%",
+                        resize: "vertical",
+                        background: BG,
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        borderRadius: 8,
+                        color: "#fff",
+                        padding: "10px 12px",
+                        fontSize: 13,
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    {disputeError && (
+                      <div style={{ marginTop: 7 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: AWAY }}>{disputeError}</span>
+                      </div>
+                    )}
+                    <button
+                      disabled={disputeSubmitting}
+                      onClick={handleSubmitDispute}
+                      style={{
+                        marginTop: 10,
+                        border: "none",
+                        borderRadius: 9,
+                        padding: "10px 16px",
+                        background: `linear-gradient(180deg, ${GOLD} 0%, #c9a53a 100%)`,
+                        color: "#1a1400",
+                        fontSize: 11,
+                        fontWeight: 900,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        cursor: disputeSubmitting ? "default" : "pointer",
+                        opacity: disputeSubmitting ? 0.5 : 1,
+                      }}
+                    >
+                      {disputeSubmitting ? "Submitting…" : "Submit dispute"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {commentsSlot}
+          </>}
+        />
       </div>
 
       {activeBet && (

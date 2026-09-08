@@ -507,18 +507,6 @@ export function PwaMarketDetailPage() {
     onOpenProfile: (userId: string) => navigate(`/profile/${userId}`),
   };
 
-  // The themed detail views are a single 760px column, so the thread sits under
-  // them at page level and matches their measure.
-  const commentsSection = <MarketComments {...commentsProps} />;
-
-  // The price view is the exception: it widens to 1080 on desktop, and a
-  // narrower thread under a wider market reads as a separate page.
-  const priceComments = (
-    <MarketComments
-      {...commentsProps}
-      maxWidth={bp === "desktop" ? 1080 : 760}
-    />
-  );
 
   // The generic view is two columns with a sticky prediction panel, so the
   // thread goes INSIDE the scrolling left column instead. Mounted below the
@@ -551,8 +539,8 @@ export function PwaMarketDetailPage() {
         disputeContest={disputeContest}
         myDispute={myDispute}
         myBets={myBets}
+        commentsSlot={embeddedComments}
       />
-      {priceComments}
     </>
     );
   }
@@ -577,8 +565,8 @@ export function PwaMarketDetailPage() {
         disputeContest={disputeContest}
         myDispute={myDispute}
         myBets={myBets}
+        commentsSlot={embeddedComments}
       />
-      {commentsSection}
     </>
     );
   }
@@ -603,8 +591,8 @@ export function PwaMarketDetailPage() {
         disputeContest={disputeContest}
         myDispute={myDispute}
         myBets={myBets}
+        commentsSlot={embeddedComments}
       />
-      {commentsSection}
     </>
     );
   }
@@ -629,8 +617,8 @@ export function PwaMarketDetailPage() {
         disputeContest={disputeContest}
         myDispute={myDispute}
         myBets={myBets}
+        commentsSlot={embeddedComments}
       />
-      {commentsSection}
     </>
     );
   }
@@ -655,8 +643,8 @@ export function PwaMarketDetailPage() {
         disputeContest={disputeContest}
         myDispute={myDispute}
         myBets={myBets}
+        commentsSlot={embeddedComments}
       />
-      {commentsSection}
     </>
     );
   }
