@@ -2172,8 +2172,13 @@ function PwaFooter({
       style={{
         background: "#0a111a",
         borderTop: "1px solid rgba(255,255,255,0.05)",
-        padding: "80px 24px 40px",
-        marginTop: "80px",
+        // 48px of its own breathing room and no margin above it. It used to
+        // carry both an 80px margin AND 80px of top padding, which put 160px
+        // of nothing between the end of a page and the first line of the
+        // footer — most obvious on the market pages, where the thread now ends
+        // the content.
+        padding: "48px 24px 40px",
+        marginTop: 0,
         color: "#fff",
         position: "relative",
         zIndex: 10,

@@ -442,14 +442,23 @@ export const PriceMarketDetail: FC<Props> = ({
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: P.pageBg, fontFamily: FONT }}>
+    <div
+      style={{
+        // Fill the screen only where nothing follows this view. On desktop the
+        // site footer comes next, so forcing 100vh on a short market just
+        // stretches the themed backdrop into a band of dead space above it.
+        minHeight: isDesktop ? undefined : "100vh",
+        background: P.pageBg,
+        fontFamily: FONT,
+      }}
+    >
       <div
         style={{
           maxWidth: isDesktop ? 1080 : 760,
           margin: "0 auto",
-          // No bottom clearance here: the app shell already reserves 80px
-          // below every route for the fixed nav, and reserving it twice left a
-          // dead band under the thread.
+          // No bottom clearance here: <main> already reserves the bottom nav's
+          // height on mobile, and on desktop the site footer follows. Reserving
+          // it again left a dead band under the thread.
           padding: "16px 16px 16px",
         }}
       >

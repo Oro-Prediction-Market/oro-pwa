@@ -220,7 +220,15 @@ export function EsportsMarketDetail({
   const pageTitle = `${market.title} | Oro Esports`;
 
   return (
-    <div style={{ minHeight: "100vh", background: EWC.bg }}>
+    <div
+      style={{
+        // Fill the screen only where nothing follows this view. On desktop the
+        // site footer comes next, so forcing 100vh on a short market just
+        // stretches the themed backdrop into a band of dead space above it.
+        minHeight: isWide ? undefined : "100vh",
+        background: EWC.bg,
+      }}
+    >
       <Helmet>
         <title>{pageTitle}</title>
         <meta
@@ -246,9 +254,9 @@ export function EsportsMarketDetail({
           // collapses back to the single 760px column.
           maxWidth: splitLayout ? 1100 : 760,
           margin: "0 auto",
-          // No bottom clearance here: the app shell already reserves 80px
-          // below every route for the fixed nav, and reserving it twice left a
-          // dead band under the thread.
+          // No bottom clearance here: <main> already reserves the bottom nav's
+          // height on mobile, and on desktop the site footer follows. Reserving
+          // it again left a dead band under the thread.
           padding: "16px 16px 16px",
         }}
       >
