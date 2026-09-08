@@ -248,9 +248,10 @@ export function UclMarketDetail({
           // collapses back to the single 760px column.
           maxWidth: splitLayout ? 1100 : 760,
           margin: "0 auto",
-          // Outermost again now the thread renders inside this view, so the
-          // fixed-nav clearance belongs back here.
-          padding: "16px 16px 120px",
+          // No bottom clearance here: the app shell already reserves 80px
+          // below every route for the fixed nav, and reserving it twice left a
+          // dead band under the thread.
+          padding: "16px 16px 16px",
         }}
       >
         {/* ── Top bar ── */}
