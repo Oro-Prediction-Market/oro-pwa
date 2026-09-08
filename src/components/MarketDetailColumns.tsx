@@ -19,14 +19,21 @@ import { useBreakpoint } from "../hooks/useBreakpoint";
 export function MarketDetailColumns({
   panel,
   main,
+  split = true,
 }: {
   /** The prediction UI. Pinned on desktop, first in flow on mobile. */
   panel: React.ReactNode;
   /** Everything else, comments included. Scrolls. */
   main: React.ReactNode;
+  /**
+   * Set false to keep one column even with room for two. Season and other
+   * field markets do this: the ranked list IS the market, so a pinned rail
+   * would show the same twenty runners twice, once to read and once to click.
+   */
+  split?: boolean;
 }) {
   const bp = useBreakpoint();
-  const isDesktop = bp === "desktop";
+  const isDesktop = bp === "desktop" && split;
 
   if (!isDesktop) {
     return (
