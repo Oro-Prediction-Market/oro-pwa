@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { MarketDetailColumns } from "./MarketDetailColumns";
+import { ThemedBetPanel } from "./ThemedBetPanel";
 import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
@@ -165,9 +166,8 @@ export function EplMarketDetail({
 
   const onBet = (outcomeId: string) => setActiveBet(outcomeId);
 
-  // Held in a variable because it moves between columns: it rides in the
-  // prediction rail on a split match, and sits inline above the thread
-  // everywhere else. Rendering it in both places would duplicate the DOM.
+  // Lives in the scrolling column above the thread, in every layout. It was
+  // briefly pinned in the rail, but the rail now holds the prediction form.
   const resolutionCard =
     market.resolutionCriteria || market.settlementSource ? (
       <div
@@ -464,7 +464,28 @@ export function EplMarketDetail({
 
             {/* ── Outcomes ── */}
             <div style={{ marginTop: 14 }}>
-              {isMatch ? (
+              {!isMatch ? (
+                <FieldBlock
+                  market={market}
+                  locked={locked}
+                  winnerId={winnerId}
+                  onBet={onBet}
+                />
+              ) : splitLayout && !locked ? (
+                // Predict in place, the way the feed markets do. Only the
+                // desktop rail gets this: on a phone the panel is the whole
+                // screen already, and the modal is the better pattern there.
+                <ThemedBetPanel
+                  market={market}
+                  onBetPlaced={onBetPlaced}
+                  accent={ACCENT}
+                  border="rgba(0,255,133,0.25)"
+                  background="rgba(255,255,255,0.02)"
+                />
+              ) : (
+                // Locked, or single column. The tiles stay because they carry
+                // the final percentages and the WON badge, which the form has
+                // no way to show.
                 <MatchBlock
                   market={market}
                   locked={locked}
@@ -472,30 +493,28 @@ export function EplMarketDetail({
                   onBet={onBet}
                   part={splitLayout ? "actions" : undefined}
                 />
-              ) : (
-                <FieldBlock
-                  market={market}
-                  locked={locked}
-                  winnerId={winnerId}
-                  onBet={onBet}
-                />
               )}
             </div>
-
-            {splitLayout && resolutionCard}
           </>}
           main={<>
-            {/* The pictures belong beside the market, not in the action rail —
-                only the buttons pin to the right. Narrow screens render the
-                whole card in the panel above instead, so this stays empty. */}
+            {/* The market itself, read-only. The rail beside it holds the
+                action — the inline form on an open match, the result tiles
+                once it is locked. Narrow screens render the whole card in the
+                panel above instead, so this stays empty. */}
             {splitLayout && (
               <div style={{ marginBottom: 14 }}>
                 <MatchBlock
                   market={market}
-                  locked={locked}
-                  winnerId={winnerId}
-                  onBet={onBet}
-                  part="header"
+                  // Never pressable in this column, whatever the market's
+                  // status: `locked` is what renders the tiles flat, with no
+                  // lip and no hover. On an open market they come along to
+                  // carry the percentages and odds, which the form does not
+                  // show; once locked the rail shows them with the winner
+                  // instead and only the header belongs here.
+                  locked
+                  winnerId={locked ? winnerId : null}
+                  onBet={() => {}}
+                  part={locked ? "header" : undefined}
                 />
               </div>
             )}
@@ -503,7 +522,7 @@ export function EplMarketDetail({
             <DisputeResultBanner dispute={myDispute ?? null} />
             <YourPositionCard bets={myBets ?? []} resolved={resolved} />
 
-            {!splitLayout && resolutionCard}
+            {resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (
