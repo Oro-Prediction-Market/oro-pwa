@@ -55,7 +55,12 @@ export function ThemedBetPanel({
           "--text-subtle": "rgba(255,255,255,0.45)",
           // Let each view's accent drive the call to action rather than the
           // app's generic blue.
-          "--color-primary": accent,
+          // The CTA colour, not the brand one: --color-primary paints solid
+          // blocks (the selected stake chip, the active wallet border), and
+          // those glare for exactly the same reason the button did. The brand
+          // colour still reaches the heading and the selected outcome, which
+          // are text and a hairline — it is passed as a prop below.
+          "--color-primary": cta,
           "--grad-primary": `linear-gradient(160deg, ${cta} 0%, ${cta}d9 100%)`,
         } as React.CSSProperties
       }

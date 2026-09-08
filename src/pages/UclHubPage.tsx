@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useLayoutEffect, useEffect, lazy, Suspense } from "react";
+import { groupByMatchday } from "../lib/matchday";
 import { useNavigate } from "react-router-dom";
 import {
   Trophy,
@@ -329,6 +330,72 @@ const WIN_GREEN = "#3ddc97";
 
 // Big card for an upcoming or in-progress match (open / betting-closed / resolving).
 // `featured` cards span the full width of the grid and carry a gold accent.
+/**
+ * "3d 5h" / "5h 12m" / "12m" until the market closes, refreshed each minute.
+ * Same shape as the EPL hub's, kept private here rather than shared: the two
+ * hub files do not import from each other.
+ */
+function useClosesAt(closesAt: string | null | undefined): string {
+  const [label, setLabel] = useState("");
+  useEffect(() => {
+    if (!closesAt) {
+      setLabel("");
+      return;
+    }
+    const tick = () => {
+      const ms = new Date(closesAt).getTime() - Date.now();
+      if (ms <= 0) {
+        setLabel("Closed");
+        return;
+      }
+      const d = Math.floor(ms / 86_400_000);
+      const h = Math.floor((ms % 86_400_000) / 3_600_000);
+      const mn = Math.floor((ms % 3_600_000) / 60_000);
+      if (d > 0) setLabel(`${d}d ${h}h`);
+      else if (h > 0) setLabel(`${h}h ${mn}m`);
+      else setLabel(`${mn}m`);
+    };
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, [closesAt]);
+  return label;
+}
+
+/**
+ * The rule that separates one matchday from the next, so a long fixture list
+ * reads as rounds rather than one block.
+ */
+function RoundHeading({ label, count }: { label: string; count: number }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        margin: "18px 0 10px",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: BLUE,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
+        {count}
+      </span>
+      <div style={{ flex: 1, height: 1, background: "rgba(43,107,255,0.22)" }} />
+    </div>
+  );
+}
+
 function MatchCard({
   m,
   onOpen,
@@ -346,10 +413,10 @@ function MatchCard({
   const away = outs[outs.length - 1];
   const probs = outcomeShares(m);
   const pool = Number(m.totalPool) || outs.reduce((sum, o) => sum + Number(o.totalBetAmount ?? 0), 0);
-  const kickoff = m.bettingClosesAt ?? m.closesAt;
-  const when = kickoff
-    ? new Date(kickoff).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
-    : "";
+  // Time left to predict, not the kickoff timestamp — matching the EPL cards.
+  // "Sat, Sep 12, 07:00 PM" makes you work out how long you have; "3d 5h"
+  // answers the question the card is actually being asked.
+  const closes = useClosesAt(m.bettingClosesAt ?? m.closesAt);
   const locked = m.status === "closed" || m.status === "resolving";
   const badge = featured
     ? "★ Featured"
@@ -382,7 +449,7 @@ function MatchCard({
           {badge}
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, fontWeight: 700, color: SILVER }}>
-          <Clock size={11} /> {when}
+          <Clock size={11} /> {closes}
         </span>
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", gap: 10, padding: "16px 16px 12px" }}>
@@ -580,16 +647,25 @@ function MatchesTab({
             const featuredIds = new Set(featured.map((m) => m.id));
             const rest = upcoming.filter((m) => !featuredIds.has(m.id));
             return (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
-                {featured.map((m) => (
-                  <div key={m.id} style={{ gridColumn: "1 / -1" }}>
-                    <MatchCard m={m} onOpen={onOpen} onBet={onBet} featured />
+              <>
+                {featured.length > 0 && (
+                  <div style={{ display: "grid", gap: 12, marginBottom: 4 }}>
+                    {featured.map((m) => (
+                      <MatchCard key={m.id} m={m} onOpen={onOpen} onBet={onBet} featured />
+                    ))}
+                  </div>
+                )}
+                {groupByMatchday(rest, "Matchday").map((g) => (
+                  <div key={g.key}>
+                    <RoundHeading label={g.label} count={g.markets.length} />
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 12 }}>
+                      {g.markets.map((m) => (
+                        <MatchCard key={m.id} m={m} onOpen={onOpen} onBet={onBet} />
+                      ))}
+                    </div>
                   </div>
                 ))}
-                {rest.map((m) => (
-                  <MatchCard key={m.id} m={m} onOpen={onOpen} onBet={onBet} />
-                ))}
-              </div>
+              </>
             );
           })()
         )
@@ -600,11 +676,16 @@ function MatchesTab({
           Results will show here after the first matchday.
         </EmptyState>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {previous.map((m) => (
-            <UclResultCard key={m.id} m={m} onOpen={onOpen} />
-          ))}
-        </div>
+        groupByMatchday(previous, "Matchday").map((g) => (
+          <div key={g.key}>
+            <RoundHeading label={g.label} count={g.markets.length} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {g.markets.map((m) => (
+                <UclResultCard key={m.id} m={m} onOpen={onOpen} />
+              ))}
+            </div>
+          </div>
+        ))
       )}
     </div>
   );

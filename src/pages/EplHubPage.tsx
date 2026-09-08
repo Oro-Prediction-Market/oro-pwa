@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense, useTransition } from "react";
+import { groupByMatchday } from "../lib/matchday";
 import { useNavigate } from "react-router-dom";
 import {
   getMarkets,
@@ -131,6 +132,41 @@ function useClosesAt(closesAt: string | null | undefined): string {
     return () => clearInterval(id);
   }, [closesAt]);
   return label;
+}
+
+/**
+ * The rule that separates one round from the next. A label alone was not
+ * enough to break the list up — a fixture grid reads as one continuous block
+ * without a horizontal line through it.
+ */
+function RoundHeading({ label, count }: { label: string; count: number }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        margin: "18px 0 10px",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 900,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: ACCENT,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>
+        {count}
+      </span>
+      <div style={{ flex: 1, height: 1, background: "rgba(0,255,133,0.18)" }} />
+    </div>
+  );
 }
 
 const kickoffOf = (m: Market) => {
@@ -941,10 +977,6 @@ export function EplHubPage() {
         {/* ── Matches ── */}
         {tab === "matches" && (
           <>
-            {featuredMatches.map((m) => (
-              <FeaturedMatchCard key={m.id} market={m} onBet={openBet} />
-            ))}
-
             {/* Upcoming / Previous toggle */}
             <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
               {(
@@ -976,20 +1008,39 @@ export function EplHubPage() {
               upcomingMatches.length === 0 ? (
                 emptyState("⚽", "No upcoming fixtures yet", "Check back when the 2026/27 fixtures are announced")
               ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14, marginTop: 12 }}>
-                  {upcomingRest.map((market) => (
-                    <EplMatchCard key={market.id} market={market} onBet={openBet} />
+                <>
+                  {/* Featured sits under the toggle, not above it: it is part of
+                      the upcoming list, and pinned above the toggle it read as
+                      a separate section that the Previous tab could not
+                      explain. */}
+                  {featuredMatches.map((m) => (
+                    <FeaturedMatchCard key={m.id} market={m} onBet={openBet} />
                   ))}
-                </div>
+                  {groupByMatchday(upcomingRest, "Gameweek").map((g) => (
+                    <div key={g.key}>
+                      <RoundHeading label={g.label} count={g.markets.length} />
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))", gap: 14 }}>
+                        {g.markets.map((market) => (
+                          <EplMatchCard key={market.id} market={market} onBet={openBet} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </>
               )
             ) : previousMatches.length === 0 ? (
               emptyState("🏁", "No finished matches yet", "Results will show here after the first matchday")
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
-                {previousMatches.map((market) => (
-                  <EplResultCard key={market.id} market={market} />
-                ))}
-              </div>
+              groupByMatchday(previousMatches, "Gameweek").map((g) => (
+                <div key={g.key}>
+                  <RoundHeading label={g.label} count={g.markets.length} />
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {g.markets.map((market) => (
+                      <EplResultCard key={market.id} market={market} />
+                    ))}
+                  </div>
+                </div>
+              ))
             )}
           </>
         )}
