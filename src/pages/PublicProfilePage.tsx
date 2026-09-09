@@ -8,6 +8,7 @@ import {
   CURRENT_FOOTBALL_SEASON,
   type CollectibleBadge,
 } from "@shared/components/BadgeGrid";
+import { tierMeta } from "@shared/reputation/tiers";
 
 export function PublicProfilePage() {
   const { id = "" } = useParams();
@@ -103,15 +104,28 @@ export function PublicProfilePage() {
               >
                 {name}
               </h1>
-              <b
-                style={{
-                  fontSize: 12,
-                  color: "#fbbf24",
-                  textTransform: "capitalize",
-                }}
-              >
-                Trophy {profile.reputationTier.replace("_", " ")}
-              </b>
+              {/* Was `Trophy {tier.replace("_"," ")}` — the icon had been typed
+                  as bare text, so the tier read "Trophy Prophet", and the raw
+                  column value under textTransform:capitalize turned hot_hand
+                  into "Hot hand". tierMeta is the same source the badges and
+                  leaderboard use, so a tier now looks identical everywhere. */}
+              {(() => {
+                const tier = tierMeta(profile.reputationTier);
+                return (
+                  <b
+                    style={{
+                      fontSize: 12,
+                      color: tier.color,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <tier.Icon size={13} />
+                    {tier.label}
+                  </b>
+                );
+              })()}
             </div>
           </div>
 
