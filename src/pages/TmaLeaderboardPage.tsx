@@ -4,6 +4,7 @@ import { Page } from "@shared/components/Page";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { tierLabel, tierColor, tierIcon } from "@shared/reputation/tiers";
 import { tierProgress as tierProgressFor } from "@shared/reputation/tiers";
+import { TierMapSheet } from "@shared/components/TierMapSheet";
 import { useAuth } from "@shared/hooks/useAuth";
 import {
   getLeaderboard,
@@ -31,6 +32,7 @@ import {
   Award,
   X,
   ChevronUp,
+  ChevronRight,
   ArrowDownLeft,
   Banknote,
   CalendarDays,
@@ -416,6 +418,10 @@ function MyStatsSheet({
   // here and on the profile page, against the old four-rung ladder.
   const tierProgress = tierProgressFor(tier, total, acc);
 
+  // Opened from inside this sheet, so it has to paint above it — the map uses
+  // z-index 2000 against this sheet's 1000/1001.
+  const [tierMapOpen, setTierMapOpen] = useState(false);
+
 
   const recentSettled = bets.filter((b) => b.status !== "pending").slice(0, 6);
 
@@ -694,10 +700,13 @@ function MyStatsSheet({
             ))}
           </div>
 
-          {/* Tier progression */}
+          {/* Tier progression — tappable through to the full ladder, from both
+              branches so a Legend can reach it too. */}
           {tier === "legend" ? (
-            <div
+            <button
+              onClick={() => setTierMapOpen(true)}
               style={{
+                width: "100%",
                 padding: "10px 14px",
                 background: "rgba(245,158,11,0.1)",
                 borderRadius: 12,
@@ -705,16 +714,39 @@ function MyStatsSheet({
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
+                cursor: "pointer",
+                textAlign: "left",
+                fontFamily: "inherit",
               }}
             >
               <Trophy size={14} color="#f59e0b" />
               <span style={{ fontSize: 12, fontWeight: 700, color: "#f59e0b" }}>
                 You've reached the top — Legend tier!
               </span>
-            </div>
+              <span
+                style={{
+                  marginLeft: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: "var(--text-muted)",
+                  flexShrink: 0,
+                }}
+              >
+                All tiers
+                <ChevronRight size={12} />
+              </span>
+            </button>
           ) : tierProgress ? (
-            <div
+            <button
+              onClick={() => setTierMapOpen(true)}
               style={{
+                width: "100%",
+                cursor: "pointer",
+                textAlign: "left",
+                fontFamily: "inherit",
                 padding: "12px 14px",
                 background: "var(--bg-secondary)",
                 borderRadius: 12,
@@ -767,16 +799,39 @@ function MyStatsSheet({
                   }}
                 />
               </div>
-              <span
+              <div
                 style={{
-                  fontSize: 11,
-                  color: "var(--text-subtle)",
-                  fontWeight: 600,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
-                {tierProgress.hint}
-              </span>
-            </div>
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--text-subtle)",
+                    fontWeight: 600,
+                  }}
+                >
+                  {tierProgress.hint}
+                </span>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "var(--text-muted)",
+                    flexShrink: 0,
+                  }}
+                >
+                  All tiers
+                  <ChevronRight size={12} />
+                </span>
+              </div>
+            </button>
           ) : null}
 
           {/* Recent bets */}
@@ -901,6 +956,15 @@ function MyStatsSheet({
           )}
         </div>
       </div>
+
+      {tierMapOpen && (
+        <TierMapSheet
+          tier={tier}
+          totalPredictions={total}
+          correctPredictions={correct}
+          onClose={() => setTierMapOpen(false)}
+        />
+      )}
     </>
   );
 }
