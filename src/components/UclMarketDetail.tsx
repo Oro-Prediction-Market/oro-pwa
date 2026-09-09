@@ -342,12 +342,6 @@ export function UclMarketDetail({
               pointerEvents: "none",
             }}
           />
-          <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.5 }}>
-            <Star size={9} color="#cfe0ff" fill="#cfe0ff" style={{ position: "absolute", right: "12%", top: "22%" }} />
-            <Star size={7} color={GOLD} fill={GOLD} style={{ position: "absolute", right: "26%", top: "60%" }} />
-            <Star size={6} color="#cfe0ff" fill="#cfe0ff" style={{ position: "absolute", right: "6%", top: "54%" }} />
-          </div>
-
           <div style={{ position: "relative", padding: "18px 18px 16px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
               <span
