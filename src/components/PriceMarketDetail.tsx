@@ -2,6 +2,7 @@ import { FC, useState, useEffect } from "react";
 import { useCurrency } from "@shared/currency/currency";
 import { outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "../hooks/useGoBack";
 import {
   ArrowLeft,
   Share2,
@@ -120,6 +121,7 @@ export const PriceMarketDetail: FC<Props> = ({
   commentsSlot,
 }) => {
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const bp = useBreakpoint();
   const isDesktop = bp === "desktop";
   const [activeBet, setActiveBet] = useState<string | null>(null);
@@ -472,7 +474,7 @@ export const PriceMarketDetail: FC<Props> = ({
             marginBottom: 18,
           }}
         >
-          <button onClick={() => navigate(-1)} style={barBtn}>
+          <button onClick={() => goBack()} style={barBtn}>
             <ArrowLeft size={15} />
             Back
           </button>

@@ -4,15 +4,15 @@
  * (browser history, no Telegram SDK required).
  */
 import { type PropsWithChildren } from "react";
-import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
+import { useGoBack } from "../hooks/useGoBack";
 
 export function PwaPage({
   children,
   back = false,
   title,
 }: PropsWithChildren<{ back?: boolean; title?: string }>) {
-  const navigate = useNavigate();
+  const goBack = useGoBack();
 
   return (
     <div style={{ minHeight: "100vh", position: "relative" }}>
@@ -33,7 +33,7 @@ export function PwaPage({
         >
           {back && (
             <button
-              onClick={() => navigate(-1)}
+              onClick={goBack}
               style={{
                 background: "none",
                 border: "none",

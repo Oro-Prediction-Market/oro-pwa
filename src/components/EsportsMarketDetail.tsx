@@ -6,6 +6,7 @@ import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "../hooks/useGoBack";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Trophy } from "lucide-react";
 import type { Bet, Market, Outcome, MyDispute } from "@shared/api/client";
@@ -164,6 +165,7 @@ export function EsportsMarketDetail({
   commentsSlot,
 }: EsportsMarketDetailProps) {
   const navigate = useNavigate();
+  const goBack = useGoBack();
   // Two columns only where there is room for them.
   const isWide = useBreakpoint() === "desktop";
   const [activeBet, setActiveBet] = useState<string | null>(null);
@@ -332,7 +334,7 @@ export function EsportsMarketDetail({
           }}
         >
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => goBack()}
             style={{
               display: "inline-flex",
               alignItems: "center",

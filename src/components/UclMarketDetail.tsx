@@ -6,6 +6,7 @@ import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "../hooks/useGoBack";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Star } from "lucide-react";
 import type { Bet, Market, Outcome, MyDispute } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
@@ -177,6 +178,7 @@ export function UclMarketDetail({
   commentsSlot,
 }: UclMarketDetailProps) {
   const navigate = useNavigate();
+  const goBack = useGoBack();
   // Two columns only where there is room for them.
   const isWide = useBreakpoint() === "desktop";
   const [activeBet, setActiveBet] = useState<string | null>(null);
@@ -301,7 +303,7 @@ export function UclMarketDetail({
       >
         {/* ── Top bar ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <button onClick={() => navigate(-1)} style={iconBtn}>
+          <button onClick={() => goBack()} style={iconBtn}>
             <ArrowLeft size={15} />
             Back
           </button>

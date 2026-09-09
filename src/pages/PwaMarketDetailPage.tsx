@@ -46,6 +46,7 @@ import { isUclMarket } from "./UclHubPage";
 import { UclMarketDetail } from "../components/UclMarketDetail";
 import { PriceMarketDetail } from "../components/PriceMarketDetail";
 import { STICKY_TOP, STICKY_MAX_HEIGHT } from "../components/MarketDetailColumns";
+import { useGoBack } from "../hooks/useGoBack";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -237,6 +238,7 @@ function TerPricePanel({ market }: { market: Market }) {
 export function PwaMarketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const goBack = useGoBack();
   const { user } = useAuth();
   const referralId = String(user?.telegramId ?? user?.id ?? "");
   const [shareOpen, setShareOpen] = useState(false);
@@ -731,8 +733,12 @@ export function PwaMarketDetailPage() {
           marginBottom: "var(--space-lg)",
         }}
       >
-        <Link
-          to="/"
+        {/* Was a <Link to="/">: labelled Back but always went to the feed
+            root, so it discarded wherever you actually came from. useGoBack
+            goes back for real, and still lands on "/" for a visitor who
+            opened this market from a shared link with no history behind it. */}
+        <button
+          onClick={goBack}
           style={{
             color: "var(--text-muted)",
             textDecoration: "none",
@@ -747,6 +753,8 @@ export function PwaMarketDetailPage() {
             borderRadius: "var(--radius-sm)",
             border: "1px solid var(--border)",
             boxShadow: "var(--shadow-sm)",
+            cursor: "pointer",
+            fontFamily: "inherit",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = "var(--text-main)";
@@ -771,7 +779,7 @@ export function PwaMarketDetailPage() {
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
           Back
-        </Link>
+        </button>
 
         <button
           onClick={() => setShareOpen(true)}
