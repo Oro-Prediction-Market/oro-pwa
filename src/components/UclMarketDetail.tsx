@@ -226,8 +226,9 @@ export function UclMarketDetail({
 
   const onBet = (outcomeId: string) => setActiveBet(outcomeId);
 
-  // Lives in the scrolling column above the thread, in every layout. It was
-  // briefly pinned in the rail, but the rail now holds the prediction form.
+  // Rendered in one place or the other, never both: pinned in the rail under
+  // the prediction form on desktop, and in the scrolling column above the
+  // thread on narrow screens, where the rail collapses to the top of the page.
   const resolutionCard =
     market.resolutionCriteria || market.settlementSource ? (
       <div
@@ -484,6 +485,12 @@ export function UclMarketDetail({
               )}
             </div>
 
+            {/* Desktop only: the rail has room under the prediction form, and
+                putting the criteria there keeps them beside the outcome you
+                are about to pick rather than below the fold. On narrow screens
+                the panel renders FIRST, so the same card would land above the
+                market itself — there it stays in the scrolling column. */}
+            {isWide && resolutionCard}
           </>}
           main={<>
             {/* The market itself, read-only. The rail beside it holds the
@@ -515,7 +522,8 @@ export function UclMarketDetail({
               theme={{ accent: ACCENT, border: "rgba(43,107,255,0.25)", background: "rgba(255,255,255,0.02)" }}
             />
 
-            {resolutionCard}
+            {/* On desktop this now sits in the rail instead — see the panel. */}
+            {!isWide && resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (
