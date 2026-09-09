@@ -645,7 +645,7 @@ function MyStatsSheet({
           >
             {[
               {
-                label: "This Week",
+                label: "This Month",
                 value: `Nu ${myWeeklyDeposit.toLocaleString()}`,
                 color: myWeeklyDeposit > 0 ? "#10b981" : "var(--text-subtle)",
                 icon: <ArrowDownLeft size={13} />,
@@ -1480,6 +1480,10 @@ export const TmaLeaderboardPage: FC = () => {
   const [seasonHistory, setSeasonHistory] = useState<Season[]>([]);
   const [depositTxs, setDepositTxs] = useState<Transaction[]>([]);
   const [myWeeklyDeposit, setMyWeeklyDeposit] = useState(0);
+  // "week" is the API's legacy name for what the backend actually computes:
+  // month-to-date, from the 1st at 00:00 UTC. Renaming it would mean changing
+  // the endpoint contract, so the wire keeps the old word and the UI says Month.
+  const [selectedPeriod, setSelectedPeriod] = useState<"all" | "week">("all");
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadMore = useCallback(() => {
@@ -1499,32 +1503,43 @@ export const TmaLeaderboardPage: FC = () => {
     return () => observer.disconnect();
   });
 
+  // Everything that does not depend on the selected period — loaded once.
   useEffect(() => {
     Promise.all([
-      getLeaderboard().catch(() => null),
       getMyResults().catch(() => []),
       getMe().catch(() => null),
       getCurrentSeason().catch(() => null),
       getSeasonHistory().catch(() => []),
       getMyTransactions("deposit").catch(() => []),
-    ])
-      .then(([lbData, myBets, myProfile, season, history, depTxs]) => {
-        setLb(lbData);
-        setBets(myBets as Bet[]);
-        setMe(myProfile);
-        setCurrentSeason(season);
-        setSeasonHistory(history as Season[]);
-        const txList = depTxs as Transaction[];
-        setDepositTxs(txList);
-        const weekAgo = Date.now() - 7 * 86_400_000;
-        setMyWeeklyDeposit(
-          txList
-            .filter((t) => new Date(t.createdAt).getTime() >= weekAgo)
-            .reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
-        );
-      })
-      .finally(() => setLoading(false));
+    ]).then(([myBets, myProfile, season, history, depTxs]) => {
+      setBets(myBets as Bet[]);
+      setMe(myProfile);
+      setCurrentSeason(season);
+      setSeasonHistory(history as Season[]);
+      const txList = depTxs as Transaction[];
+      setDepositTxs(txList);
+      // Month-to-date, matching the board's own window — a rolling 7 days
+      // would have counted deposits the monthly standings ignore.
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      setMyWeeklyDeposit(
+        txList
+          .filter((t) => new Date(t.createdAt).getTime() >= monthStart.getTime())
+          .reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
+      );
+    });
   }, []);
+
+  // The board itself — refetched whenever the period changes.
+  useEffect(() => {
+    setLoading(true);
+    setVisibleCount(20);
+    getLeaderboard(selectedPeriod)
+      .then(setLb)
+      .catch(() => setLb(null))
+      .finally(() => setLoading(false));
+  }, [selectedPeriod]);
 
   const winRate =
     (me?.totalPredictions ?? 0) > 0
@@ -1678,7 +1693,24 @@ export const TmaLeaderboardPage: FC = () => {
                   fontWeight: 600,
                 }}
               >
-                {lb?.totalRanked ?? 0} ranked · All Time
+                {lb?.totalRanked ?? 0} ranked ·{" "}
+                {selectedPeriod === "week" ? "This Month" : "All Time"}
+              </p>
+              <p
+                style={{
+                  fontSize: 10,
+                  color: "var(--text-subtle)",
+                  margin: "2px 0 0",
+                  fontWeight: 600,
+                }}
+              >
+                {/* The two boards do not share an entry rule: all-time needs 10
+                    lifetime predictions, the month needs 15 SETTLED ones inside
+                    it. Saying "10+" on both is what makes an empty monthly
+                    board look broken rather than simply unearned. */}
+                {selectedPeriod === "week"
+                  ? "15+ settled predictions this month to appear"
+                  : "10+ predictions needed to appear on the board"}
               </p>
             </div>
 
@@ -1700,6 +1732,39 @@ export const TmaLeaderboardPage: FC = () => {
             >
               <CalendarDays size={13} /> Seasons
             </button>
+          </div>
+
+          {/* Period pills */}
+          <div
+            className="lb-period-pills"
+            style={{ display: "flex", gap: 8, padding: "0 16px 12px" }}
+          >
+            {(["all", "week"] as const).map((p) => (
+              <button
+                key={p}
+                className="lb-period-pill"
+                onClick={() => setSelectedPeriod(p)}
+                style={{
+                  padding: "5px 16px",
+                  borderRadius: 20,
+                  border: `1px solid ${selectedPeriod === p ? "var(--color-primary)" : "var(--glass-border)"}`,
+                  background:
+                    selectedPeriod === p
+                      ? "rgba(39,117,208,0.12)"
+                      : "var(--bg-card)",
+                  color:
+                    selectedPeriod === p
+                      ? "var(--color-primary)"
+                      : "var(--text-muted)",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {p === "all" ? "All Time" : "This Month"}
+              </button>
+            ))}
           </div>
 
           {/* Percentile banner */}
@@ -1751,9 +1816,19 @@ export const TmaLeaderboardPage: FC = () => {
                 strokeWidth={1.5}
                 style={{ marginBottom: 12, opacity: 0.4 }}
               />
-              <p style={{ fontWeight: 600 }}>No ranked predictors yet.</p>
+              {/* An empty monthly board is the normal state early in a month —
+                  it means nobody has settled 15 predictions yet, not that the
+                  platform has no predictors. The all-time copy would read as a
+                  bug here. */}
+              <p style={{ fontWeight: 600 }}>
+                {selectedPeriod === "week"
+                  ? "No one has qualified this month yet."
+                  : "No ranked predictors yet."}
+              </p>
               <p style={{ fontSize: 12, marginTop: 4 }}>
-                Be the first to make predictions!
+                {selectedPeriod === "week"
+                  ? "Settle 15 predictions this month to claim the top spot."
+                  : "Be the first to make predictions!"}
               </p>
             </div>
           ) : (
