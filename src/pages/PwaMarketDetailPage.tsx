@@ -3,6 +3,8 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import MarketComments from "@shared/components/MarketComments";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
+import { ProbabilityChart } from "@shared/components/ProbabilityChart";
+import { getViewerCurrency } from "@shared/currency/pools";
 import {
   getMarket,
   getDisputes,
@@ -20,6 +22,8 @@ import {
   DisputeSide,
   SubmitDisputePayload,
   TerPrice,
+  getMarketHistory,
+  OutcomeHistory,
 } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
 import { YourPositionCard } from "../../shared/components/YourPositionCard";
@@ -250,6 +254,7 @@ export function PwaMarketDetailPage() {
   const [myBets, setMyBets] = useState<Bet[]>([]);
   // Bumped whenever a bet lands, to re-read the position card.
   const [betsNonce, setBetsNonce] = useState(0);
+  const [history, setHistory] = useState<OutcomeHistory[] | null>(null);
   // Outcome the phone sheet is open on, if any.
   const [activeBet, setActiveBet] = useState<string | null>(null);
 
@@ -324,6 +329,13 @@ export function PwaMarketDetailPage() {
     if (!id) return;
     const refetch = () => {
       bustCache(`/markets/${id}`);
+      // The curve rides the market poll rather than appending points from the
+      // socket: the server already ends the series at the live value, and a
+      // client-appended point would compute its probability a different way
+      // and land a second "now" at a slightly different timestamp.
+      getMarketHistory(id)
+        .then(setHistory)
+        .catch(() => setHistory([]));
       return getMarket(id)
         .then(setMarket)
         .catch(() => {});
@@ -497,6 +509,46 @@ export function PwaMarketDetailPage() {
 
   // Use live-merged market for rendering so odds/pool update in real time
   const displayMarket = liveMarket!;
+
+  /**
+   * The probability curve, mapped into the chart's primitive shape.
+   *
+   * Null — and so the card renders exactly as it did before — unless all of:
+   *  - the market is in the "other" category (this is the first test surface);
+   *  - the viewer is on the ngultrum book, because snapshots mirror BTN only
+   *    and a USDT viewer would get a chart in a different currency from the
+   *    outcome rows right beneath it;
+   *  - there are points carrying an outcomePool. Points written before that
+   *    column existed can only offer the raw LMSR value, which is not what the
+   *    rows display, so plotting them would contradict the page.
+   *
+   * Colours are indexed the same way as the outcome rows below, so a line and
+   * its row are the same colour.
+   */
+  const chartSeries = useMemo(() => {
+    if (!history || displayMarket.category !== "other") return null;
+    if (getViewerCurrency() !== "BTN") return null;
+
+    const resolved =
+      market.status === "resolved" || market.status === "settled";
+    const palette = resolved
+      ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
+      : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
+
+    const series = history.map((h, i) => ({
+      label: h.label,
+      color: palette[i % palette.length],
+      points: h.points
+        .filter((pt) => pt.outcomePool !== null)
+        .map((pt) => ({ t: new Date(pt.capturedAt).getTime(), p: pt.share })),
+    }));
+    return series.some((s) => s.points.length) ? series : null;
+  }, [history, displayMarket.category, market.status]);
+
+  const chartSince = useMemo(() => {
+    const ts = (chartSeries ?? []).flatMap((s) => s.points.map((p) => p.t));
+    return ts.length ? Math.min(...ts) : null;
+  }, [chartSeries]);
 
   const isOpen = market.status === "open";
   const isResolving = market.status === "resolving";
@@ -1031,85 +1083,6 @@ export function PwaMarketDetailPage() {
               boxShadow: "var(--shadow-md)",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "var(--space-lg)",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 900,
-                  color: "var(--text-muted)",
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Crowd Sentiment
-              </div>
-              {(() => {
-                const meta = (market as any).signalMeta;
-                if (!meta || meta.composite === 0) return null;
-                const c = meta.composite as number;
-                const pct = Math.round(c * 100);
-                const col =
-                  c >= 0.6
-                    ? "var(--color-success)"
-                    : c >= 0.3
-                      ? "var(--color-warning)"
-                      : "var(--color-danger)";
-                const label =
-                  c >= 0.6 ? "Strong" : c >= 0.3 ? "Balanced" : "Low";
-                const r = 7,
-                  circ = 2 * Math.PI * r;
-                const dash = (c * circ).toFixed(2);
-                return (
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                    title={`Participants: ${meta.participantCount}`}
-                  >
-                    <div
-                      style={{ position: "relative", width: 22, height: 22 }}
-                    >
-                      <svg width="22" height="22" viewBox="0 0 18 18">
-                        <circle
-                          cx="9"
-                          cy="9"
-                          r={r}
-                          fill="none"
-                          stroke="var(--bg-secondary)"
-                          strokeWidth="3"
-                        />
-                        <circle
-                          cx="9"
-                          cy="9"
-                          r={r}
-                          fill="none"
-                          stroke={col}
-                          strokeWidth="3"
-                          strokeDasharray={`${dash} ${circ}`}
-                          strokeLinecap="round"
-                          transform="rotate(-90 9 9)"
-                        />
-                      </svg>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 900,
-                        color: col,
-                        letterSpacing: "0.02em",
-                      }}
-                    >
-                      {label} Confidence ({pct}%)
-                    </span>
-                  </div>
-                );
-              })()}
-            </div>
             {(market.externalSource === "ter" || market.settlementSource) && (
               <div
                 style={{
@@ -1141,6 +1114,9 @@ export function PwaMarketDetailPage() {
                 })()}
               </div>
             )}
+
+            {chartSeries && <ProbabilityChart series={chartSeries} since={chartSince} />}
+
             <div
               style={{
                 display: "flex",
