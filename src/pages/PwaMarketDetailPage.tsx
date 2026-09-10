@@ -1304,7 +1304,7 @@ export function PwaMarketDetailPage() {
                       }}
                     >
                       Nu {Number(outcome.totalBetAmount).toLocaleString()} total
-                      bet
+                      predicted
                     </div>
                   </div>
                 );
