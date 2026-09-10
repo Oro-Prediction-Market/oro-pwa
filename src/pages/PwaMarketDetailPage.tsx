@@ -452,6 +452,49 @@ export function PwaMarketDetailPage() {
     setSide: setDisputeSide,
   };
 
+  /**
+   * The probability curve, mapped into the chart's primitive shape.
+   *
+   * Null — and so the card renders exactly as it did before — unless all of:
+   *  - the market is in the "other" category (this is the first test surface);
+   *  - the viewer is on the ngultrum book, because snapshots mirror BTN only
+   *    and a USDT viewer would get a chart in a different currency from the
+   *    outcome rows right beneath it;
+   *  - there are points carrying an outcomePool. Points written before that
+   *    column existed can only offer the raw LMSR value, which is not what the
+   *    rows display, so plotting them would contradict the page.
+   *
+   * Colours are indexed the same way as the outcome rows below, so a line and
+   * its row are the same colour.
+   *
+   * Declared above the loading/error early returns below: every hook on this
+   * page must run on every render, including the ones that bail out.
+   */
+  const chartSeries = useMemo(() => {
+    if (!history || liveMarket?.category !== "other") return null;
+    if (getViewerCurrency() !== "BTN") return null;
+
+    const resolved =
+      liveMarket.status === "resolved" || liveMarket.status === "settled";
+    const palette = resolved
+      ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
+      : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
+
+    const series = history.map((h, i) => ({
+      label: h.label,
+      color: palette[i % palette.length],
+      points: h.points
+        .filter((pt) => pt.outcomePool !== null)
+        .map((pt) => ({ t: new Date(pt.capturedAt).getTime(), p: pt.share })),
+    }));
+    return series.some((s) => s.points.length) ? series : null;
+  }, [history, liveMarket?.category, liveMarket?.status]);
+
+  const chartSince = useMemo(() => {
+    const ts = (chartSeries ?? []).flatMap((s) => s.points.map((p) => p.t));
+    return ts.length ? Math.min(...ts) : null;
+  }, [chartSeries]);
+
   if (loading) return <LoadingScreen message="Syncing market..." />;
 
   if (error || !market) {
@@ -509,46 +552,6 @@ export function PwaMarketDetailPage() {
 
   // Use live-merged market for rendering so odds/pool update in real time
   const displayMarket = liveMarket!;
-
-  /**
-   * The probability curve, mapped into the chart's primitive shape.
-   *
-   * Null — and so the card renders exactly as it did before — unless all of:
-   *  - the market is in the "other" category (this is the first test surface);
-   *  - the viewer is on the ngultrum book, because snapshots mirror BTN only
-   *    and a USDT viewer would get a chart in a different currency from the
-   *    outcome rows right beneath it;
-   *  - there are points carrying an outcomePool. Points written before that
-   *    column existed can only offer the raw LMSR value, which is not what the
-   *    rows display, so plotting them would contradict the page.
-   *
-   * Colours are indexed the same way as the outcome rows below, so a line and
-   * its row are the same colour.
-   */
-  const chartSeries = useMemo(() => {
-    if (!history || displayMarket.category !== "other") return null;
-    if (getViewerCurrency() !== "BTN") return null;
-
-    const resolved =
-      market.status === "resolved" || market.status === "settled";
-    const palette = resolved
-      ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
-      : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
-
-    const series = history.map((h, i) => ({
-      label: h.label,
-      color: palette[i % palette.length],
-      points: h.points
-        .filter((pt) => pt.outcomePool !== null)
-        .map((pt) => ({ t: new Date(pt.capturedAt).getTime(), p: pt.share })),
-    }));
-    return series.some((s) => s.points.length) ? series : null;
-  }, [history, displayMarket.category, market.status]);
-
-  const chartSince = useMemo(() => {
-    const ts = (chartSeries ?? []).flatMap((s) => s.points.map((p) => p.t));
-    return ts.length ? Math.min(...ts) : null;
-  }, [chartSeries]);
 
   const isOpen = market.status === "open";
   const isResolving = market.status === "resolving";
