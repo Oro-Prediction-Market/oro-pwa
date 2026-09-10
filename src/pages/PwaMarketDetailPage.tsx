@@ -900,7 +900,7 @@ export function PwaMarketDetailPage() {
               you can still act on — showed no sign that you were in it. */}          <div>
             <h1
               style={{
-                fontSize: bp === "mobile" ? "1.05rem" : "1.2rem",
+                fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
                 fontWeight: 900,
                 color: "var(--text-main)",
                 marginBottom: "var(--space-sm)",
@@ -915,7 +915,7 @@ export function PwaMarketDetailPage() {
               <p
                 style={{
                   color: "var(--text-muted)",
-                  fontSize: bp === "mobile" ? "0.85rem" : "0.9rem",
+                  fontSize: bp === "mobile" ? "0.95rem" : "1.05rem",
                   lineHeight: 1.6,
                   fontWeight: 500,
                   maxWidth: "70ch",
@@ -949,14 +949,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: bp === "mobile" ? "10px 9px" : "12px",
+                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.6rem" : "0.62rem",
+                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -973,7 +973,7 @@ export function PwaMarketDetailPage() {
                         ? "var(--color-warning)"
                         : "var(--text-muted)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.8rem" : "0.9rem",
+                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
@@ -995,14 +995,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: bp === "mobile" ? "10px 9px" : "12px",
+                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.6rem" : "0.62rem",
+                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -1015,7 +1015,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.8rem" : "0.9rem",
+                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
                   }}
                 >
                   Nu {Number(displayMarket.totalPool).toLocaleString()}
@@ -1026,14 +1026,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: bp === "mobile" ? "10px 9px" : "12px",
+                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.6rem" : "0.62rem",
+                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -1046,7 +1046,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.8rem" : "0.9rem",
+                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
                   }}
                 >
                   {market.closesAt
@@ -1108,7 +1108,7 @@ export function PwaMarketDetailPage() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 16,
+                gap: "var(--space-md)",
               }}
             >
               {isOpen &&
@@ -1149,30 +1149,29 @@ export function PwaMarketDetailPage() {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        gap: 10,
-                        marginBottom: 10,
+                        marginBottom: "var(--space-xs)",
                       }}
                     >
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 10,
+                          gap: 12,
                           minWidth: 0,
                         }}
                       >
                         <div
                           style={{
                             flexShrink: 0,
-                            width: 30,
-                            height: 30,
+                            width: 36,
+                            height: 36,
                             borderRadius: wcFlag ? 6 : "var(--radius-full)",
                             overflow: "hidden",
                             background: wcFlag ? "transparent" : vis.gradient,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            border: wcFlag ? "none" : "1.5px solid #fff",
+                            border: wcFlag ? "none" : "2px solid #fff",
                             boxShadow: wcFlag ? "none" : "var(--shadow-sm)",
                           }}
                         >
@@ -1191,7 +1190,7 @@ export function PwaMarketDetailPage() {
                           ) : (
                             <span
                               style={{
-                                fontSize: 13,
+                                fontSize: 14,
                                 fontWeight: 900,
                                 color: "#fff",
                               }}
@@ -1200,50 +1199,21 @@ export function PwaMarketDetailPage() {
                             </span>
                           )}
                         </div>
-                        <div
+                        <span
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            minWidth: 0,
+                            fontWeight: 800,
+                            color: "var(--text-main)",
+                            fontSize: "1rem",
                           }}
                         >
-                          <span
-                            style={{
-                              fontWeight: 700,
-                              color: "var(--text-main)",
-                              fontSize: "0.875rem",
-                              lineHeight: 1.45,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {outcome.label}
-                          </span>
-                          {/* The pool reads under its own outcome rather than
-                              right-aligned below the bar. It belongs to this
-                              row, it balances the two-line pill opposite, and
-                              it takes a whole stacked block out of the row. */}
-                          <span
-                            style={{
-                              fontSize: "0.72rem",
-                              fontWeight: 600,
-                              color: "var(--text-subtle)",
-                              lineHeight: 1.45,
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            Nu{" "}
-                            {Number(outcome.totalBetAmount).toLocaleString()}{" "}
-                            total predicted
-                          </span>
-                        </div>
+                          {outcome.label}
+                        </span>
                       </div>
                       <div
                         style={{
                           background: `${color}15`,
                           color: color,
-                          padding: "3px 9px",
+                          padding: "4px 12px",
                           borderRadius: "var(--radius-full)",
                           flexShrink: 0,
                           border: `1px solid ${color}30`,
@@ -1253,7 +1223,7 @@ export function PwaMarketDetailPage() {
                           lineHeight: 1.15,
                         }}
                       >
-                        <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{(() => {
+                        <span style={{ fontSize: "0.8rem", fontWeight: 900 }}>{(() => {
                           const outcomePool = Number(outcome.totalBetAmount) || 0;
                           const pool = Number(displayMarket.totalPool) || 0;
                           const edge = Number(displayMarket.houseEdgePct) || 0;
@@ -1262,14 +1232,14 @@ export function PwaMarketDetailPage() {
                             : 100 / Math.max(pct, 1);
                           return Math.min(99, odds).toFixed(2);
                         })()}x</span>
-                        <span style={{ fontSize: "0.58rem", fontWeight: 700, opacity: 0.75 }}>{pct.toFixed(0)}%</span>
+                        <span style={{ fontSize: "0.62rem", fontWeight: 700, opacity: 0.75 }}>{pct.toFixed(0)}%</span>
                       </div>
                     </div>
                     <div
                       style={{
                         background: "var(--bg-secondary)",
                         borderRadius: "var(--radius-full)",
-                        height: "7px",
+                        height: "10px",
                         overflow: "hidden",
                         position: "relative",
                       }}
@@ -1282,9 +1252,22 @@ export function PwaMarketDetailPage() {
                           borderRadius: "var(--radius-full)",
                           transition:
                             "width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                          boxShadow: `0 0 8px ${color}40`,
+                          boxShadow: `0 0 12px ${color}40`,
                         }}
                       />
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--text-subtle)",
+                        marginTop: "6px",
+                        fontWeight: 700,
+                        display: "flex",
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      Nu {Number(outcome.totalBetAmount).toLocaleString()} total
+                      predicted
                     </div>
                   </div>
                 );
