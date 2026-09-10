@@ -172,12 +172,12 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
   // If not authenticated, show login prompt
   if (!authed && !showLoginModal) {
     return (
-      <div style={{ textAlign: "center", padding: "32px 20px" }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+      <div style={{ textAlign: "center", padding: "26px 20px" }}>
+        <div style={{ fontSize: 34, marginBottom: 12 }}>🔒</div>
         <h3
           style={{
             margin: "0 0 8px",
-            fontSize: 18,
+            fontSize: 15,
             fontWeight: 800,
             color: "var(--text-main)",
           }}
@@ -186,8 +186,8 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
         </h3>
         <p
           style={{
-            margin: "0 0 20px",
-            fontSize: 14,
+            margin: "0 0 18px",
+            fontSize: 13,
             color: "var(--text-muted)",
             lineHeight: 1.5,
           }}
@@ -198,8 +198,8 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
           onClick={() => setShowLoginModal(true)}
           style={{
             width: "100%",
-            padding: "14px",
-            fontSize: 15,
+            padding: "12px",
+            fontSize: 14,
             fontWeight: 700,
             background:
               "var(--grad-primary, linear-gradient(135deg, #2775d0, #1a5bb5))",
@@ -592,7 +592,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
                     : "var(--bg-secondary)",
                   color: isSelected ? baseColor : "var(--text-main)",
                   fontWeight: 900,
-                  fontSize: "1.05rem",
+                  fontSize: "0.9rem",
                   cursor: eliminated ? "not-allowed" : "pointer",
                   opacity: eliminated ? 0.45 : 1,
                   transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -658,7 +658,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
                 >
                   {c === "USDT" ? "USDT wallet" : "Ngultrum"}
                 </div>
-                <div style={{ fontSize: "0.95rem", fontWeight: 900 }}>
+                <div style={{ fontSize: "0.875rem", fontWeight: 900 }}>
                   {c === "USDT" ? "$" : "Nu"} {fmt(balanceOf(c))}
                 </div>
               </button>
@@ -703,7 +703,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
               </div>
               <div
                 style={{
-                  fontSize: "2.2rem",
+                  fontSize: "1.5rem",
                   fontWeight: 900,
                   color:
                     winAmount > 0
@@ -754,7 +754,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
               </div>
               <div
                 style={{
-                  fontSize: "1.2rem",
+                  fontSize: "1rem",
                   fontWeight: 900,
                   color: "var(--text-main)",
                   letterSpacing: "-0.02em",
@@ -780,7 +780,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
                       ? "var(--color-primary)"
                       : "var(--bg-card)",
                   color: amount === q.toString() ? "#fff" : "var(--text-muted)",
-                  fontSize: "0.85rem",
+                  fontSize: "0.8rem",
                   fontWeight: 800,
                   cursor: "pointer",
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -902,7 +902,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
           border: "none",
           background: isReady ? "var(--grad-primary)" : "var(--bg-secondary)",
           color: isReady ? "#fff" : "var(--text-subtle)",
-          fontSize: "1.05rem",
+          fontSize: "0.95rem",
           fontWeight: 900,
           cursor: isReady ? "pointer" : "not-allowed",
           transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",

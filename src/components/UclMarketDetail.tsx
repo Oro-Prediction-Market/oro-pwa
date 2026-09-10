@@ -8,9 +8,8 @@ import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
 import { useGoBack } from "../hooks/useGoBack";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Star } from "lucide-react";
-import type { Bet, Market, Outcome, MyDispute } from "@shared/api/client";
+import type { Market, Outcome, MyDispute } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
-import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { TmaBetModal } from "./TmaBetModal";
 import {
   DisputeContestFields,
@@ -162,7 +161,6 @@ export interface UclMarketDetailProps {
   disputeSuccess: boolean;
   disputeContest?: DisputeContestControls;
   myDispute?: MyDispute | null;
-  myBets?: Bet[];
   referralId?: string;
 }
 
@@ -180,7 +178,6 @@ export function UclMarketDetail({
   disputeSuccess,
   disputeContest,
   myDispute,
-  myBets,
   referralId,
   commentsSlot,
   chartSlot,
@@ -519,14 +516,7 @@ export function UclMarketDetail({
               </div>
             )}
             {/* ── Resolution info ── */}
-            <DisputeResultBanner dispute={myDispute ?? null} />
-            <YourPositionCard
-              bets={myBets ?? []}
-              resolved={resolved}
-              theme={{ accent: ACCENT, border: "rgba(43,107,255,0.25)", background: "rgba(255,255,255,0.02)" }}
-            />
-
-            {/* On desktop this now sits in the rail instead — see the panel. */}
+            <DisputeResultBanner dispute={myDispute ?? null} />            {/* On desktop this now sits in the rail instead — see the panel. */}
             {!isWide && resolutionCard}
 
             {/* ── Dispute (resolving) ── */}

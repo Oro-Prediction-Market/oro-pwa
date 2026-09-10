@@ -14,9 +14,8 @@ import {
   Trophy,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { Bet, Market, Outcome, MyDispute } from "@shared/api/client";
+import type { Market, Outcome, MyDispute } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
-import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { TmaBetModal } from "./TmaBetModal";
 import {
   DisputeContestFields,
@@ -57,7 +56,6 @@ interface Props {
   disputeSuccess: boolean;
   disputeContest?: DisputeContestControls;
   myDispute?: MyDispute | null;
-  myBets?: Bet[];
   referralId?: string;
 }
 
@@ -116,7 +114,6 @@ export const PriceMarketDetail: FC<Props> = ({
   disputeSuccess,
   disputeContest,
   myDispute,
-  myBets,
   referralId,
   commentsSlot,
 }) => {
@@ -533,18 +530,7 @@ export const PriceMarketDetail: FC<Props> = ({
         </div>
 
         {/* ── Resolved winner (full width) ── */}
-        <DisputeResultBanner dispute={myDispute ?? null} />
-        <YourPositionCard
-          bets={myBets ?? []}
-          resolved={!!resolvedOutcome}
-          theme={{
-            accent: P.accent,
-            border: `${P.accent}40`,
-            background: "rgba(255,255,255,0.02)",
-          }}
-        />
-
-        {resolvedOutcome && (
+        <DisputeResultBanner dispute={myDispute ?? null} />        {resolvedOutcome && (
           <div
             style={{
               background: "rgba(16,185,129,0.12)",

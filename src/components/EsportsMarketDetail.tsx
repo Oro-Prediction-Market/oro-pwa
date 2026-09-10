@@ -9,9 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useGoBack } from "../hooks/useGoBack";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Trophy } from "lucide-react";
-import type { Bet, Market, Outcome, MyDispute } from "@shared/api/client";
+import type { Market, Outcome, MyDispute } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
-import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { isEsportsFinal } from "@shared/helpers/esportsKeywords";
 import {
   EWC,
@@ -142,7 +141,6 @@ export interface EsportsMarketDetailProps {
   disputeSuccess: boolean;
   disputeContest?: DisputeContestControls;
   myDispute?: MyDispute | null;
-  myBets?: Bet[];
   referralId?: string;
 }
 
@@ -160,7 +158,6 @@ export function EsportsMarketDetail({
   disputeSuccess,
   disputeContest,
   myDispute,
-  myBets,
   referralId,
   commentsSlot,
 }: EsportsMarketDetailProps) {
@@ -604,14 +601,7 @@ export function EsportsMarketDetail({
               </div>
             )}
             {/* ── Resolution info ── */}
-            <DisputeResultBanner dispute={myDispute ?? null} />
-            <YourPositionCard
-              bets={myBets ?? []}
-              resolved={resolved}
-              theme={{ accent: EWC.gold, border: EWC.border, background: EWC.panel }}
-            />
-
-            {resolutionCard}
+            <DisputeResultBanner dispute={myDispute ?? null} />            {resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (

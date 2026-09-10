@@ -10,7 +10,6 @@ import {
   getMarket,
   getDisputes,
   getMyDispute,
-  getMyBets,
   submitDispute,
   getDisputeInfo,
   bustCache,
@@ -18,7 +17,6 @@ import {
   Market,
   Dispute,
   MyDispute,
-  Bet,
   DisputeInfo,
   DisputeSide,
   SubmitDisputePayload,
@@ -27,7 +25,6 @@ import {
   OutcomeHistory,
 } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
-import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { PwaBetForm } from "../components/PwaBetForm";
 import { TmaBetModal } from "../components/TmaBetModal";
 import { DisputeContestFields } from "../components/DisputeContestFields";
@@ -252,9 +249,7 @@ export function PwaMarketDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [_disputes, setDisputes] = useState<Dispute[]>([]);
   const [myDispute, setMyDispute] = useState<MyDispute | null>(null);
-  const [myBets, setMyBets] = useState<Bet[]>([]);
   // Bumped whenever a bet lands, to re-read the position card.
-  const [betsNonce, setBetsNonce] = useState(0);
   const [history, setHistory] = useState<OutcomeHistory[] | null>(null);
   // Outcome the phone sheet is open on, if any.
   const [activeBet, setActiveBet] = useState<string | null>(null);
@@ -297,9 +292,6 @@ export function PwaMarketDetailPage() {
 
   const refreshMarket = useCallback(
     (updatedMarket?: Market) => {
-      // Before the early return below: a bet was just placed either way, and
-      // the position card has to see it.
-      setBetsNonce((n) => n + 1);
       if (updatedMarket) {
         setMarket(updatedMarket);
         return;
@@ -395,27 +387,6 @@ export function PwaMarketDetailPage() {
       .then(setMyDispute)
       .catch(() => setMyDispute(null));
   }, [id, market?.status]);
-
-  /**
-   * The caller's own bets on this market — what "Your position" renders.
-   *
-   * Deliberately NOT gated on the market being settled. This used to sit
-   * inside the dispute effect above, behind its `if (!settled) return`, so an
-   * open market never loaded them at all: you could place a prediction, come
-   * back, and the page would show no trace of it. That is precisely when
-   * knowing what you hold matters most.
-   *
-   * `betsNonce` re-runs it after a bet is placed; the GET cache is busted
-   * first because placing a bet POSTs to a different path and so leaves this
-   * one's cached response in place.
-   */
-  useEffect(() => {
-    if (!id) return;
-    bustCache("/users/me/bets");
-    getMyBets()
-      .then((all) => setMyBets(all.filter((b) => b.marketId === id)))
-      .catch(() => setMyBets([]));
-  }, [id, betsNonce]);
 
   const handleSubmitDispute = async () => {
     if (!id) return;
@@ -576,8 +547,6 @@ export function PwaMarketDetailPage() {
 
   const isOpen = market.status === "open";
   const isResolving = market.status === "resolving";
-  const isSettled =
-    market.status === "resolved" || market.status === "settled";
 
   const proposedOutcome =
     isResolving && market.proposedOutcomeId
@@ -662,7 +631,6 @@ export function PwaMarketDetailPage() {
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
         myDispute={myDispute}
-        myBets={myBets}
         commentsSlot={embeddedComments}
       />
     </>
@@ -688,7 +656,6 @@ export function PwaMarketDetailPage() {
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
         myDispute={myDispute}
-        myBets={myBets}
         commentsSlot={embeddedComments}
       />
     </>
@@ -714,7 +681,6 @@ export function PwaMarketDetailPage() {
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
         myDispute={myDispute}
-        myBets={myBets}
         commentsSlot={embeddedComments}
       />
     </>
@@ -741,7 +707,6 @@ export function PwaMarketDetailPage() {
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
         myDispute={myDispute}
-        myBets={myBets}
         commentsSlot={embeddedComments}
       />
     </>
@@ -768,7 +733,6 @@ export function PwaMarketDetailPage() {
         disputeSuccess={disputeSuccess}
         disputeContest={disputeContest}
         myDispute={myDispute}
-        myBets={myBets}
         commentsSlot={embeddedComments}
       />
     </>
@@ -933,13 +897,10 @@ export function PwaMarketDetailPage() {
         >
           {/* What you already hold here. This used to render only in the
               right column's market-closed branch, so an open market — the one
-              you can still act on — showed no sign that you were in it. */}
-          <YourPositionCard bets={myBets} resolved={isSettled} />
-
-          <div>
+              you can still act on — showed no sign that you were in it. */}          <div>
             <h1
               style={{
-                fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
+                fontSize: bp === "mobile" ? "1.05rem" : "1.2rem",
                 fontWeight: 900,
                 color: "var(--text-main)",
                 marginBottom: "var(--space-sm)",
@@ -954,7 +915,7 @@ export function PwaMarketDetailPage() {
               <p
                 style={{
                   color: "var(--text-muted)",
-                  fontSize: bp === "mobile" ? "0.95rem" : "1.05rem",
+                  fontSize: bp === "mobile" ? "0.85rem" : "0.9rem",
                   lineHeight: 1.6,
                   fontWeight: 500,
                   maxWidth: "70ch",
@@ -988,14 +949,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
+                  padding: bp === "mobile" ? "10px 9px" : "12px",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
+                    fontSize: bp === "mobile" ? "0.6rem" : "0.62rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -1012,7 +973,7 @@ export function PwaMarketDetailPage() {
                         ? "var(--color-warning)"
                         : "var(--text-muted)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
+                    fontSize: bp === "mobile" ? "0.8rem" : "0.9rem",
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
@@ -1034,14 +995,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
+                  padding: bp === "mobile" ? "10px 9px" : "12px",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
+                    fontSize: bp === "mobile" ? "0.6rem" : "0.62rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -1054,7 +1015,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
+                    fontSize: bp === "mobile" ? "0.8rem" : "0.9rem",
                   }}
                 >
                   Nu {Number(displayMarket.totalPool).toLocaleString()}
@@ -1065,14 +1026,14 @@ export function PwaMarketDetailPage() {
                   background: "var(--bg-card)",
                   border: "1px solid var(--border)",
                   borderRadius: "var(--radius-md)",
-                  padding: bp === "mobile" ? "12px 10px" : "var(--space-md)",
+                  padding: bp === "mobile" ? "10px 9px" : "12px",
                   boxShadow: "var(--shadow-sm)",
                 }}
               >
                 <div
                   style={{
                     color: "var(--text-subtle)",
-                    fontSize: bp === "mobile" ? "0.65rem" : "0.68rem",
+                    fontSize: bp === "mobile" ? "0.6rem" : "0.62rem",
                     fontWeight: 900,
                     textTransform: "uppercase",
                     marginBottom: "6px",
@@ -1085,7 +1046,7 @@ export function PwaMarketDetailPage() {
                   style={{
                     color: "var(--text-main)",
                     fontWeight: 900,
-                    fontSize: bp === "mobile" ? "0.85rem" : "1rem",
+                    fontSize: bp === "mobile" ? "0.8rem" : "0.9rem",
                   }}
                 >
                   {market.closesAt
@@ -1147,7 +1108,7 @@ export function PwaMarketDetailPage() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 12,
+                gap: 16,
               }}
             >
               {isOpen &&
@@ -1189,7 +1150,7 @@ export function PwaMarketDetailPage() {
                         justifyContent: "space-between",
                         alignItems: "center",
                         gap: 10,
-                        marginBottom: 8,
+                        marginBottom: 10,
                       }}
                     >
                       <div
@@ -1203,8 +1164,8 @@ export function PwaMarketDetailPage() {
                         <div
                           style={{
                             flexShrink: 0,
-                            width: 28,
-                            height: 28,
+                            width: 30,
+                            height: 30,
                             borderRadius: wcFlag ? 6 : "var(--radius-full)",
                             overflow: "hidden",
                             background: wcFlag ? "transparent" : vis.gradient,
@@ -1230,7 +1191,7 @@ export function PwaMarketDetailPage() {
                           ) : (
                             <span
                               style={{
-                                fontSize: 12,
+                                fontSize: 13,
                                 fontWeight: 900,
                                 color: "#fff",
                               }}
@@ -1251,7 +1212,7 @@ export function PwaMarketDetailPage() {
                               fontWeight: 700,
                               color: "var(--text-main)",
                               fontSize: "0.875rem",
-                              lineHeight: 1.3,
+                              lineHeight: 1.45,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -1265,10 +1226,10 @@ export function PwaMarketDetailPage() {
                               it takes a whole stacked block out of the row. */}
                           <span
                             style={{
-                              fontSize: "0.68rem",
+                              fontSize: "0.72rem",
                               fontWeight: 600,
                               color: "var(--text-subtle)",
-                              lineHeight: 1.3,
+                              lineHeight: 1.45,
                               whiteSpace: "nowrap",
                             }}
                           >
@@ -1308,7 +1269,7 @@ export function PwaMarketDetailPage() {
                       style={{
                         background: "var(--bg-secondary)",
                         borderRadius: "var(--radius-full)",
-                        height: "6px",
+                        height: "7px",
                         overflow: "hidden",
                         position: "relative",
                       }}

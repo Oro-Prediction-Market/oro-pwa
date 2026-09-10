@@ -8,9 +8,8 @@ import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { useNavigate } from "react-router-dom";
 import { useGoBack } from "../hooks/useGoBack";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Trophy } from "lucide-react";
-import type { Bet, Market, Outcome, MyDispute } from "@shared/api/client";
+import type { Market, Outcome, MyDispute } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
-import { YourPositionCard } from "../../shared/components/YourPositionCard";
 import { TmaBetModal } from "./TmaBetModal";
 import {
   DisputeContestFields,
@@ -103,7 +102,6 @@ export interface EplMarketDetailProps {
   disputeSuccess: boolean;
   disputeContest?: DisputeContestControls;
   myDispute?: MyDispute | null;
-  myBets?: Bet[];
   referralId?: string;
 }
 
@@ -121,7 +119,6 @@ export function EplMarketDetail({
   disputeSuccess,
   disputeContest,
   myDispute,
-  myBets,
   referralId,
   commentsSlot,
   chartSlot,
@@ -532,14 +529,7 @@ export function EplMarketDetail({
               </div>
             )}
             {/* ── Resolution info ── */}
-            <DisputeResultBanner dispute={myDispute ?? null} />
-            <YourPositionCard
-              bets={myBets ?? []}
-              resolved={resolved}
-              theme={{ accent: ACCENT, border: "rgba(0,255,133,0.25)", background: "rgba(255,255,255,0.02)" }}
-            />
-
-            {resolutionCard}
+            <DisputeResultBanner dispute={myDispute ?? null} />            {resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (
