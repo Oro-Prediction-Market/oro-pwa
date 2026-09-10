@@ -142,6 +142,13 @@ export interface UclMarketDetailProps {
    * and the panel would unpin as soon as you scrolled into it.
    */
   commentsSlot?: React.ReactNode;
+  /**
+   * The probability curve. Passed in rather than fetched here: the page above
+   * already holds the history and this component is reached through an early
+   * return, so a fetch of its own would duplicate the request on every themed
+   * market.
+   */
+  chartSlot?: React.ReactNode;
   market: Market;
   onBetPlaced: () => void;
   isResolving: boolean;
@@ -176,6 +183,7 @@ export function UclMarketDetail({
   myBets,
   referralId,
   commentsSlot,
+  chartSlot,
 }: UclMarketDetailProps) {
   const navigate = useNavigate();
   const goBack = useGoBack();
@@ -444,6 +452,8 @@ export function UclMarketDetail({
                 </span>
               </div>
             )}
+
+            {chartSlot}
 
             {/* ── Outcomes ── */}
             <div style={{ marginTop: 14 }}>

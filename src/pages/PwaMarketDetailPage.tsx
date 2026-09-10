@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import MarketComments from "@shared/components/MarketComments";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { ProbabilityChart } from "@shared/components/ProbabilityChart";
+import { CrowdSentiment } from "@shared/components/CrowdSentiment";
 import { getViewerCurrency } from "@shared/currency/pools";
 import {
   getMarket,
@@ -322,6 +323,14 @@ export function PwaMarketDetailPage() {
       .then(setMarket)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+    // Fetched here as well as in the poll below. The curve used to be requested
+    // only from the 15s interval, so it could not appear before the first tick
+    // — fifteen seconds of empty card in front of a six-millisecond endpoint.
+    // Fired alongside getMarket rather than after it: they do not depend on
+    // each other, and awaiting in sequence would just add a round trip.
+    getMarketHistory(id)
+      .then(setHistory)
+      .catch(() => setHistory([]));
   }, [id]);
 
   // Refetch when page becomes visible + poll every 15s as WS fallback
@@ -329,6 +338,10 @@ export function PwaMarketDetailPage() {
     if (!id) return;
     const refetch = () => {
       bustCache(`/markets/${id}`);
+      // The history key is `/insights/markets/…`, which does not share the
+      // prefix above, so without this the curve served whatever it had cached
+      // and never moved after a bet.
+      bustCache(`/insights/markets/${id}`);
       // The curve rides the market poll rather than appending points from the
       // socket: the server already ends the series at the live value, and a
       // client-appended point would compute its probability a different way
@@ -455,21 +468,21 @@ export function PwaMarketDetailPage() {
   /**
    * The probability curve, mapped into the chart's primitive shape.
    *
-   * Null — and so the card renders exactly as it did before — unless all of:
-   *  - the market is in the "other" category (this is the first test surface);
-   *  - the viewer is on the ngultrum book, because snapshots mirror BTN only
-   *    and a USDT viewer would get a chart in a different currency from the
-   *    outcome rows right beneath it;
-   *  - some point is usable (see the recovery note below).
+   * The server replays this from the market's own bets and already returns the
+   * displayed share on a shared timeline, so there is nothing left to derive
+   * here — only colours, which are taken from the outcome's position in the
+   * market so a line always matches the row beneath it.
    *
-   * Colours are indexed the same way as the outcome rows below, so a line and
-   * its row are the same colour.
+   * Null — and the card renders exactly as it did before — when the market has
+   * no bets, or when the viewer is on a book the curve is not about: the replay
+   * sums the ngultrum positions only, so a USDT viewer would get a chart in a
+   * different currency from the rows under it.
    *
    * Declared above the loading/error early returns below: every hook on this
    * page must run on every render, including the ones that bail out.
    */
   const chartSeries = useMemo(() => {
-    if (!history || liveMarket?.category !== "other") return null;
+    if (!history || !history.length || !liveMarket) return null;
     if (getViewerCurrency() !== "BTN") return null;
 
     const resolved =
@@ -478,61 +491,30 @@ export function PwaMarketDetailPage() {
       ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
       : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
 
-    const series = history.map((h) => {
-      // Colour by the outcome's position in the market, not its position in
-      // the history payload, so a line always matches the row beneath it even
-      // if the two ever come back in a different order.
-      const idx = liveMarket.outcomes.findIndex((o) => o.id === h.outcomeId);
-      /**
-       * Points written before the outcomePool column can only offer the raw
-       * LMSR value, which is a few points off what the rows print — plotting
-       * it directly would make the chart contradict the page.
-       *
-       * They are still recoverable when the book provably did not change:
-       * LMSR pins the differences between outcome pools and totalPool pins
-       * their sum, so a legacy point matching the first pooled point on both
-       * describes the same pools, and therefore the same share. That restores
-       * the flat prefix truthfully; a legacy point that actually moved is
-       * dropped rather than guessed at.
-       */
-      const anchor = h.points.find((pt) => pt.outcomePool !== null);
-      const unchanged = (pt: (typeof h.points)[number]) =>
-        anchor != null &&
-        Math.abs(pt.probability - anchor.probability) < 1e-9 &&
-        Math.abs(pt.totalPool - anchor.totalPool) < 1e-9;
+    const series = history
+      .filter((h) => h.points.length > 0)
+      .map((h) => {
+        const idx = liveMarket.outcomes.findIndex((o) => o.id === h.outcomeId);
+        return {
+          label: h.label,
+          color: palette[(idx >= 0 ? idx : 0) % palette.length],
+          points: h.points.map((pt) => ({ t: pt.t, p: pt.p })),
+        };
+      });
 
-      return {
-        label: h.label,
-        color: palette[(idx >= 0 ? idx : 0) % palette.length],
-        points: h.points.flatMap((pt) => {
-          const t = new Date(pt.capturedAt).getTime();
-          if (pt.outcomePool !== null) return [{ t, p: pt.share }];
-          return unchanged(pt) ? [{ t, p: anchor!.share }] : [];
-        }),
-      };
-    });
+    // A curve needs somewhere to have moved. One bet is a single step, which
+    // reads as a dead market rather than as a market with one bet in it.
+    const distinct = new Set(series.flatMap((s) => s.points.map((p) => p.t)));
+    if (distinct.size < 3) return null;
 
-    // Some of these markets have sixteen outcomes; drawn in full that is
-    // sixteen near-identical lines under a legend four rows deep. Show the
-    // five the crowd actually favours — the outcome rows below the chart
-    // remain the complete list.
-    const ranked = series
-      .filter((s) => s.points.length > 0)
+    // Five lines is what the eye can follow; the rows below stay complete.
+    return series
       .sort(
         (a, b) =>
           b.points[b.points.length - 1].p - a.points[a.points.length - 1].p,
       )
       .slice(0, palette.length);
-    return ranked.length ? ranked : null;
-  }, [history, liveMarket?.category, liveMarket?.status, liveMarket?.outcomes]);
-
-  /** The whole tracked window, including points too old to plot. */
-  const chartSince = useMemo(() => {
-    const ts = (history ?? []).flatMap((h) =>
-      h.points.map((pt) => new Date(pt.capturedAt).getTime()),
-    );
-    return ts.length ? Math.min(...ts) : null;
-  }, [history]);
+  }, [history, liveMarket]);
 
   if (loading) return <LoadingScreen message="Syncing market..." />;
 
@@ -744,6 +726,7 @@ export function PwaMarketDetailPage() {
     return (
     <>
       <UclMarketDetail
+        chartSlot={chartSeries ? <ProbabilityChart series={chartSeries} /> : null}
         market={displayMarket}
         referralId={referralId}
         onBetPlaced={refreshMarket}
@@ -770,6 +753,7 @@ export function PwaMarketDetailPage() {
     return (
     <>
       <EplMarketDetail
+        chartSlot={chartSeries ? <ProbabilityChart series={chartSeries} /> : null}
         market={displayMarket}
         referralId={referralId}
         onBetPlaced={refreshMarket}
@@ -1157,7 +1141,7 @@ export function PwaMarketDetailPage() {
               </div>
             )}
 
-            {chartSeries && <ProbabilityChart series={chartSeries} since={chartSince} />}
+            {chartSeries && <ProbabilityChart series={chartSeries} />}
 
             <div
               style={{
@@ -1926,17 +1910,33 @@ function PredictLauncher({
 
   return (
     <div>
+      {/* The phone path. PwaBetForm carries the same pairing, but below 640px
+          the right column renders this instead — so the sentiment badge has to
+          live in both or it disappears on every phone. */}
       <div
         style={{
-          fontSize: "0.75rem",
-          fontWeight: 900,
-          letterSpacing: "0.1em",
-          color: "var(--text-subtle)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "var(--space-sm)",
           marginBottom: "var(--space-md)",
-          textTransform: "uppercase",
         }}
       >
-        Make Your Prediction
+        <div
+          style={{
+            fontSize: "0.75rem",
+            fontWeight: 900,
+            letterSpacing: "0.1em",
+            color: "var(--text-subtle)",
+            textTransform: "uppercase",
+          }}
+        >
+          Make Your Prediction
+        </div>
+        <CrowdSentiment
+          composite={market.signalMeta?.composite}
+          participantCount={market.signalMeta?.participantCount}
+        />
       </div>
       <div
         style={{

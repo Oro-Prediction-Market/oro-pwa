@@ -1,3 +1,4 @@
+import { CrowdSentiment } from "@shared/components/CrowdSentiment";
 import { FC, useEffect, useState, useMemo } from "react";
 import {
   Market,
@@ -517,17 +518,33 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
     >
       {/* Outcome buttons */}
       <div>
+        {/* Crowd sentiment rides the heading rather than sitting above the
+            outcome rows in the left column: how much to trust the crowd's
+            number is context for staking, not a label for the list. */}
         <div
           style={{
-            fontSize: "0.75rem",
-            fontWeight: 900,
-            letterSpacing: "0.1em",
-            color: accent ?? "var(--text-subtle)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "var(--space-sm)",
             marginBottom: "var(--space-md)",
-            textTransform: "uppercase",
           }}
         >
-          Make Your Prediction
+          <div
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 900,
+              letterSpacing: "0.1em",
+              color: accent ?? "var(--text-subtle)",
+              textTransform: "uppercase",
+            }}
+          >
+            Make Your Prediction
+          </div>
+          <CrowdSentiment
+            composite={market.signalMeta?.composite}
+            participantCount={market.signalMeta?.participantCount}
+          />
         </div>
         <div
           style={{
