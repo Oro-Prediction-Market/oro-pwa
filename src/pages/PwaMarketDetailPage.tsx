@@ -452,40 +452,54 @@ export function PwaMarketDetailPage() {
    * Declared above the loading/error early returns below: every hook on this
    * page must run on every render, including the ones that bail out.
    */
-  const chartSeries = useMemo(() => {
+  const chartData = useMemo(() => {
     if (!history || !history.length || !liveMarket) return null;
     if (getViewerCurrency() !== "BTN") return null;
 
+    const curves = history
+      .filter((h) => h.points.length > 0)
+      .map((h) => ({
+        outcomeId: h.outcomeId,
+        label: h.label,
+        points: h.points.map((pt) => ({ t: pt.t, p: pt.p })),
+      }));
+
+    // A curve needs somewhere to have moved. One bet is a single step, which
+    // reads as a dead market rather than as a market with one bet in it.
+    const distinct = new Set(curves.flatMap((s) => s.points.map((p) => p.t)));
+    if (distinct.size < 3) return null;
+
+    // Five lines is what the eye can follow; the rows below stay complete.
+    // Ranked by where each one ended, so the order matches the list beneath.
+    return curves
+      .sort(
+        (a, b) =>
+          b.points[b.points.length - 1].p - a.points[a.points.length - 1].p,
+      )
+      .slice(0, 5);
+  }, [history, liveMarket]);
+
+  /**
+   * The generic view's colouring: the outcome's position in the market, so a
+   * line matches the row beneath it. The themed views ignore this and paint
+   * their own — red and blue corners, home and away — from `chartData`.
+   */
+  const chartSeries = useMemo(() => {
+    if (!chartData || !liveMarket) return null;
     const resolved =
       liveMarket.status === "resolved" || liveMarket.status === "settled";
     const palette = resolved
       ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
       : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
-
-    const series = history
-      .filter((h) => h.points.length > 0)
-      .map((h) => {
-        const idx = liveMarket.outcomes.findIndex((o) => o.id === h.outcomeId);
-        return {
-          label: h.label,
-          color: palette[(idx >= 0 ? idx : 0) % palette.length],
-          points: h.points.map((pt) => ({ t: pt.t, p: pt.p })),
-        };
-      });
-
-    // A curve needs somewhere to have moved. One bet is a single step, which
-    // reads as a dead market rather than as a market with one bet in it.
-    const distinct = new Set(series.flatMap((s) => s.points.map((p) => p.t)));
-    if (distinct.size < 3) return null;
-
-    // Five lines is what the eye can follow; the rows below stay complete.
-    return series
-      .sort(
-        (a, b) =>
-          b.points[b.points.length - 1].p - a.points[a.points.length - 1].p,
-      )
-      .slice(0, palette.length);
-  }, [history, liveMarket]);
+    return chartData.map((h) => {
+      const idx = liveMarket.outcomes.findIndex((o) => o.id === h.outcomeId);
+      return {
+        label: h.label,
+        color: palette[(idx >= 0 ? idx : 0) % palette.length],
+        points: h.points,
+      };
+    });
+  }, [chartData, liveMarket]);
 
   if (loading) return <LoadingScreen message="Syncing market..." />;
 
@@ -642,6 +656,7 @@ export function PwaMarketDetailPage() {
     return (
     <>
       <UfcMarketDetail
+        chartData={chartData}
         market={displayMarket}
         referralId={referralId}
         onBetPlaced={refreshMarket}
@@ -692,7 +707,7 @@ export function PwaMarketDetailPage() {
     return (
     <>
       <UclMarketDetail
-        chartSlot={chartSeries ? <ProbabilityChart series={chartSeries} /> : null}
+        chartData={chartData}
         market={displayMarket}
         referralId={referralId}
         onBetPlaced={refreshMarket}
@@ -718,7 +733,7 @@ export function PwaMarketDetailPage() {
     return (
     <>
       <EplMarketDetail
-        chartSlot={chartSeries ? <ProbabilityChart series={chartSeries} /> : null}
+        chartData={chartData}
         market={displayMarket}
         referralId={referralId}
         onBetPlaced={refreshMarket}

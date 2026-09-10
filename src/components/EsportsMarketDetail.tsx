@@ -577,6 +577,12 @@ export function EsportsMarketDetail({
               )}
             </div>
 
+            {/* Desktop only: the rail has room under the prediction form, and
+                putting the criteria there keeps them beside the outcome you
+                are about to pick rather than below the fold. On narrow screens
+                the panel renders FIRST, so the same card would land above the
+                market itself — there it stays in the scrolling column. */}
+            {isWide && resolutionCard}
           </>}
           main={<>
             {/* The market itself, read-only. The rail beside it holds the
@@ -601,7 +607,8 @@ export function EsportsMarketDetail({
               </div>
             )}
             {/* ── Resolution info ── */}
-            <DisputeResultBanner dispute={myDispute ?? null} />            {resolutionCard}
+            <DisputeResultBanner dispute={myDispute ?? null} />            {/* On desktop this now sits in the rail instead — see the panel. */}
+            {!isWide && resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (
