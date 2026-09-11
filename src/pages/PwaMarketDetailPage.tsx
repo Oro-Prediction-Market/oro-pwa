@@ -42,6 +42,7 @@ import {
   getWCFlag,
   isWCMarket,
   calcProb,
+  calcOdds,
   rankedOutcomes,
 } from "./WorldCupHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
@@ -499,10 +500,12 @@ export function PwaMarketDetailPage() {
       : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
     return chartData.map((h) => {
       const idx = liveMarket.outcomes.findIndex((o) => o.id === h.outcomeId);
+      const odds = calcOdds(liveMarket, h.outcomeId);
       return {
         label: h.label,
         color: palette[(idx >= 0 ? idx : 0) % palette.length],
         points: h.points,
+        odds: odds ? `${Math.min(99, odds).toFixed(2)}x` : undefined,
       };
     });
   }, [chartData, liveMarket]);
@@ -929,7 +932,19 @@ export function PwaMarketDetailPage() {
         >
           {/* What you already hold here. This used to render only in the
               right column's market-closed branch, so an open market — the one
-              you can still act on — showed no sign that you were in it. */}          <div>
+              you can still act on — showed no sign that you were in it. */}
+          {/* Sticky so the title, pool and timeline stay visible while the
+              outcomes/prediction panel below is scrolled — mirrors the
+              right column's own sticky pin. */}
+          <div
+            style={{
+              position: "sticky",
+              top: STICKY_TOP,
+              zIndex: 2,
+              background: "var(--bg-page, var(--bg-card))",
+              paddingBottom: "var(--space-sm)",
+            }}
+          >
             <h1
               style={{
                 fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
@@ -956,18 +971,17 @@ export function PwaMarketDetailPage() {
                 {market.description}
               </p>
             )}
-          </div>
 
-          {/* TER Price Panel */}
-          {market.externalSource === "ter" && market.metadata?.isTer && (
-            <TerPricePanel market={market} />
-          )}
+            {/* TER Price Panel */}
+            {market.externalSource === "ter" && market.metadata?.isTer && (
+              <TerPricePanel market={market} />
+            )}
 
-          <div
-            style={{
-              overflowX: "visible",
-            }}
-          >
+            <div
+              style={{
+                overflowX: "visible",
+              }}
+            >
             <div
               style={{
                 display: "grid",
@@ -1092,6 +1106,57 @@ export function PwaMarketDetailPage() {
             </div>
           </div>
 
+            {/* Rest of the timeline — folded in small, next to the Deadline
+                tile above, rather than a separate card competing for space. */}
+            {(market.opensAt || market.resolvedAt) && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "4px 14px",
+                  marginTop: "var(--space-sm)",
+                }}
+              >
+                {[
+                  { label: "Opens", date: market.opensAt },
+                  { label: "Resolved", date: market.resolvedAt },
+                ].map(({ label, date }) =>
+                  date ? (
+                    <div
+                      key={label}
+                      style={{ display: "flex", alignItems: "center", gap: 5 }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.62rem",
+                          fontWeight: 700,
+                          color: "var(--text-subtle)",
+                        }}
+                      >
+                        {label}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "0.62rem",
+                          fontWeight: 800,
+                          color: "var(--text-main)",
+                        }}
+                      >
+                        {new Date(date).toLocaleString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                  ) : null,
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Crowd sentiment */}
           <div
             style={{
@@ -1102,6 +1167,37 @@ export function PwaMarketDetailPage() {
               boxShadow: "var(--shadow-md)",
             }}
           >
+            {/* On a phone this card doubles as the predict CTA now that the
+                separate "Make Your Prediction" card is gone, so it carries
+                the sentiment badge the same way that card used to. */}
+            {bp === "mobile" && isOpen && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "var(--space-sm)",
+                  marginBottom: "var(--space-md)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 900,
+                    letterSpacing: "0.1em",
+                    color: "var(--text-subtle)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Pick your outcome
+                </div>
+                <CrowdSentiment
+                  composite={market.signalMeta?.composite}
+                  participantCount={market.signalMeta?.participantCount}
+                />
+              </div>
+            )}
+
             {(market.externalSource === "ter" || market.settlementSource) && (
               <div
                 style={{
@@ -1169,10 +1265,14 @@ export function PwaMarketDetailPage() {
                 );
 
                 const isResolved = market.status === "resolved" || market.status === "settled";
-                const colors = isResolved
-                  ? ["#22c55e", "#ef4444", "#f59e0b", "#3b82f6", "#8b5cf6"]
-                  : ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
-                const color = colors[idx % colors.length];
+                // One flat colour for every outcome rather than a rainbow per
+                // index — the winner still stands out once a market resolves.
+                const color =
+                  isResolved && outcome.id === market.resolvedOutcomeId
+                    ? "#22c55e"
+                    : isResolved
+                      ? "var(--text-subtle)"
+                      : "#3b82f6";
 
                 const wcFlag = isWCMarket(market) ? getWCFlag(outcome.label) : "";
                 const avatarUrl = wcFlag || (!imgError
@@ -1184,9 +1284,22 @@ export function PwaMarketDetailPage() {
                         : null)
                   : null);
                 const vis = getCategoryVisual(market.category);
+                const eliminated = !!outcome.isEliminated;
+                // On a phone this row IS the predict CTA — tapping it opens
+                // the same bottom sheet the old separate "Make Your
+                // Prediction" card used to launch, so that card is gone and
+                // this is the only place left to tap.
+                const tappable = bp === "mobile" && isOpen && !eliminated;
 
                 return (
-                  <div key={outcome.id}>
+                  <div
+                    key={outcome.id}
+                    onClick={() => tappable && setActiveBet(outcome.id)}
+                    style={{
+                      cursor: tappable ? "pointer" : "default",
+                      opacity: eliminated ? 0.5 : 1,
+                    }}
+                  >
                     <div
                       style={{
                         display: "flex",
@@ -1256,17 +1369,12 @@ export function PwaMarketDetailPage() {
                         style={{
                           background: `${color}15`,
                           color: color,
-                          padding: "4px 12px",
+                          padding: "4px 10px",
                           borderRadius: "var(--radius-full)",
                           flexShrink: 0,
-                          border: `1px solid ${color}30`,
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          lineHeight: 1.15,
                         }}
                       >
-                        <span style={{ fontSize: "0.8rem", fontWeight: 900 }}>{(() => {
+                        <span style={{ fontSize: "0.85rem", fontWeight: 900 }}>{(() => {
                           const outcomePool = Number(outcome.totalBetAmount) || 0;
                           const pool = Number(displayMarket.totalPool) || 0;
                           const edge = Number(displayMarket.houseEdgePct) || 0;
@@ -1275,14 +1383,51 @@ export function PwaMarketDetailPage() {
                             : 100 / Math.max(pct, 1);
                           return Math.min(99, odds).toFixed(2);
                         })()}x</span>
-                        <span style={{ fontSize: "0.62rem", fontWeight: 700, opacity: 0.75 }}>{pct.toFixed(0)}%</span>
                       </div>
+                      {tappable && (
+                        <div
+                          style={{
+                            background: color,
+                            color: "#fff",
+                            fontSize: "0.62rem",
+                            fontWeight: 800,
+                            padding: "4px 10px",
+                            borderRadius: "var(--radius-full)",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            flexShrink: 0,
+                          }}
+                        >
+                          Predict
+                        </div>
+                      )}
+                      {eliminated && bp === "mobile" && isOpen && (
+                        <div
+                          style={{
+                            background: "rgba(239,68,68,0.15)",
+                            color: "#ef4444",
+                            border: "1px solid rgba(239,68,68,0.35)",
+                            fontSize: "0.62rem",
+                            fontWeight: 800,
+                            padding: "4px 10px",
+                            borderRadius: "var(--radius-full)",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            flexShrink: 0,
+                          }}
+                        >
+                          Out
+                        </div>
+                      )}
                     </div>
+                    {/* Battery-style: the % sits centered inside the bar
+                        itself rather than in a separate number, so the fill
+                        level and its readout are always the same glance. */}
                     <div
                       style={{
                         background: "var(--bg-secondary)",
                         borderRadius: "var(--radius-full)",
-                        height: "10px",
+                        height: "20px",
                         overflow: "hidden",
                         position: "relative",
                       }}
@@ -1298,6 +1443,22 @@ export function PwaMarketDetailPage() {
                           boxShadow: `0 0 12px ${color}40`,
                         }}
                       />
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.68rem",
+                          fontWeight: 800,
+                          color: "#fff",
+                          textShadow: "0 1px 2px rgba(0,0,0,0.55)",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {pct.toFixed(0)}%
+                      </div>
                     </div>
                     <div
                       style={{
@@ -1347,29 +1508,25 @@ export function PwaMarketDetailPage() {
           }}
         >
           {isOpen ? (
-            <div
-              style={{
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius-lg)",
-                padding: "var(--space-lg)",
-                boxShadow: "var(--shadow-lg)",
-                backdropFilter: "var(--glass-blur)",
-              }}
-            >
-              {/* Phones get the bottom sheet, like every other market type in
-                  this app. The inline form is a desktop pattern: it belongs in
-                  a rail beside the market, and stacked on a phone it is just a
-                  long form buried under the market info. */}
-              {bp === "mobile" ? (
-                <PredictLauncher
-                  market={displayMarket}
-                  onPick={(outcomeId) => setActiveBet(outcomeId)}
-                />
-              ) : (
+            // On a phone, tapping an outcome in the Crowd sentiment card
+            // (left column) opens the same bottom sheet PredictLauncher used
+            // to — so this rail has nothing left to add there. Only render
+            // it on desktop, where the inline form belongs in its own rail
+            // beside the market rather than duplicating the outcome list.
+            bp !== "mobile" && (
+              <div
+                style={{
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-lg)",
+                  padding: "var(--space-lg)",
+                  boxShadow: "var(--shadow-lg)",
+                  backdropFilter: "var(--glass-blur)",
+                }}
+              >
                 <PwaBetForm market={displayMarket} onBetPlaced={refreshMarket} />
-              )}
-            </div>
+              </div>
+            )
           ) : isResolving ? (
             <div
               style={{
@@ -1892,137 +2049,6 @@ export function PwaMarketDetailPage() {
           onGoToWallet={() => navigate("/wallet")}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * The phone entry point to the prediction sheet: one button per outcome with
- * its current price. Deliberately not a form — the stake, the wallet and the
- * payout estimate all live in the sheet, which is the pattern every themed
- * market view already uses on a phone.
- */
-function PredictLauncher({
-  market,
-  onPick,
-}: {
-  market: Market;
-  onPick: (outcomeId: string) => void;
-}) {
-  const pool = Number(market.totalPool) || 0;
-  const edge = Number(market.houseEdgePct) || 0;
-
-  return (
-    <div>
-      {/* The phone path. PwaBetForm carries the same pairing, but below 640px
-          the right column renders this instead — so the sentiment badge has to
-          live in both or it disappears on every phone. */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "var(--space-sm)",
-          marginBottom: "var(--space-md)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: "0.75rem",
-            fontWeight: 900,
-            letterSpacing: "0.1em",
-            color: "var(--text-subtle)",
-            textTransform: "uppercase",
-          }}
-        >
-          Make Your Prediction
-        </div>
-        <CrowdSentiment
-          composite={market.signalMeta?.composite}
-          participantCount={market.signalMeta?.participantCount}
-        />
-      </div>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: "var(--space-sm)",
-        }}
-      >
-        {rankedOutcomes(market).map((outcome) => {
-          const eliminated = !!outcome.isEliminated;
-          const stake = Number(outcome.totalBetAmount) || 0;
-          const pct = Math.round(calcProb(market, outcome.id) * 100);
-          const odds =
-            pool > 0 && stake > 0
-              ? Math.min(99, (pool * (1 - edge / 100)) / stake)
-              : Math.min(99, 100 / Math.max(pct, 1));
-          return (
-            <button
-              key={outcome.id}
-              disabled={eliminated}
-              onClick={() => !eliminated && onPick(outcome.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                padding: "var(--space-md)",
-                borderRadius: "var(--radius-md)",
-                border: "1.5px solid var(--border)",
-                background: "var(--bg-secondary)",
-                color: "var(--text-main)",
-                cursor: eliminated ? "not-allowed" : "pointer",
-                opacity: eliminated ? 0.45 : 1,
-                textAlign: "left",
-                width: "100%",
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 800,
-                  fontSize: "0.95rem",
-                  minWidth: 0,
-                  overflowWrap: "anywhere",
-                }}
-              >
-                {outcome.label}
-                {eliminated && (
-                  <span style={{ fontSize: "0.7rem", opacity: 0.8 }}> · Out</span>
-                )}
-              </span>
-              <span
-                style={{
-                  flexShrink: 0,
-                  textAlign: "right",
-                  lineHeight: 1.15,
-                }}
-              >
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: "0.9rem",
-                    fontWeight: 900,
-                    color: "var(--color-primary)",
-                  }}
-                >
-                  {odds.toFixed(2)}x
-                </span>
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    color: "var(--text-subtle)",
-                  }}
-                >
-                  {pct}%
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

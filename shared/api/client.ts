@@ -1775,17 +1775,21 @@ export function getKycStatus(): Promise<KycStatusResponse> {
   return request<KycStatusResponse>("/kyc/status");
 }
 
-export function submitKycDocument(body: {
+export async function submitKycDocument(body: {
   documentType: KycDocumentType;
   documentNumber: string;
   documentCountry: string;
   imageBase64: string;
   mimeType: string;
 }): Promise<{ status: string }> {
-  return request<{ status: string }>("/kyc/documents", {
+  const result = await request<{ status: string }>("/kyc/documents", {
     method: "POST",
     body: JSON.stringify(body),
   });
+  // Otherwise the caller's immediate getKycStatus() can serve the pre-submit
+  // snapshot back from cache, and the "document sent" confirmation never shows.
+  bustCache("/kyc/status");
+  return result;
 }
 
 export interface UsdtNetwork {
