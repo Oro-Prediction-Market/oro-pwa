@@ -141,6 +141,11 @@ const PwaAccuracyPage = lazy(() =>
     default: m.PlatformAccuracyPage,
   })),
 );
+const PwaSavedPage = lazy(() =>
+  import("@/pages/SavedMarketsPage").then((m) => ({
+    default: m.SavedMarketsPage,
+  })),
+);
 const PwaWorldCupPage = lazy(() =>
   import("./pages/WorldCupHubPage").then((m) => ({
     default: m.WorldCupHubPage,
@@ -231,6 +236,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/challenges": "Duels",
   "/resolved": "Resolution Record",
   "/accuracy": "Platform Accuracy",
+  "/saved": "Saved Markets",
   "/wallet": "Wallet",
   "/my-bets": "My Positions",
   "/results": "Results",
@@ -1984,6 +1990,30 @@ function PwaLayout({
               >
                 <PwaResolvedPage />
               </Suspense>
+            }
+          />
+          {/* Saved markets are one account's private list, so this is the one
+              of these three that has to be behind the gate. */}
+          <Route
+            path="/saved"
+            element={
+              <AuthGate authed={authed} onAuthSuccess={onAuthSuccess}>
+                <Suspense
+                  fallback={
+                    <div
+                      style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      Loading…
+                    </div>
+                  }
+                >
+                  <PwaSavedPage />
+                </Suspense>
+              </AuthGate>
             }
           />
           <Route

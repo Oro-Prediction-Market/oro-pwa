@@ -31,6 +31,7 @@ import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
+import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { useMarketSocket } from "../hooks/useMarketSocket";
 import { useAuth } from "@shared/hooks/useAuth";
 import {
@@ -843,6 +844,16 @@ export function PwaMarketDetailPage() {
           Back
         </button>
 
+        {/* Save and Share ride together on the right: the row is
+            space-between, so a third loose child would strand Save in the
+            middle of it. */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <SaveMarketButton
+          marketId={displayMarket.id}
+          variant="outline"
+          compact={bp === "mobile"}
+        />
+
         <button
           onClick={() => setShareOpen(true)}
           style={{
@@ -888,6 +899,7 @@ export function PwaMarketDetailPage() {
           </svg>
           {bp !== "mobile" && "Share"}
         </button>
+        </div>
         <MarketShareSheet
           open={shareOpen}
           onClose={() => setShareOpen(false)}

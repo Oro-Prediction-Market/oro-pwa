@@ -17,6 +17,7 @@ import {
 import { calcProb, calcOdds } from "../pages/WorldCupHubPage";
 import { isDrawOutcome } from "../pages/BplHubPage";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
+import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { marketOutcomeChances } from "@/components/MarketShareCard";
 import {
   getUfcAvatar,
@@ -412,6 +413,12 @@ export function UfcMarketDetail({
             <ArrowLeft size={15} />
             Back
           </button>
+          <SaveMarketButton
+            marketId={market.id}
+            variant="inherit"
+            accent={RED}
+            style={{ ...iconBtn, marginLeft: "auto", marginRight: 8 }}
+          />
           <button onClick={() => setShareOpen(true)} style={iconBtn}>
             <Share2 size={15} />
             Share

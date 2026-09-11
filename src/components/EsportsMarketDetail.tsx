@@ -5,6 +5,7 @@ import { ThemedBetPanel } from "./ThemedBetPanel";
 import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
+import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { useNavigate } from "react-router-dom";
 import { useGoBack } from "../hooks/useGoBack";
 import { Helmet } from "react-helmet-async";
@@ -347,6 +348,24 @@ export function EsportsMarketDetail({
             <ArrowLeft size={15} />
             <Label color={EWC.textSecondary}>Back</Label>
           </button>
+          <SaveMarketButton
+            marketId={market.id}
+            variant="inherit"
+            accent={EWC.goldBright}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 7,
+              background: "transparent",
+              border: `1px solid ${EWC.border}`,
+              clipPath: notch(7),
+              padding: "8px 12px",
+              color: EWC.textSecondary,
+              cursor: "pointer",
+              marginLeft: "auto",
+              marginRight: 8,
+            }}
+          />
           <button
             onClick={() => setShareOpen(true)}
             style={{

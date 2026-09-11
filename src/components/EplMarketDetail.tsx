@@ -5,6 +5,7 @@ import { ThemedBetPanel } from "./ThemedBetPanel";
 import { formatOdds } from "@/pages/WorldCupHubPage";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
+import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { useNavigate } from "react-router-dom";
 import { useGoBack } from "../hooks/useGoBack";
 import { ArrowLeft, Share2, Clock, ShieldAlert, Trophy } from "lucide-react";
@@ -342,6 +343,12 @@ export function EplMarketDetail({
             <ArrowLeft size={15} />
             Back
           </button>
+          <SaveMarketButton
+            marketId={market.id}
+            variant="inherit"
+            accent={ACCENT}
+            style={{ ...iconBtn, marginLeft: "auto", marginRight: 8 }}
+          />
           <button onClick={() => setShareOpen(true)} style={iconBtn}>
             <Share2 size={15} />
             Share
