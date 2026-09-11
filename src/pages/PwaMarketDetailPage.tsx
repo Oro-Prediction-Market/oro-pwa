@@ -37,7 +37,12 @@ import {
   UnderdogBanner,
   getUnderdogLabel,
 } from "../../shared/components/UnderdogBanner";
-import { getWCFlag, isWCMarket, calcProb } from "./WorldCupHubPage";
+import {
+  getWCFlag,
+  isWCMarket,
+  calcProb,
+  rankedOutcomes,
+} from "./WorldCupHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsMarketDetail } from "../components/EsportsMarketDetail";
 import { isUfcMarket } from "./UfcHubPage";
@@ -1134,11 +1139,22 @@ export function PwaMarketDetailPage() {
                   );
                   return ul ? <UnderdogBanner underdogLabel={ul} /> : null;
                 })()}
-              {displayMarket.outcomes.map((outcome, idx) => {
+              {rankedOutcomes(displayMarket).map((outcome) => {
                 // calcProb uses LMSR only when every outcome has a value
                 // (mixed LMSR/pool sources don't sum to 100), else the
                 // Laplace-smoothed pool ratio.
                 const pct = calcProb(displayMarket, outcome.id) * 100;
+
+                // The row is ranked, but colour and artwork belong to the
+                // OUTCOME, not to where it happens to sit today. The chart
+                // above picks its line colours from this same market order, so
+                // reading the palette off the rank would have drifted the two
+                // apart every time a price moved — and `imageUrl` /
+                // `imageUrlAlt` are "first side, second side", so ranking them
+                // would have put the wrong crest on the row.
+                const idx = displayMarket.outcomes.findIndex(
+                  (o) => o.id === outcome.id,
+                );
 
                 const isResolved = market.status === "resolved" || market.status === "settled";
                 const colors = isResolved
@@ -1921,7 +1937,7 @@ function PredictLauncher({
           gap: "var(--space-sm)",
         }}
       >
-        {market.outcomes.map((outcome) => {
+        {rankedOutcomes(market).map((outcome) => {
           const eliminated = !!outcome.isEliminated;
           const stake = Number(outcome.totalBetAmount) || 0;
           const pct = Math.round(calcProb(market, outcome.id) * 100);

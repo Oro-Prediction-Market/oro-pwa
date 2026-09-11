@@ -14,6 +14,7 @@ import {
 } from "@shared/api/client";
 import { useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { rankedOutcomes } from "@/pages/WorldCupHubPage";
 import { Check } from "lucide-react";
 
 interface PwaBetFormProps {
@@ -26,6 +27,14 @@ interface PwaBetFormProps {
    * Omitted, the form keeps its neutral rotating palette.
    */
   accent?: string;
+  /**
+   * Keep the market's own outcome order instead of ranking by price.
+   *
+   * Set by the themed match panels: Home / Draw / Away reads in that order,
+   * and the card beside this one pins each side to a fixed place, so a list
+   * that re-sorted itself as the price moved would disagree with it.
+   */
+  preserveOrder?: boolean;
 }
 
 const DEFAULT_AMOUNT = 100;
@@ -144,6 +153,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
   market,
   onBetPlaced,
   accent,
+  preserveOrder = false,
 }) => {
   const navigate = useNavigate();
   const [selectedOutcomeId, setSelectedOutcomeId] = useState<string | null>(
@@ -553,7 +563,8 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
             gap: "var(--space-sm)",
           }}
         >
-          {market.outcomes.map((outcome, idx) => {
+          {(preserveOrder ? market.outcomes : rankedOutcomes(market)).map(
+            (outcome) => {
             const isSelected = selectedOutcomeId === outcome.id;
             const eliminated = !!outcome.isEliminated;
             const colors = [
@@ -563,6 +574,9 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
               "#06b6d4",
               "#f97316",
             ];
+            // Keyed to the outcome's place in the market, not to its rank, so
+            // a button does not change colour when the price moves.
+            const idx = market.outcomes.findIndex((o) => o.id === outcome.id);
             const baseColor = accent ?? colors[idx % colors.length];
 
             return (
@@ -615,7 +629,8 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
                 )}
               </button>
             );
-          })}
+            },
+          )}
         </div>
       </div>
 

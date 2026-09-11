@@ -65,7 +65,15 @@ export function ThemedBetPanel({
         } as React.CSSProperties
       }
     >
-      <PwaBetForm market={market} onBetPlaced={onBetPlaced} accent={accent} />
+      {/* Match markets only — every themed view routes field markets to its
+          own ranked list instead. Home / Draw / Away keeps that order, and the
+          card beside this one fixes each side to a place on the page. */}
+      <PwaBetForm
+        market={market}
+        onBetPlaced={onBetPlaced}
+        accent={accent}
+        preserveOrder
+      />
     </div>
   );
 }

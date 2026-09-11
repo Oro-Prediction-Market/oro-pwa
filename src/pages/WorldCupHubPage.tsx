@@ -289,6 +289,30 @@ export function isWCMarket(m: Market): boolean {
 }
 
 /**
+ * A market's outcomes, likeliest first.
+ *
+ * The order the API returns is the order they were created in, which says
+ * nothing a reader wants to know. Eliminated outcomes sink to the bottom
+ * whatever their price — they cannot win, so they are not in the running.
+ *
+ * Returns a copy: `market.outcomes` is shared with everything else on the
+ * page, and `sort` mutates in place.
+ *
+ * Match markets do NOT use this. Home / Draw / Away has a reading order of
+ * its own, and the two-sided cards pin each side to a fixed position — the
+ * left crest, the red corner — so re-ranking them would swap the teams around
+ * as the price moved.
+ */
+export function rankedOutcomes(market: Market): Outcome[] {
+  return [...(market.outcomes ?? [])].sort((a, b) => {
+    const ea = Number(!!a.isEliminated);
+    const eb = Number(!!b.isEliminated);
+    if (ea !== eb) return ea - eb;
+    return calcProb(market, b.id) - calcProb(market, a.id);
+  });
+}
+
+/**
  * Probability implied by the money on each side.
  *
  * `currency` selects the book: the figure has to agree with the payout
