@@ -37,6 +37,22 @@ function fmtMoney(value: number): string {
   });
 }
 
+/**
+ * A payout, for display. Whole units only.
+ *
+ * An estimate that reads "Nu 1,284.6039" invites a precision it does not have:
+ * this figure moves with every prediction that follows and is only final at
+ * close. Rounded DOWN, so the number shown is never more than the pool would
+ * actually return.
+ *
+ * Separate from {@link fmtMoney} deliberately — a stake or a balance is an exact
+ * amount the person typed or holds, and a 1.5 USDT stake shown as "1" would be
+ * a wrong number rather than a tidy one.
+ */
+function fmtPayout(value: number): string {
+  return Math.floor(value).toLocaleString();
+}
+
 function getMinBet(market: Market): number {
   return ["ter", "btc"].includes(market.externalSource ?? "") ? 10 : 50;
 }
@@ -1310,7 +1326,7 @@ export function TmaBetModal({
                         overflowWrap: "anywhere",
                       }}
                     >
-                      {estProfit >= 0 ? `${unit} ${fmtMoney(estPayout)}` : "—"}
+                      {estProfit >= 0 ? `${unit} ${fmtPayout(estPayout)}` : "—"}
                     </div>
                   </div>
                   <div style={{ textAlign: "right", minWidth: 0 }}>
@@ -1333,7 +1349,7 @@ export function TmaBetModal({
                           color: "#16a34a",
                         }}
                       >
-                        +{unit} {fmtMoney(estProfit)}
+                        +{unit} {fmtPayout(estProfit)}
                       </div>
                     ) : (
                       <div

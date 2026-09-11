@@ -61,6 +61,22 @@ function fmt(value: number): string {
   });
 }
 
+/**
+ * A payout, for display. Whole units only.
+ *
+ * An estimate that reads "Nu 1,284.6039" invites a precision it does not have:
+ * this figure moves with every prediction that follows and is only final at
+ * close. Rounded DOWN, so the number shown is never more than the pool would
+ * actually return.
+ *
+ * Separate from {@link fmt} deliberately — a stake or a balance is an exact
+ * amount the person typed or holds, and a 1.5 USDT stake shown as "1" would be
+ * a wrong number rather than a tidy one.
+ */
+function fmtPayout(value: number): string {
+  return Math.floor(value).toLocaleString();
+}
+
 function getMinBet(market: Market): number {
   return ["ter", "btc"].includes(market.externalSource ?? "") ? 10 : 50;
 }
@@ -475,7 +491,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
           <Row label="Stake" value={`${placed.unit} ${fmt(placed.amount)}`} />
           <Row
             label="Pays if it wins"
-            value={`${placed.unit} ${fmt(placed.payout)}`}
+            value={`${placed.unit} ${fmtPayout(placed.payout)}`}
             accent="var(--color-success)"
           />
         </div>
@@ -729,7 +745,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
                   letterSpacing: "-0.04em",
                 }}
               >
-                {winAmount > 0 ? `${unit} ${fmt(winAmount)}` : "—"}
+                {winAmount > 0 ? `${unit} ${fmtPayout(winAmount)}` : "—"}
               </div>
               {winMultiple > 0 && (
                 <div
