@@ -136,6 +136,11 @@ const PwaResolvedPage = lazy(() =>
     default: m.ResolvedMarketsPage,
   })),
 );
+const PwaAccuracyPage = lazy(() =>
+  import("@/pages/PlatformAccuracyPage").then((m) => ({
+    default: m.PlatformAccuracyPage,
+  })),
+);
 const PwaWorldCupPage = lazy(() =>
   import("./pages/WorldCupHubPage").then((m) => ({
     default: m.WorldCupHubPage,
@@ -225,6 +230,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/profile": "Profile",
   "/challenges": "Duels",
   "/resolved": "Resolution Record",
+  "/accuracy": "Platform Accuracy",
   "/wallet": "Wallet",
   "/my-bets": "My Positions",
   "/results": "Results",
@@ -1977,6 +1983,26 @@ function PwaLayout({
                 }
               >
                 <PwaResolvedPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/accuracy"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaAccuracyPage />
               </Suspense>
             }
           />
