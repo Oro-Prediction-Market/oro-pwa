@@ -1994,6 +1994,28 @@ function PwaLayout({
           />
           {/* Saved markets are one account's private list, so this is the one
               of these three that has to be behind the gate. */}
+          {/* Someone else's list — public, so no gate: it is reached from a
+              public profile and shows only what that profile already shows. */}
+          <Route
+            path="/saved/:id"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaSavedPage />
+              </Suspense>
+            }
+          />
           <Route
             path="/saved"
             element={
