@@ -933,18 +933,12 @@ export function PwaMarketDetailPage() {
           {/* What you already hold here. This used to render only in the
               right column's market-closed branch, so an open market — the one
               you can still act on — showed no sign that you were in it. */}
-          {/* Sticky so the title, pool and timeline stay visible while the
-              outcomes/prediction panel below is scrolled — mirrors the
-              right column's own sticky pin. */}
-          <div
-            style={{
-              position: "sticky",
-              top: STICKY_TOP,
-              zIndex: 2,
-              background: "var(--bg-page, var(--bg-card))",
-              paddingBottom: "var(--space-sm)",
-            }}
-          >
+          {/* Plain flow, not sticky. Pinning this scrolled the outcomes under
+              a band that had to be opaque to hide them — and an opaque
+              card-coloured band with no horizontal padding read as a broken
+              card, with the title flush against its own edge. The right rail
+              is the one thing here worth pinning; it still is. */}
+          <div>
             <h1
               style={{
                 fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
