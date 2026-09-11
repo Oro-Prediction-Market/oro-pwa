@@ -783,15 +783,75 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
               >
                 Input
               </div>
+              {/* Typable. This was a read-only figure, so the four quick
+                  amounts were the only stakes reachable here — anything in
+                  between meant giving up or going through the bottom sheet.
+                  They stay as shortcuts, not as the whole menu.
+
+                  type="text" with inputMode rather than type="number": a
+                  number input draws spinner arrows that do not fit a field
+                  this small, and its value cannot be sanitised as it is
+                  typed. The keypad is still numeric on a phone. */}
               <div
                 style={{
-                  fontSize: "1.2rem",
-                  fontWeight: 900,
-                  color: "var(--text-main)",
-                  letterSpacing: "-0.02em",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  gap: 6,
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)",
+                  background: "var(--bg-main)",
+                  padding: "5px 10px",
                 }}
               >
-                {unit} {amount}
+                <span
+                  style={{
+                    fontSize: "0.95rem",
+                    fontWeight: 900,
+                    color: "var(--text-muted)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {unit}
+                </span>
+                <input
+                  value={amount}
+                  aria-label="Stake amount"
+                  // USDT stakes are not whole numbers — a numeric keypad hides
+                  // the decimal point and makes $2.50 untypeable.
+                  inputMode={currency === "USDT" ? "decimal" : "numeric"}
+                  placeholder="0"
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    // Empty is allowed through so the field can be cleared
+                    // mid-edit; betAmount reads it as 0 and the CTA already
+                    // says what the minimum is.
+                    // Digits and at most one dot, whatever the currency. The
+                    // dot is admitted even for ngultrum on purpose: dropping
+                    // it turns a typed "12.5" into 125, because each keystroke
+                    // is sanitised on its own and the dot never survives to
+                    // separate anything. A tenfold stake is a worse outcome
+                    // than a fractional one, and the bet sheet's number input
+                    // has always accepted decimals here too.
+                    setAmount(
+                      raw.replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1"),
+                    );
+                  }}
+                  style={{
+                    width: 92,
+                    border: "none",
+                    background: "transparent",
+                    outline: "none",
+                    textAlign: "right",
+                    fontSize: "1.2rem",
+                    fontWeight: 900,
+                    color: "var(--text-main)",
+                    letterSpacing: "-0.02em",
+                    fontFamily: "inherit",
+                    padding: 0,
+                  }}
+                />
               </div>
             </div>
           </div>
