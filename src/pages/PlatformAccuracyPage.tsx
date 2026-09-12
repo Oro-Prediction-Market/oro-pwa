@@ -25,11 +25,15 @@ export const PlatformAccuracyPage: FC = () => (
         content="How often the crowd on Oro gets it right: the share of every settled market's pool that backed the winning outcome, overall and week by week."
       />
     </Helmet>
+    {/* 1240 to match the route title above it, so the dashboard lines up with
+        the heading and the KPI row gets the width it needs on a desktop. A
+        narrower column squeezed the four tiles and the two lower panels into
+        a single stack with the screen half empty either side. */}
     <div
       style={{
-        maxWidth: 760,
+        maxWidth: 1240,
         margin: "0 auto",
-        padding: "16px 16px 60px",
+        padding: "16px var(--space-md) 60px",
       }}
     >
       <PlatformAccuracyPanel />

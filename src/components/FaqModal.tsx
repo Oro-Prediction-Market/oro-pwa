@@ -106,7 +106,7 @@ const FAQ_DATA: FAQSection[] = [
     items: [
       {
         id: "05",
-        question: "How does parimutuel betting work?",
+        question: "How does parimutuel prediction work?",
         answer:
           "All stakes go into a single shared pool. When the market resolves, the total pool (minus the platform fee) is distributed proportionally among everyone who predicted on the winning outcome. Your potential payout is shown before you confirm.",
       },
