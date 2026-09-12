@@ -202,6 +202,7 @@ import {
   ArrowLeft,
   CheckCircle,
   History,
+  Target,
 } from "lucide-react";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ContactSupport } from "./components/ContactSupport";
@@ -235,7 +236,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/profile": "Profile",
   "/challenges": "Duels",
   "/resolved": "Resolution Record",
-  "/accuracy": "Platform Accuracy",
+  "/accuracy": "Accuracy",
   "/saved": "Saved Markets",
   "/wallet": "Wallet",
   "/my-bets": "My Positions",
@@ -304,6 +305,7 @@ const NAV_ITEMS_PUBLIC = [
   { to: "/", label: "Feed", icon: LayoutGrid },
   { to: "/results", label: "Results", icon: History },
   { to: "/leaderboard", label: "Ranks", icon: Medal },
+  { to: "/accuracy", label: "Accuracy", icon: Target },
 ];
 
 const NAV_ITEMS_AUTH = [
