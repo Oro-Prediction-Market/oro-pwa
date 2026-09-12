@@ -160,14 +160,26 @@ export function PublicProfilePage() {
           </div>
         </section>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2,minmax(0,1fr))",
-            gap: 10,
-            marginTop: 16,
-          }}
-        >
+        {/* One card per row on a phone, two once there is room for them.
+            Side by side on a 390px screen each tile got ~175px, which wrapped
+            "Saved Markets" onto two lines and cut its subtitle off mid-word.
+
+            A media query rather than auto-fit/minmax so the column count can
+            never depend on how wide the container happens to be — the TMA copy
+            of this page has no max-width wrapper and auto-fit gave it three.
+            640px is the breakpoint the own-profile grid already uses. */}
+        <style>{`
+          .pub-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 16px;
+          }
+          @media (min-width: 640px) {
+            .pub-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+          }
+        `}</style>
+        <div className="pub-stat-grid">
           {statCards.map((card) => (
             <CompactStatCard key={card.title} {...card} />
           ))}
