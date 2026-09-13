@@ -234,62 +234,6 @@ export function EplMarketDetail({
 
   // Lives in the scrolling column above the thread, in every layout. It was
   // briefly pinned in the rail, but the rail now holds the prediction form.
-  const resolutionCard =
-    market.resolutionCriteria || market.settlementSource ? (
-      <div
-        style={{
-          marginTop: 14,
-          border: "1px solid rgba(0,255,133,0.2)",
-          borderRadius: 12,
-          padding: "14px 15px",
-          background: "rgba(0,255,133,0.04)",
-        }}
-      >
-        <SectionLabel>How this resolves</SectionLabel>
-        {market.resolutionCriteria && (
-          <p
-            style={{
-              margin: "9px 0 0",
-              fontSize: 12.5,
-              lineHeight: 1.55,
-              color: "rgba(255,255,255,0.72)",
-            }}
-          >
-            {market.resolutionCriteria}
-          </p>
-        )}
-        {market.settlementSource && (
-          <div style={{ marginTop: 10 }}>
-            <MutedLabel>Settlement source</MutedLabel>
-            <div
-              style={{
-                marginTop: 3,
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#fff",
-              }}
-            >
-              {market.settlementSource}
-            </div>
-          </div>
-        )}
-        {resolved && market.evidenceNote && (
-          <div style={{ marginTop: 10 }}>
-            <MutedLabel>Resolution note</MutedLabel>
-            <p
-              style={{
-                margin: "3px 0 0",
-                fontSize: 12,
-                lineHeight: 1.5,
-                color: "rgba(255,255,255,0.72)",
-              }}
-            >
-              {market.evidenceNote}
-            </p>
-          </div>
-        )}
-      </div>
-    ) : null;
 
   const iconBtn: React.CSSProperties = {
     display: "inline-flex",
@@ -576,7 +520,6 @@ export function EplMarketDetail({
                 are about to pick rather than below the fold. On narrow screens
                 the panel renders FIRST, so the same card would land above the
                 market itself — there it stays in the scrolling column. */}
-            {isWide && resolutionCard}
           </>}
           main={<>
             {/* The market itself, read-only. The rail beside it holds the
@@ -602,7 +545,6 @@ export function EplMarketDetail({
             )}
             {/* ── Resolution info ── */}
             <DisputeResultBanner dispute={myDispute ?? null} />            {/* On desktop this now sits in the rail instead — see the panel. */}
-            {!isWide && resolutionCard}
 
             {/* ── Dispute (resolving) ── */}
             {isResolving && (
