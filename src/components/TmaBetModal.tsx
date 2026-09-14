@@ -87,6 +87,7 @@ export function TmaBetModal({
   // default below must never overwrite what they typed.
   const touchedAmount = useRef(false);
   const [status, setStatus] = useState<Status>("idle");
+  const [closing, setClosing] = useState(false);
   const [error, setError] = useState("");
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
   const [viewportHeight, setViewportHeight] = useState(
@@ -323,9 +324,15 @@ export function TmaBetModal({
   };
 
   const handleClose = () => {
-    if (status === "processing") return;
-    onClose();
-    resetForm();
+    if (status === "processing" || closing) return;
+    setClosing(true);
+    // Parents commonly conditionally render this modal. Defer their close
+    // callback until the exit motion is complete so the sheet can slide down.
+    window.setTimeout(() => {
+      onClose();
+      resetForm();
+      setClosing(false);
+    }, 320);
   };
 
   const handlePlaceBet = async () => {
@@ -408,6 +415,10 @@ export function TmaBetModal({
       }}
     >
       <style>{`
+        @keyframes tmaSheetDown {
+          from { transform: translateY(0); }
+          to   { transform: translateY(100%); }
+        }
         @keyframes tmaSheetUp {
           from { transform: translateY(100%); }
           to   { transform: translateY(0); }
@@ -451,7 +462,7 @@ export function TmaBetModal({
           maxWidth: 500,
           boxSizing: "border-box",
           boxShadow: "0 -4px 32px rgba(0,0,0,0.22)",
-          animation: "tmaSheetUp 0.32s cubic-bezier(0.32,0.72,0,1) forwards",
+          animation: `${closing ? "tmaSheetDown" : "tmaSheetUp"} 0.32s cubic-bezier(0.32,0.72,0,1) forwards`,
           maxHeight: `min(${viewportHeight * 0.92}px, 92dvh)`,
           // NOT `auto`. With the sheet scrolling itself, its "fixed footer"
           // child was not fixed to anything: the whole sheet scrolled as one,

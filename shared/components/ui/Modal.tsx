@@ -23,14 +23,36 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   maxHeightVh = 88,
   children,
 }) => {
+  // Kept mounted past `open` going false so the sheet can slide back down —
+  // the same two-state pattern the sibling BottomSheet in src/components/ui
+  // uses. Dropping straight out of the tree gives the exit keyframe no frame
+  // to run in.
+  const [rendered, setRendered] = React.useState(open)
+  const [closing, setClosing] = React.useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setRendered(true)
+      setClosing(false)
+      return
+    }
+    if (!rendered) return
+    setClosing(true)
+    const timer = window.setTimeout(() => {
+      setRendered(false)
+      setClosing(false)
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [open, rendered])
+
   // Prevent body scroll while open
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden"
+    if (rendered) document.body.style.overflow = "hidden"
     else document.body.style.overflow = ""
     return () => { document.body.style.overflow = "" }
-  }, [open])
+  }, [rendered])
 
-  if (!open) return null
+  if (!rendered) return null
 
   return (
     <div
@@ -55,13 +77,17 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           maxHeight: `${maxHeightVh}vh`,
           overflowY: "auto",
           paddingBottom: `calc(env(safe-area-inset-bottom) + ${bottomPad}px)`,
-          animation: "sheetSlideUp 0.25s cubic-bezier(0.32,0.72,0,1)",
+          animation: `${closing ? "sheetSlideDown" : "sheetSlideUp"} 0.25s cubic-bezier(0.32,0.72,0,1) forwards`,
         }}
       >
         <style>{`
           @keyframes sheetSlideUp {
             from { transform: translateY(100%) }
             to   { transform: translateY(0) }
+          }
+          @keyframes sheetSlideDown {
+            from { transform: translateY(0) }
+            to   { transform: translateY(100%) }
           }
         `}</style>
 
