@@ -4,7 +4,15 @@ import { bookEdge, marketPool, outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { VISIBLE_OUTCOMES } from "@shared/feedCardMetrics";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
+import {
+  FEED_CARD_H,
+  MORE_LINE_H,
+  OUTCOMES_BLOCK_H,
+  SOURCE_LINE_H,
+  TITLE_BLOCK_H,
+} from "./feedCardHeight";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 
 function outcomeColor(rank: number, total: number, resolved: boolean): string {
@@ -44,11 +52,10 @@ function useCountdown(targetAt: string | null): string {
   return label;
 }
 
-// How many outcomes a card shows before collapsing the rest behind "+N more".
-// Tuned to sit just within the height of the TER/BTC chart cards: enough to fill
-// the space next to them, but not so many that a multi-outcome market (e.g. Ballon
-// d'Or) grows taller than its neighbours and drags the whole grid row up.
-const DEFAULT_VISIBLE_OUTCOMES = 4;
+// How many outcomes a card shows before the rest are left to the market page.
+// Shared with the Telegram app and with every other card in this feed, because
+// it is what fixes the card's height — see shared/feedCardMetrics.ts.
+const DEFAULT_VISIBLE_OUTCOMES = VISIBLE_OUTCOMES;
 
 interface PwaMarketCardProps {
   market: Market;
@@ -59,7 +66,6 @@ interface PwaMarketCardProps {
 export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
   ({ market, onBet, userPickedOutcomeId }) => {
     const navigate = useNavigate();
-    const [showAll, setShowAll] = useState(false);
     const [imgError, setImgError] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const isUpcoming = market.status === "upcoming";
@@ -97,9 +103,8 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
       });
     })();
 
-    const displayOutcomes = showAll
-      ? sentiment
-      : sentiment.slice(0, DEFAULT_VISIBLE_OUTCOMES);
+    const displayOutcomes = sentiment.slice(0, DEFAULT_VISIBLE_OUTCOMES);
+    const hiddenOutcomes = market.outcomes.length - DEFAULT_VISIBLE_OUTCOMES;
 
     return (
       <div
@@ -109,6 +114,13 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
           display: "flex",
           flexDirection: "column",
           height: "100%",
+          // Every card in the feed lands on one height. `height: 100%` alone
+          // only equalises cards within a grid row — it leaves each row free to
+          // differ from the next, which is the ragged feed this fixes. The
+          // minimum is the backstop: add a section without reserving room for
+          // it and the card visibly outgrows its neighbours instead of quietly
+          // re-raggedying the grid.
+          minHeight: FEED_CARD_H,
           boxSizing: "border-box",
           position: "relative",
           boxShadow:
@@ -135,7 +147,10 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               display: "flex",
               alignItems: "center",
               gap: 6,
-              flexWrap: "wrap",
+              // One row, always. Wrapping put a long category name and the
+              // status badge on two lines and made that card taller.
+              flexWrap: "nowrap",
+              overflow: "hidden",
               marginBottom: 2,
             }}
           >
@@ -189,6 +204,11 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
+              // Reserved, not just capped. The clamp stopped a long title
+              // growing the card; without a floor a one-line title still made
+              // it shorter than its neighbours. Same technique the trending
+              // mini-card already uses.
+              minHeight: TITLE_BLOCK_H,
               fontFamily: "var(--font-display)",
               letterSpacing: "-0.01em",
               cursor: "pointer",
@@ -203,6 +223,11 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
               display: "flex",
               flexDirection: "column",
               gap: 6,
+              // Fixed: `open` renders outcome rows here, while resolving,
+              // closed and upcoming each swap in a single banner of their own
+              // height. All four appear in the same feed.
+              height: OUTCOMES_BLOCK_H,
+              overflow: "hidden",
               justifyContent:
                 isUpcoming || isResolving || isClosed ? "center" : "flex-start",
             }}
@@ -530,44 +555,57 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   })()}
                 </div>
 
-                {market.outcomes.length > DEFAULT_VISIBLE_OUTCOMES && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowAll(!showAll);
-                    }}
-                    style={{
-                      background: "transparent",
-                      border: "1px solid var(--border)",
-                      padding: "5px 10px",
-                      borderRadius: "var(--radius-md)",
-                      fontSize: "0.7rem",
-                      color: "var(--text-muted)",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      textAlign: "center",
-                      width: "100%",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.borderColor = "var(--text-subtle)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = "var(--border)")
-                    }
-                  >
-                    {showAll
-                      ? "Show Less"
-                      : `+ ${market.outcomes.length - DEFAULT_VISIBLE_OUTCOMES} more`}
-                  </button>
-                )}
+                {/* The overflow hint. Opens the market rather than expanding
+                    in place — expanding was what made a card's height
+                    unknowable, since a 36-outcome market grew by 1,500px and
+                    reflowed the whole grid row around it. The slot is reserved
+                    even when there is nothing to hide, so a binary market (94%
+                    of the feed) is not a line shorter than the rest. */}
+                <div
+                  onClick={
+                    hiddenOutcomes > 0
+                      ? (e) => {
+                          e.stopPropagation();
+                          navigate(`/market/${market.id}`);
+                        }
+                      : undefined
+                  }
+                  style={{
+                    height: MORE_LINE_H,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    color: "var(--text-subtle)",
+                    cursor: hiddenOutcomes > 0 ? "pointer" : "default",
+                  }}
+                >
+                  {hiddenOutcomes > 0 ? `+${hiddenOutcomes} more` : ""}
+                </div>
               </>
             )}
           </div>
 
-          {/* Settlement source */}
+          {/* Settlement source. The slot is always here — most markets have no
+              source line, and letting it collapse made those cards shorter. */}
+          {!(market.externalSource === "ter" || market.settlementSource) && (
+            <div style={{ height: SOURCE_LINE_H }} />
+          )}
           {(market.externalSource === "ter" || market.settlementSource) && (
-            <div style={{ fontSize: "0.68rem", color: "var(--text-subtle)", fontWeight: 600 }}>
+            <div
+              style={{
+                fontSize: "0.68rem",
+                color: "var(--text-subtle)",
+                fontWeight: 600,
+                // One line only: `wordBreak: "break-all"` on the link below
+                // means a long URL would otherwise wrap and grow the card.
+                height: SOURCE_LINE_H,
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                textOverflow: "ellipsis",
+              }}
+            >
               Resolves via{" "}
               {market.externalSource === "ter" ? (
                 "api.ter.bt"

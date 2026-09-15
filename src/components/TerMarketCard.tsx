@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, memo, type FC } from "react";
 import { useCurrency } from "@shared/currency/currency";
 import { marketPool, outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
+import { FEED_CARD_H, PRICE_CHART_H } from "./feedCardHeight";
 import { Market, getTerPrice, getTerPriceHistory, TerPrice } from "../../shared/api/client";
 
 function useCountdown(targetAt: string | null): string {
@@ -401,6 +402,8 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
           cursor: "pointer",
           userSelect: "none",
           height: "100%",
+          // The one feed height, shared with the market cards beside it.
+          minHeight: FEED_CARD_H,
           boxSizing: "border-box",
           display: "flex",
           flexDirection: "column",
@@ -478,11 +481,15 @@ export const TerMarketCard: FC<TerMarketCardProps> = memo(
         </div>
 
         {/* Chart */}
-        {priceHistory.length >= 2 && (
-          <div style={{ height: 160, background: "rgba(0,0,0,0.18)" }}>
+        {/* The well is always here, even before price history arrives. It
+            used to render only once there were two points, so the card stood
+            160px short and then jumped taller mid-session — which put it out of
+            step with every other card in the feed twice over. */}
+        <div style={{ height: PRICE_CHART_H, background: "rgba(0,0,0,0.18)" }}>
+          {priceHistory.length >= 2 && (
             <TerSparkline history={priceHistory} refPrice={refPrice} />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Actions */}
         <div style={{ padding: "10px 16px 14px", display: "flex", flexDirection: "column", gap: 10, marginTop: "auto" }}>
