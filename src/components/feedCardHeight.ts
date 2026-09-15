@@ -1,7 +1,7 @@
 import {
   feedCardHeight,
+  outcomesBlockHeight,
   priceChartHeight,
-  VISIBLE_OUTCOMES,
   type FeedCardMetrics,
 } from "@shared/feedCardMetrics";
 
@@ -27,6 +27,8 @@ const PWA_CARD: FeedCardMetrics = {
   sourceLineH: 14,
   // Body padding (10 + 12) + badge row (19) + footer (22) + 4 × gap 10.
   chromeH: 103,
+  // The hint sits inside the outcomes block here.
+  moreLineInBlock: true,
 };
 
 /** Every card in the PWA feed lands on exactly this height. */
@@ -36,6 +38,26 @@ export const FEED_CARD_H = feedCardHeight(PWA_CARD);
 export const MORE_LINE_H = PWA_CARD.moreLineH;
 
 /**
+ * One outcome row and the gap below it, exported so a card can work out how
+ * many rows fit the space the grid actually gave it — see `useFittedRows`.
+ * A row in a stretched grid row is the difference between a third outcome and
+ * 50px of blank space.
+ */
+export const OUTCOME_ROW_H = PWA_CARD.outcomeRowH;
+export const OUTCOME_GAP = PWA_CARD.outcomeGap;
+
+/**
+ * A grouped card's candidate row, which is taller than a plain outcome row: it
+ * carries an avatar, a name, a chance, and the two Yes/No buttons.
+ *
+ * Measured at 50px with a single-line name. It used to be 65px whenever a name
+ * wrapped to two lines, which is why grouped cards stood ~17px above the rest of
+ * the feed — a card cannot have a fixed height while its rows are sized by how
+ * long someone's name is. The name is clamped to one line for that reason.
+ */
+export const GROUP_ROW_H = 50;
+
+/**
  * The outcomes block, fixed so every status occupies the same space.
  *
  * Only `open` markets render outcome rows at all — `resolving`, `closed` and
@@ -43,10 +65,7 @@ export const MORE_LINE_H = PWA_CARD.moreLineH;
  * appear side by side in the feed. Sizing the block rather than its contents is
  * what keeps a "CLOSED" card level with a live one.
  */
-export const OUTCOMES_BLOCK_H =
-  VISIBLE_OUTCOMES * PWA_CARD.outcomeRowH +
-  (VISIBLE_OUTCOMES - 1) * PWA_CARD.outcomeGap +
-  PWA_CARD.moreLineH;
+export const OUTCOMES_BLOCK_H = outcomesBlockHeight(PWA_CARD);
 
 /** Reserved slot for the "Resolves via …" line, kept when there is no source. */
 export const SOURCE_LINE_H = PWA_CARD.sourceLineH;

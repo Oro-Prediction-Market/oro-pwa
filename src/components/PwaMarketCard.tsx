@@ -6,11 +6,13 @@ import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { marketArtwork } from "@shared/helpers/marketImage";
 import { MarketThumb } from "@shared/components/MarketThumb";
-import { VISIBLE_OUTCOMES } from "@shared/feedCardMetrics";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
+import { ROWS_LAYER, useFittedRows } from "@shared/hooks/useFittedRows";
 import {
   FEED_CARD_H,
   MORE_LINE_H,
+  OUTCOME_GAP,
+  OUTCOME_ROW_H,
   OUTCOMES_BLOCK_H,
   SOURCE_LINE_H,
   TITLE_BLOCK_H,
@@ -53,11 +55,6 @@ function useCountdown(targetAt: string | null): string {
   }, [targetAt]);
   return label;
 }
-
-// How many outcomes a card shows before the rest are left to the market page.
-// Shared with the Telegram app and with every other card in this feed, because
-// it is what fixes the card's height — see shared/feedCardMetrics.ts.
-const DEFAULT_VISIBLE_OUTCOMES = VISIBLE_OUTCOMES;
 
 interface PwaMarketCardProps {
   market: Market;
@@ -105,8 +102,19 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
       });
     })();
 
-    const displayOutcomes = sentiment.slice(0, DEFAULT_VISIBLE_OUTCOMES);
-    const hiddenOutcomes = market.outcomes.length - DEFAULT_VISIBLE_OUTCOMES;
+    // `DEFAULT_VISIBLE_OUTCOMES` is the floor, not the cap: the block measures
+    // itself and shows a third row when the grid row is tall enough to hold one
+    // — which it often is, since the banner cards stretch their row past the
+    // shared card height.
+    const { blockRef, visibleRows } = useFittedRows({
+      rowH: OUTCOME_ROW_H,
+      gap: OUTCOME_GAP,
+      reserveH: MORE_LINE_H,
+      total: sentiment.length,
+    });
+
+    const displayOutcomes = sentiment.slice(0, visibleRows);
+    const hiddenOutcomes = market.outcomes.length - displayOutcomes.length;
 
     return (
       <div
@@ -234,15 +242,27 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
 
           {/* ── Outcomes Area ── */}
           <div
+            ref={blockRef}
             style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              // Fixed: `open` renders outcome rows here, while resolving,
-              // closed and upcoming each swap in a single banner of their own
-              // height. All four appear in the same feed.
-              height: OUTCOMES_BLOCK_H,
+              // The floor is the two rows every card is guaranteed, which is
+              // what `feedCardHeight()` sizes the card from. `flex: 1` then
+              // hands this block any space the grid row has over that — space
+              // the footer's `marginTop: auto` used to collect into a dead gap
+              // — and `useFittedRows` turns it into real rows.
+              //
+              // `open` renders outcome rows here, while resolving, closed and
+              // upcoming each swap in a single banner of their own height. All
+              // four appear in the same feed.
+              minHeight: OUTCOMES_BLOCK_H,
+              flex: 1,
+              position: "relative",
               overflow: "hidden",
+            }}
+          >
+          <div
+            style={{
+              ...ROWS_LAYER,
+              gap: 6,
               justifyContent:
                 isUpcoming || isResolving || isClosed ? "center" : "flex-start",
             }}
@@ -600,6 +620,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                 </div>
               </>
             )}
+          </div>
           </div>
 
           {/* Settlement source. The slot is always here — most markets have no

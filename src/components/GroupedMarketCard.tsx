@@ -13,10 +13,12 @@ import type { Market, Outcome } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { groupArtwork } from "@shared/helpers/marketImage";
 import { MarketThumb } from "@shared/components/MarketThumb";
-import { VISIBLE_OUTCOMES } from "@shared/feedCardMetrics";
+import { ROWS_LAYER, useFittedRows } from "@shared/hooks/useFittedRows";
 import {
   FEED_CARD_H,
+  GROUP_ROW_H,
   MORE_LINE_H,
+  OUTCOME_GAP,
   TITLE_BLOCK_H,
 } from "./feedCardHeight";
 import { BottomSheet } from "@/components/ui/Modal";
@@ -29,8 +31,6 @@ import { MarketShareCard } from "@/components/MarketShareCard";
 
 export const YES_COLOR = "#22c55e";
 export const NO_COLOR = "#ef4444";
-// Matches every other card in the feed — see shared/feedCardMetrics.ts.
-const DEFAULT_VISIBLE_CANDIDATES = VISIBLE_OUTCOMES;
 
 function useCountdown(targetAt: string | null): string {
   const [label, setLabel] = useState("Open");
@@ -190,8 +190,16 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
         };
       })
       .sort((a, b) => b.pct - a.pct);
-    const visibleRows = rows.slice(0, DEFAULT_VISIBLE_CANDIDATES);
-    const hiddenRows = rows.length - DEFAULT_VISIBLE_CANDIDATES;
+    // Two candidates are guaranteed; more appear when the grid row is tall
+    // enough to hold them, rather than leaving the space blank above the footer.
+    const { blockRef, visibleRows: fitRows } = useFittedRows({
+      rowH: GROUP_ROW_H,
+      gap: OUTCOME_GAP,
+      reserveH: MORE_LINE_H,
+      total: rows.length,
+    });
+    const visibleRows = rows.slice(0, fitRows);
+    const hiddenRows = rows.length - visibleRows.length;
 
     const betButton = (
       m: Market,
@@ -351,8 +359,19 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
             </h3>
           </div>
 
-          {/* Candidate rows */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* Candidate rows. `flex: 1` takes the space the grid row has over
+              the two guaranteed candidates, which `useFittedRows` spends on
+              more of them. */}
+          <div
+            ref={blockRef}
+            style={{
+              minHeight: 2 * GROUP_ROW_H + 2 * OUTCOME_GAP + MORE_LINE_H,
+              flex: 1,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+          <div style={{ ...ROWS_LAYER, gap: 6 }}>
             {visibleRows.map(({ market: m, name, pct, yes, no }) => {
               const avatarUrl = !imgErrors[m.id] ? m.imageUrl : null;
               const barWidth = Math.max(4, Math.min(100, pct));
@@ -450,10 +469,13 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
                         lineHeight: 1.25,
                         color: "var(--text-main)",
                         overflow: "hidden",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        wordBreak: "break-word",
+                        // One line. Two made the row 65px instead of 50
+                        // whenever a name wrapped, so a grouped card's height
+                        // depended on how long a candidate's name was — which
+                        // is what put these cards ~17px above the rest of the
+                        // feed. The full name is on the group page.
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
                       }}
                     >
                       {name}
@@ -497,6 +519,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
             >
               {hiddenRows > 0 ? `+${hiddenRows} more` : ""}
             </div>
+          </div>
           </div>
 
           {/* Settlement source */}
