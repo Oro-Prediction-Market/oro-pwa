@@ -30,6 +30,8 @@ import { TmaBetModal } from "../components/TmaBetModal";
 import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { marketArtwork } from "@shared/helpers/marketImage";
+import { MarketThumb } from "@shared/components/MarketThumb";
 import { OutcomeRow } from "@shared/components/OutcomeRow";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { SaveMarketButton } from "@shared/components/SaveMarketButton";
@@ -940,19 +942,34 @@ export function PwaMarketDetailPage() {
               card, with the title flush against its own edge. The right rail
               is the one thing here worth pinning; it still is. */}
           <div>
-            <h1
+            <div
               style={{
-                fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
-                fontWeight: 900,
-                color: "var(--text-main)",
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-sm)",
                 marginBottom: "var(--space-sm)",
-                lineHeight: 1.2,
-                fontFamily: "var(--font-display)",
-                letterSpacing: "-0.02em",
               }}
             >
-              {market.title}
-            </h1>
+              <MarketThumb
+                src={marketArtwork(market)}
+                alt={market.title}
+                size={52}
+                rounded={10}
+              />
+              <h1
+                style={{
+                  fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
+                  fontWeight: 900,
+                  color: "var(--text-main)",
+                  margin: 0,
+                  lineHeight: 1.2,
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                {market.title}
+              </h1>
+            </div>
             {market.description && market.externalSource !== "ter" && (
               <p
                 style={{
@@ -1251,17 +1268,6 @@ export function PwaMarketDetailPage() {
                 // Laplace-smoothed pool ratio.
                 const pct = calcProb(displayMarket, outcome.id) * 100;
 
-                // The row is ranked, but colour and artwork belong to the
-                // OUTCOME, not to where it happens to sit today. The chart
-                // above picks its line colours from this same market order, so
-                // reading the palette off the rank would have drifted the two
-                // apart every time a price moved — and `imageUrl` /
-                // `imageUrlAlt` are "first side, second side", so ranking them
-                // would have put the wrong crest on the row.
-                const idx = displayMarket.outcomes.findIndex(
-                  (o) => o.id === outcome.id,
-                );
-
                 const isResolved = market.status === "resolved" || market.status === "settled";
                 // One flat colour for every outcome rather than a rainbow per
                 // index — the winner still stands out once a market resolves.
@@ -1273,14 +1279,8 @@ export function PwaMarketDetailPage() {
                       : "#3b82f6";
 
                 const wcFlag = isWCMarket(market) ? getWCFlag(outcome.label) : "";
-                const avatarUrl = wcFlag || (!imgError
-                  ? (outcome as any).imageUrl ||
-                    (idx === 0
-                      ? market.imageUrl
-                      : idx === 1
-                        ? market.imageUrlAlt || market.imageUrl
-                        : null)
-                  : null);
+                const avatarUrl =
+                  wcFlag || (!imgError ? outcome.imageUrl || null : null);
                 const vis = getCategoryVisual(market.category);
                 const eliminated = !!outcome.isEliminated;
                 // On a phone this row IS the predict CTA — tapping it opens

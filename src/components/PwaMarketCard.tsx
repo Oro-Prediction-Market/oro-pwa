@@ -4,6 +4,8 @@ import { bookEdge, marketPool, outcomePool } from "@shared/currency/pools";
 import { useNavigate } from "react-router-dom";
 import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { marketArtwork } from "@shared/helpers/marketImage";
+import { MarketThumb } from "@shared/components/MarketThumb";
 import { VISIBLE_OUTCOMES } from "@shared/feedCardMetrics";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
 import {
@@ -191,31 +193,44 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
             )}
           </div>
 
-          {/* Title — tappable → open market detail */}
-          <h3
-            onClick={() => navigate(`/market/${market.id}`)}
-            style={{
-              fontSize: "0.95rem",
-              fontWeight: 800,
-              lineHeight: 1.35,
-              color: "var(--text-main)",
-              margin: 0,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              // Reserved, not just capped. The clamp stopped a long title
-              // growing the card; without a floor a one-line title still made
-              // it shorter than its neighbours. Same technique the trending
-              // mini-card already uses.
-              minHeight: TITLE_BLOCK_H,
-              fontFamily: "var(--font-display)",
-              letterSpacing: "-0.01em",
-              cursor: "pointer",
-            }}
-          >
-            {market.title}
-          </h3>
+          {/* Title row — artwork, then the title. Both tappable → market detail.
+              The thumbnail is 40px against a title block reserved at 42px, so a
+              card with a picture is exactly as tall as one without. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <MarketThumb
+              src={marketArtwork(market)}
+              alt={market.title}
+              size={40}
+            />
+            <h3
+              onClick={() => navigate(`/market/${market.id}`)}
+              style={{
+                fontSize: "0.95rem",
+                fontWeight: 800,
+                lineHeight: 1.35,
+                color: "var(--text-main)",
+                margin: 0,
+                // Lets the clamp work as a flex child instead of the title
+                // pushing the thumbnail off the row.
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                // Reserved, not just capped. The clamp stopped a long title
+                // growing the card; without a floor a one-line title still made
+                // it shorter than its neighbours. Same technique the trending
+                // mini-card already uses.
+                minHeight: TITLE_BLOCK_H,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.01em",
+                cursor: "pointer",
+              }}
+            >
+              {market.title}
+            </h3>
+          </div>
 
           {/* ── Outcomes Area ── */}
           <div
@@ -339,17 +354,17 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                   }}
                 >
                   {(() => {
-                    return displayOutcomes.map((s, idx) => {
+                    return displayOutcomes.map((s) => {
                       const barWidth = Math.max(4, Math.min(100, s.pct));
-                      // WC flag > explicit imageUrl > market images
+                      // The outcome's own image, or its flag. The market image
+                      // used to sit on the end of this chain, which meant the
+                      // market's artwork became the face of whichever outcome
+                      // was listed first — and this list is probability-sorted,
+                      // so it moved between outcomes as the odds moved. The
+                      // market image has its own slot beside the title now.
                       const wcFlag = isWCMarket(market) ? getWCFlag(s.label) : "";
                       const avatarUrl = !imgError
-                        ? s.imageUrl || wcFlag ||
-                          (idx === 0
-                            ? market.imageUrl
-                            : idx === 1
-                              ? market.imageUrlAlt || market.imageUrl
-                              : null)
+                        ? s.imageUrl || wcFlag || null
                         : null;
                       const vis = getCategoryVisual(market.category);
                       return (
