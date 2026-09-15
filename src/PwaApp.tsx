@@ -24,6 +24,7 @@ const PwaMarketDetailPage = lazy(() =>
     default: m.PwaMarketDetailPage,
   })),
 );
+const PwaGroupDetailPage = lazy(() => import("./pages/PwaGroupDetailPage"));
 const PwaPaymentTestPage = lazy(() =>
   import("./pages/PwaPaymentTestPage").then((m) => ({
     default: m.PwaPaymentTestPage,
@@ -1805,6 +1806,26 @@ function PwaLayout({
                 }
               >
                 <PwaMarketDetailPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/group/:groupId"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaGroupDetailPage />
               </Suspense>
             }
           />

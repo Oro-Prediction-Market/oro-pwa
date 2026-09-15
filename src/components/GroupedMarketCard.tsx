@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, type FC } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatOdds } from "@/pages/WorldCupHubPage";
 import { useCurrency, type Currency } from "@shared/currency/currency";
 import {
@@ -26,8 +27,8 @@ import { MarketShareCard } from "@/components/MarketShareCard";
 // candidate (each candidate is its own Yes/No child market on the backend),
 // with the candidate's image, chance % and Yes/No quick-bet buttons.
 
-const YES_COLOR = "#22c55e";
-const NO_COLOR = "#ef4444";
+export const YES_COLOR = "#22c55e";
+export const NO_COLOR = "#ef4444";
 // Matches every other card in the feed — see shared/feedCardMetrics.ts.
 const DEFAULT_VISIBLE_CANDIDATES = VISIBLE_OUTCOMES;
 
@@ -66,13 +67,13 @@ export function candidateName(m: Market): string {
   return parts.length > 1 ? parts[parts.length - 1].trim() : m.title;
 }
 
-function findOutcome(m: Market, label: "yes" | "no"): Outcome | undefined {
+export function findOutcome(m: Market, label: "yes" | "no"): Outcome | undefined {
   return m.outcomes?.find((o) => o.label?.trim().toLowerCase() === label);
 }
 
 /** Chance % of an outcome (Laplace-smoothed pool share once bets exist, else
  *  initial LMSR odds). */
-function chanceOf(
+export function chanceOf(
   m: Market,
   o: Outcome | undefined,
   currency: Currency,
@@ -115,7 +116,7 @@ function chanceOf(
  * currency: a Nu 100 probe against a $2 book would swamp the pool and report a
  * multiple nobody could ever get.
  */
-function outcomeOdds(
+export function outcomeOdds(
   m: Market,
   o: Outcome,
   currency: Currency,
@@ -140,6 +141,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
   ({ markets, onBet, referralId }) => {
     const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
     const [shareOpen, setShareOpen] = useState(false);
+    const navigate = useNavigate();
     // The book this viewer transacts in. Every pool, percentage and multiple
     // below is read from it.
     const currency = useCurrency();
@@ -325,6 +327,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <MarketThumb src={groupArtwork(first)} alt={title} size={40} />
             <h3
+              onClick={() => first.groupId && navigate(`/group/${first.groupId}`)}
               style={{
                 fontSize: "0.95rem",
                 fontWeight: 800,
@@ -333,6 +336,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
                 margin: 0,
                 flex: 1,
                 minWidth: 0,
+                cursor: "pointer",
                 overflow: "hidden",
                 display: "-webkit-box",
                 WebkitLineClamp: 2,
@@ -475,10 +479,11 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
             })}
             {/* Overflow hint. Reserved even when nothing is hidden, so a
                 two-candidate group is not a line shorter than a ten-candidate
-                one. Unlike the other feed cards this one does not navigate:
-                each row is its own market, so there is no single "the market"
-                to open, and no group route exists to show them all. */}
+                one. It opens the group page, which lists every candidate —
+                before that page existed this line led nowhere, and the
+                candidates past the second were unreachable from the feed. */}
             <div
+              onClick={() => first.groupId && navigate(`/group/${first.groupId}`)}
               style={{
                 height: MORE_LINE_H,
                 display: "flex",
@@ -487,6 +492,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
                 fontSize: "0.7rem",
                 fontWeight: 800,
                 color: "var(--text-subtle)",
+                cursor: first.groupId ? "pointer" : "default",
               }}
             >
               {hiddenRows > 0 ? `+${hiddenRows} more` : ""}
