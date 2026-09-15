@@ -10,7 +10,9 @@ import {
   type OutcomeHistory,
 } from "@shared/api/client";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
+import MarketComments from "@shared/components/MarketComments";
 import { MarketThumb } from "@shared/components/MarketThumb";
+import { useAuth } from "@shared/hooks/useAuth";
 import { ProbabilityChart, type ChartSeries } from "@shared/components/ProbabilityChart";
 import { groupArtwork } from "@shared/helpers/marketImage";
 import { getCategoryVisual } from "@shared/helpers/visuals";
@@ -84,6 +86,9 @@ export default function PwaGroupDetailPage() {
   const bp = useBreakpoint();
   const currency = useCurrency();
   const isMobile = bp === "mobile";
+  // Passed down to the thread rather than letting MarketComments call useAuth()
+  // itself — there is no auth context, so that would be a second getMe().
+  const { user } = useAuth();
 
   const [all, setAll] = useState<Market[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -200,6 +205,33 @@ export default function PwaGroupDetailPage() {
   // is the more useful glance on a race anyway.
   const leader = rows[0];
   const selected = rows.find((r) => r.market.id === selectedId) ?? rows[0];
+
+  /**
+   * The market the race's comment thread hangs off.
+   *
+   * Comments are keyed to a single `marketId` and a group is virtual, so there
+   * is no row for the race itself to own a thread. One conversation about the
+   * race is what people would actually write, so the whole group shares the
+   * oldest child's thread rather than splitting five ways.
+   *
+   * Oldest, specifically: candidates are only ever appended, so the first one
+   * never changes. Anchoring to the newest would move the thread — and hide
+   * every existing comment — the moment a candidate was added.
+   *
+   * Tie-broken on id, which is what makes that guarantee hold. Children created
+   * in one statement share a `createdAt` to the microsecond, and an ordering
+   * that treats equal timestamps as unequal is decided by whatever order the
+   * feed happened to return — so the thread could move between candidates from
+   * one load to the next, taking every comment on it out of view.
+   */
+  const commentAnchor = useMemo(() => {
+    if (!markets.length) return null;
+    return [...markets].sort((a, b) => {
+      const at = String(a.createdAt ?? "");
+      const bt = String(b.createdAt ?? "");
+      return at === bt ? a.id.localeCompare(b.id) : at < bt ? -1 : 1;
+    })[0];
+  }, [markets]);
   /**
    * The candidate the stake sheet is bound to, titled candidate-first.
    *
@@ -592,6 +624,21 @@ export default function PwaGroupDetailPage() {
                 </p>
               )}
             </div>
+          )}
+
+          {/* One thread for the race. Inside the scrolling left column, not
+              below it: mounted below, it would end the sticky rail's
+              containing block and unpin the panel the moment you scrolled
+              into the comments — the same reason the market detail page
+              embeds its thread rather than stacking it. */}
+          {commentAnchor && (
+            <MarketComments
+              marketId={commentAnchor.id}
+              marketStatus={commentAnchor.status}
+              currentUserId={user?.id ?? null}
+              onOpenProfile={(userId: string) => navigate(`/profile/${userId}`)}
+              embedded
+            />
           )}
         </div>
 
