@@ -209,6 +209,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ContactSupport } from "./components/ContactSupport";
 import { NotificationBell } from "./components/NotificationCenter";
 import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
+import { ConsentGate } from "@shared/components/ConsentGate";
+import { useConsentRequired } from "@shared/hooks/useConsentRequired";
 // Lazy-load HowItWorksModal — only needed on click
 const HowItWorksModal = lazy(() =>
   import("./components/HowItWorksModal").then((m) => ({
@@ -966,6 +968,7 @@ function PwaLayout({
   onAuthSuccess: () => void;
 }) {
   const navigate = useNavigate();
+  const { consentRequired, acceptConsent } = useConsentRequired(authed);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
@@ -1781,6 +1784,20 @@ function PwaLayout({
       >
         <PageTitleBar />
         {authed && <SystemNotificationModal />}
+        {/* Blocks the app until this user has consented. Mounted here, beside
+            the notification modal, because it is the same shape of thing: an
+            app-level overlay that gates itself on a server-side flag. */}
+        <ConsentGate
+          open={consentRequired}
+          onAccept={acceptConsent}
+          onDecline={() =>
+            logoutApi().then(() =>
+              window.dispatchEvent(new Event("oro:unauthorized")),
+            )
+          }
+          onOpenTerms={() => navigate("/terms")}
+          onOpenPrivacy={() => navigate("/privacy")}
+        />
         <Routes>
           <Route
             path="/"
