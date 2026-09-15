@@ -30,6 +30,7 @@ import { TmaBetModal } from "../components/TmaBetModal";
 import { DisputeContestFields } from "../components/DisputeContestFields";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { OutcomeRow } from "@shared/components/OutcomeRow";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { useMarketSocket } from "../hooks/useMarketSocket";
@@ -1226,11 +1227,14 @@ export function PwaMarketDetailPage() {
 
             {chartSeries && <ProbabilityChart series={chartSeries} />}
 
+            {/* --space-sm, not --space-md: the gap was sized to separate
+                three-band rows ~83px tall. Against a ~52px row that much air
+                re-lengthens the card the compaction was meant to shorten. */}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "var(--space-md)",
+                gap: "var(--space-sm)",
               }}
             >
               {isOpen &&
@@ -1285,189 +1289,39 @@ export function PwaMarketDetailPage() {
                 // this is the only place left to tap.
                 const tappable = bp === "mobile" && isOpen && !eliminated;
 
+                // Null when there is nothing to quote, which hides the pill.
+                // This used to fall back to `100 / max(pct, 1)` and print a
+                // number derived from the smoothed prior — a fabricated price
+                // on a market nobody had staked on. It also skipped the 1.05x
+                // payout floor the engine guarantees, so a heavily-favoured
+                // outcome could be quoted BELOW what a winner would be paid.
+                const ownPool = Number(outcome.totalBetAmount) || 0;
+                const pool = Number(displayMarket.totalPool) || 0;
+                const edge = Number(displayMarket.houseEdgePct) || 0;
+                const odds =
+                  pool > 0 && ownPool > 0
+                    ? Math.max(1.05, (pool * (1 - edge / 100)) / ownPool)
+                    : null;
+
                 return (
-                  <div
+                  <OutcomeRow
                     key={outcome.id}
-                    onClick={() => tappable && setActiveBet(outcome.id)}
-                    style={{
-                      cursor: tappable ? "pointer" : "default",
-                      opacity: eliminated ? 0.5 : 1,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: "var(--space-xs)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 12,
-                          minWidth: 0,
-                        }}
-                      >
-                        <div
-                          style={{
-                            flexShrink: 0,
-                            width: 36,
-                            height: 36,
-                            borderRadius: wcFlag ? 6 : "var(--radius-full)",
-                            overflow: "hidden",
-                            background: wcFlag ? "transparent" : vis.gradient,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: wcFlag ? "none" : "2px solid #fff",
-                            boxShadow: wcFlag ? "none" : "var(--shadow-sm)",
-                          }}
-                        >
-                          {avatarUrl ? (
-                            <img
-                              src={avatarUrl}
-                              alt=""
-                              onError={() => setImgError(true)}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                display: "block",
-                              }}
-                            />
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: 14,
-                                fontWeight: 900,
-                                color: "#fff",
-                              }}
-                            >
-                              {outcome.label.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <span
-                          style={{
-                            fontWeight: 800,
-                            color: "var(--text-main)",
-                            fontSize: "1rem",
-                          }}
-                        >
-                          {outcome.label}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          background: `${color}15`,
-                          color: color,
-                          padding: "4px 10px",
-                          borderRadius: "var(--radius-full)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <span style={{ fontSize: "0.85rem", fontWeight: 900 }}>{(() => {
-                          const outcomePool = Number(outcome.totalBetAmount) || 0;
-                          const pool = Number(displayMarket.totalPool) || 0;
-                          const edge = Number(displayMarket.houseEdgePct) || 0;
-                          const odds = pool > 0 && outcomePool > 0
-                            ? (pool * (1 - edge / 100)) / outcomePool
-                            : 100 / Math.max(pct, 1);
-                          return Math.min(99, odds).toFixed(2);
-                        })()}x</span>
-                      </div>
-                      {tappable && (
-                        <div
-                          style={{
-                            background: color,
-                            color: "#fff",
-                            fontSize: "0.62rem",
-                            fontWeight: 800,
-                            padding: "4px 10px",
-                            borderRadius: "var(--radius-full)",
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            flexShrink: 0,
-                          }}
-                        >
-                          Predict
-                        </div>
-                      )}
-                      {eliminated && bp === "mobile" && isOpen && (
-                        <div
-                          style={{
-                            background: "rgba(239,68,68,0.15)",
-                            color: "#ef4444",
-                            border: "1px solid rgba(239,68,68,0.35)",
-                            fontSize: "0.62rem",
-                            fontWeight: 800,
-                            padding: "4px 10px",
-                            borderRadius: "var(--radius-full)",
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            flexShrink: 0,
-                          }}
-                        >
-                          Out
-                        </div>
-                      )}
-                    </div>
-                    {/* Battery-style: the % sits centered inside the bar
-                        itself rather than in a separate number, so the fill
-                        level and its readout are always the same glance. */}
-                    <div
-                      style={{
-                        background: "var(--bg-secondary)",
-                        borderRadius: "var(--radius-full)",
-                        height: "20px",
-                        overflow: "hidden",
-                        position: "relative",
-                      }}
-                    >
-                      <div
-                        style={{
-                          background: color,
-                          height: "100%",
-                          width: `${pct}%`,
-                          borderRadius: "var(--radius-full)",
-                          transition:
-                            "width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                          boxShadow: `0 0 12px ${color}40`,
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "0.68rem",
-                          fontWeight: 800,
-                          color: "#fff",
-                          textShadow: "0 1px 2px rgba(0,0,0,0.55)",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        {pct.toFixed(0)}%
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-subtle)",
-                        marginTop: "6px",
-                        fontWeight: 700,
-                        display: "flex",
-                        justifyContent: "flex-end",
-                      }}
-                    >
-                      Nu {Number(outcome.totalBetAmount).toLocaleString()} total
-                      predicted
-                    </div>
-                  </div>
+                    label={outcome.label}
+                    avatarUrl={avatarUrl || null}
+                    fallbackInitial={outcome.label.charAt(0).toUpperCase()}
+                    gradient={vis.gradient}
+                    isFlag={!!wcFlag}
+                    pct={pct}
+                    odds={odds}
+                    totalStaked={Number(outcome.totalBetAmount)}
+                    currencyLabel="Nu"
+                    color={color}
+                    pickable={tappable}
+                    eliminated={eliminated}
+                    showOutChip={bp === "mobile" && isOpen}
+                    onPick={() => setActiveBet(outcome.id)}
+                    onImageError={() => setImgError(true)}
+                  />
                 );
               })}
             </div>
