@@ -10,6 +10,8 @@ import {
 } from "@shared/currency/pools";
 import type { Market, Outcome } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
+import { groupArtwork } from "@shared/helpers/marketImage";
+import { MarketThumb } from "@shared/components/MarketThumb";
 import { VISIBLE_OUTCOMES } from "@shared/feedCardMetrics";
 import {
   FEED_CARD_H,
@@ -316,26 +318,34 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
             </span>
           </div>
 
-          {/* Umbrella title */}
-          <h3
-            style={{
-              fontSize: "0.95rem",
-              fontWeight: 800,
-              lineHeight: 1.35,
-              color: "var(--text-main)",
-              margin: 0,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              // Reserved so a one-line group title does not shorten the card.
-              minHeight: TITLE_BLOCK_H,
-              fontFamily: "var(--font-display)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {title}
-          </h3>
+          {/* Umbrella title, with the event's own artwork beside it. The
+              candidate rows below carry the candidates' photos; this is the
+              picture for the race itself. 40px against a title block reserved
+              at 42px, so the card's fixed height is unchanged. */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <MarketThumb src={groupArtwork(first)} alt={title} size={40} />
+            <h3
+              style={{
+                fontSize: "0.95rem",
+                fontWeight: 800,
+                lineHeight: 1.35,
+                color: "var(--text-main)",
+                margin: 0,
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                // Reserved so a one-line group title does not shorten the card.
+                minHeight: TITLE_BLOCK_H,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {title}
+            </h3>
+          </div>
 
           {/* Candidate rows */}
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
