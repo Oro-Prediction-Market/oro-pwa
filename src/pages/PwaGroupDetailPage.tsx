@@ -1,15 +1,24 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Users, Clock } from "lucide-react";
-import { getMarkets, type Market, type Outcome } from "@shared/api/client";
+import {
+  getMarkets,
+  getMarketHistory,
+  type Market,
+  type Outcome,
+  type OutcomeHistory,
+} from "@shared/api/client";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import { MarketThumb } from "@shared/components/MarketThumb";
+import { ProbabilityChart, type ChartSeries } from "@shared/components/ProbabilityChart";
 import { groupArtwork } from "@shared/helpers/marketImage";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { useCurrency, formatMoney } from "@shared/currency/currency";
 import { marketPool } from "@shared/currency/pools";
 import { useBreakpoint } from "../hooks/useBreakpoint";
+import { PwaBetForm } from "../components/PwaBetForm";
+import { TmaBetModal } from "../components/TmaBetModal";
 import { formatOdds } from "./WorldCupHubPage";
 import {
   candidateName,
@@ -21,25 +30,33 @@ import {
 } from "../components/GroupedMarketCard";
 
 /**
- * The detail page for a grouped event — a political race, typically.
+ * The page for a grouped event — a political race, typically.
  *
- * Until now a group had no page. The feed card showed two candidates and a
- * "+N more" hint that led nowhere: it is the only card in the feed that does
- * not navigate, because each row is its own market and there was no route that
- * could show them all. On a five-candidate race that meant three candidates
- * were unreachable except through search.
+ * This is the ONLY layer. A group used to have none at all: its feed card is
+ * the only one that does not navigate, because each candidate row is its own
+ * market, and the "+N more" hint led nowhere. The first version of this page
+ * added a second hop — it listed the candidates and sent you to each one's own
+ * market page to stake — which meant two pages for one event. Now the whole
+ * thing resolves here: pick a candidate, the panel binds to it, and you stake
+ * without leaving.
  *
- * Assembled on the client rather than from a group endpoint. `GET /markets`
- * already returns every market in every status but `cancelled`, and the feed
- * already groups them by `groupId` this same way, so filtering that list needs
- * no backend change and no deploy. A dedicated `GET /markets/group/:groupId`
- * would be leaner — the service method already exists, exposed only to admins
- * — and is the natural follow-up if this page ever gets its own traffic.
+ * The staking UI is not reimplemented. Each candidate IS a market, so the same
+ * `PwaBetForm` the market detail page puts in its right rail and the same
+ * `TmaBetModal` it opens on a phone take the selected candidate directly.
+ * Nothing new was written next to the payment path.
  *
- * It does not place bets. Each candidate is a market with its own detail page
- * and its own working bet flow, so Yes/No lead there rather than duplicating
- * the auth-modal and bet-sheet plumbing around the payment path.
+ * Assembled from `GET /markets`, which already returns every market in every
+ * status but `cancelled` and which the feed already groups by `groupId` this
+ * same way, so the page needs no backend change. A dedicated
+ * `GET /markets/group/:groupId` would be leaner — `findGroup()` exists,
+ * exposed only to admins — and is the follow-up if this page earns traffic.
  */
+
+/** Candidates drawn on the chart. Beyond a handful the lines stop being
+ *  readable, and each one costs its own history request. */
+const CHARTED = 5;
+
+const PALETTE = ["#3b82f6", "#8b5cf6", "#f59e0b", "#06b6d4", "#f97316"];
 
 function useCountdown(targetAt: string | null): string {
   const [label, setLabel] = useState("Open");
@@ -66,10 +83,24 @@ export default function PwaGroupDetailPage() {
   const navigate = useNavigate();
   const bp = useBreakpoint();
   const currency = useCurrency();
+  const isMobile = bp === "mobile";
 
   const [all, setAll] = useState<Market[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  /** The candidate whose market the panel is bound to. */
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Phone only: the candidate + side the stake sheet is open on. */
+  const [activeBet, setActiveBet] = useState<{ marketId: string; outcomeId: string } | null>(
+    null,
+  );
+  const [histories, setHistories] = useState<Record<string, OutcomeHistory[]>>({});
+
+  const load = useCallback(() => {
+    return getMarkets()
+      .then(setAll)
+      .catch(() => setFailed(true));
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -89,14 +120,14 @@ export default function PwaGroupDetailPage() {
   const first = markets[0];
   const title = first ? (first.groupTitle || first.title).trim() : "";
 
-  // Sorted by chance, and every candidate is shown — the whole point of the
-  // page is that the feed card could only fit two.
+  // Sorted by chance, and every candidate is shown — the feed card can only
+  // fit two, which is the reason this page exists.
   const rows = useMemo(
     () =>
       markets
         .map((m) => {
           // Prefer the Yes/No labels, fall back to position, so a renamed
-          // outcome still resolves — same rule the feed card uses.
+          // outcome still resolves — the same rule the feed card uses.
           const yes = findOutcome(m, "yes") ?? m.outcomes?.[0];
           const no = findOutcome(m, "no") ?? m.outcomes?.[1];
           return { market: m, name: candidateName(m), pct: chanceOf(m, yes, currency), yes, no };
@@ -105,14 +136,55 @@ export default function PwaGroupDetailPage() {
     [markets, currency],
   );
 
+  // The leader is the default binding, so the panel is never empty on arrival.
+  useEffect(() => {
+    if (!selectedId && rows.length) setSelectedId(rows[0].market.id);
+  }, [rows, selectedId]);
+
+  const charted = useMemo(() => rows.slice(0, CHARTED), [rows]);
+
+  // One history request per charted candidate — each is a separate market, so
+  // there is no single call that returns the group's curves.
+  useEffect(() => {
+    let live = true;
+    for (const { market: m } of charted) {
+      if (histories[m.id]) continue;
+      getMarketHistory(m.id)
+        .then((h) => live && setHistories((prev) => ({ ...prev, [m.id]: h })))
+        .catch(() => {});
+    }
+    return () => {
+      live = false;
+    };
+  }, [charted, histories]);
+
+  /**
+   * One line per candidate: their Yes curve, labelled with their name.
+   *
+   * A candidate's own market has a Yes and a No curve that mirror each other,
+   * so drawing both would double the lines and say nothing — across the group
+   * it is the Yes side that competes.
+   */
+  const chartSeries: ChartSeries[] = useMemo(() => {
+    const out: ChartSeries[] = [];
+    charted.forEach(({ market: m, name, yes }, i) => {
+      const h = histories[m.id];
+      if (!h || !yes) return;
+      const curve = h.find((x) => x.outcomeId === yes.id);
+      if (!curve?.points?.length) return;
+      out.push({
+        label: name,
+        color: PALETTE[i % PALETTE.length],
+        points: curve.points,
+      });
+    });
+    return out;
+  }, [charted, histories]);
+
   const groupPool = useMemo(
     () => markets.reduce((s, m) => s + marketPool(m, currency), 0),
     [markets, currency],
   );
-  // No predictor count here: `Market` as the feed serves it carries no
-  // participantCount, so a head count would need a backend change. The
-  // front-runner is the more useful glance on a race anyway.
-  const leader = rows[0];
   const earliestClose = useMemo(
     () =>
       markets.reduce<string | null>(
@@ -123,6 +195,27 @@ export default function PwaGroupDetailPage() {
     [markets],
   );
   const countdown = useCountdown(earliestClose);
+  // No predictor count: `Market` as the feed serves it carries no
+  // participantCount, so a head count would need a backend change. The leader
+  // is the more useful glance on a race anyway.
+  const leader = rows[0];
+  const selected = rows.find((r) => r.market.id === selectedId) ?? rows[0];
+  /**
+   * The candidate the stake sheet is bound to, titled candidate-first.
+   *
+   * A child market's stored title is "<race> — <candidate>", and the sheet
+   * heads itself with it on one truncated line, so every candidate's sheet
+   * read "Who will lead Paro Thromde the next fi…" — identical, with the name
+   * cut off. Flipped, the name survives truncation and the race still reaches
+   * the share card, which takes this same title. Display only: the stake posts
+   * `market.id`.
+   */
+  const activeMarket = useMemo(() => {
+    const m = activeBet ? markets.find((x) => x.id === activeBet.marketId) : undefined;
+    if (!m) return undefined;
+    const race = (m.groupTitle || "").trim();
+    return race ? { ...m, title: `${candidateName(m)} — ${race}` } : m;
+  }, [activeBet, markets]);
 
   if (!all && !failed) return <LoadingScreen />;
 
@@ -158,6 +251,24 @@ export default function PwaGroupDetailPage() {
 
   const vis = getCategoryVisual(first.category);
   const isOpen = first.status === "open";
+
+  /**
+   * Yes or No for one candidate.
+   *
+   * On a phone it opens the stake sheet on exactly that side. On a wide screen
+   * it binds the right-hand panel to that candidate — the panel carries its own
+   * Yes/No picker, so the side is chosen there, in the one place that takes the
+   * money.
+   */
+  const pick = (m: Market, o: Outcome | undefined) => {
+    if (!o) return;
+    setSelectedId(m.id);
+    // The side buttons carry `disabled`, but the whole row is clickable too —
+    // without this a tap anywhere on a settled candidate opened a stake sheet
+    // for a race that finished.
+    if (m.status !== "open" || o.isEliminated) return;
+    if (isMobile) setActiveBet({ marketId: m.id, outcomeId: o.id });
+  };
 
   const stat = (icon: React.ReactNode, label: string, value: string) => (
     <div
@@ -201,12 +312,150 @@ export default function PwaGroupDetailPage() {
     </div>
   );
 
+  const sideButton = (m: Market, o: Outcome | undefined, label: string, color: string) => {
+    const disabled = !o || o.isEliminated || m.status !== "open";
+    const active = selected?.market.id === m.id;
+    return (
+      <button
+        disabled={disabled}
+        onClick={(e) => {
+          e.stopPropagation();
+          pick(m, o);
+        }}
+        style={{
+          position: "relative",
+          flexShrink: 0,
+          width: 58,
+          padding: "6px 0",
+          borderRadius: "var(--radius-md)",
+          border: "none",
+          cursor: disabled ? "default" : "pointer",
+          background: `${color}${active && !isMobile ? "33" : "1c"}`,
+          boxShadow: `inset 0 0 0 1px ${color}${active && !isMobile ? "80" : "45"}`,
+          color,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          lineHeight: 1.15,
+          opacity: disabled ? 0.4 : 1,
+        }}
+      >
+        <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{o?.label ?? label}</span>
+        {o && (
+          <span style={{ fontSize: "0.55rem", fontWeight: 700, opacity: 0.8 }}>
+            {formatOdds(outcomeOdds(m, o, currency))}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const candidateList = (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {rows.map(({ market: m, name, pct, yes, no }) => {
+        const avatarUrl = !imgErrors[m.id] ? m.imageUrl : null;
+        const fill = Math.max(2, Math.min(100, pct));
+        const active = !isMobile && selected?.market.id === m.id;
+        return (
+          <div
+            key={m.id}
+            onClick={() => pick(m, yes)}
+            style={{
+              position: "relative",
+              overflow: "hidden",
+              borderRadius: "var(--radius-md)",
+              background: "var(--bg-card)",
+              // The bound candidate is marked, because on a wide screen the
+              // panel beside this list belongs to exactly one of these rows.
+              border: `1px solid ${active ? vis.accentColor : "var(--border)"}`,
+              cursor: "pointer",
+            }}
+          >
+            {/* The chance bar as the row's background, matching the outcome
+                rows on a market detail page. */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: 0,
+                width: `${fill}%`,
+                background: `linear-gradient(90deg, ${YES_COLOR}2e, ${YES_COLOR}12)`,
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 12px",
+              }}
+            >
+              <div
+                style={{
+                  flexShrink: 0,
+                  width: 38,
+                  height: 38,
+                  borderRadius: "var(--radius-full)",
+                  overflow: "hidden",
+                  background: vis.gradient,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid rgba(255,255,255,0.15)",
+                }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    onError={() => setImgErrors((p) => ({ ...p, [m.id]: true }))}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>
+                    {name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontWeight: 800,
+                    fontSize: "0.9rem",
+                    color: "var(--text-main)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {name}
+                </div>
+                <div style={{ fontSize: "0.68rem", fontWeight: 700, color: "var(--text-subtle)" }}>
+                  {pct.toFixed(0)}% · {formatMoney(marketPool(m, currency), currency)}
+                </div>
+              </div>
+
+              {sideButton(m, yes, "Yes", YES_COLOR)}
+              {sideButton(m, no, "No", NO_COLOR)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div
       style={{
-        maxWidth: 760,
+        maxWidth: isMobile ? 760 : 1180,
         margin: "0 auto",
-        padding: bp === "mobile" ? "var(--space-md)" : "var(--space-xl)",
+        padding: isMobile ? "var(--space-md)" : "var(--space-xl)",
         display: "flex",
         flexDirection: "column",
         gap: "var(--space-lg)",
@@ -275,7 +524,7 @@ export default function PwaGroupDetailPage() {
           </div>
           <h1
             style={{
-              fontSize: bp === "mobile" ? "1.3rem" : "1.5rem",
+              fontSize: isMobile ? "1.3rem" : "1.5rem",
               fontWeight: 900,
               color: "var(--text-main)",
               margin: 0,
@@ -289,181 +538,125 @@ export default function PwaGroupDetailPage() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-        {stat(null, "Total pool", formatMoney(groupPool, currency))}
-        {/* "Leader", not "Front-runner": the longer label wrapped to two lines
-            in a third of a phone's width and squeezed the name to "Sonam P…".
-            The percentage is on the candidate's own row just below, so the
-            name alone is what this tile is for. */}
-        {stat(<Users size={11} />, "Leader", leader ? leader.name : "—")}
-        {stat(<Clock size={11} />, isOpen ? "Closes" : "Status", isOpen ? countdown : first.status)}
-      </div>
-
-      {/* Every candidate, which is the reason this page exists. */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {rows.map(({ market: m, name, pct, yes, no }) => {
-          const avatarUrl = !imgErrors[m.id] ? m.imageUrl : null;
-          const fill = Math.max(2, Math.min(100, pct));
-          return (
-            <div
-              key={m.id}
-              onClick={() => navigate(`/market/${m.id}`)}
-              style={{
-                position: "relative",
-                overflow: "hidden",
-                borderRadius: "var(--radius-md)",
-                background: "var(--bg-card)",
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-              }}
-            >
-              {/* The chance bar as the row's background, matching the outcome
-                  rows on a market detail page. */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  left: 0,
-                  width: `${fill}%`,
-                  background: `linear-gradient(90deg, ${YES_COLOR}2e, ${YES_COLOR}12)`,
-                  pointerEvents: "none",
-                }}
-              />
-              <div
-                style={{
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "10px 12px",
-                }}
-              >
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: 38,
-                    height: 38,
-                    borderRadius: "var(--radius-full)",
-                    overflow: "hidden",
-                    background: vis.gradient,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "2px solid rgba(255,255,255,0.15)",
-                  }}
-                >
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      onError={() => setImgErrors((p) => ({ ...p, [m.id]: true }))}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: 14, fontWeight: 900, color: "#fff" }}>
-                      {name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontWeight: 800,
-                      fontSize: "0.9rem",
-                      color: "var(--text-main)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.68rem",
-                      fontWeight: 700,
-                      color: "var(--text-subtle)",
-                    }}
-                  >
-                    {pct.toFixed(0)}% · {formatMoney(marketPool(m, currency), currency)}
-                  </div>
-                </div>
-
-                {pickButton(m, yes, "Yes", YES_COLOR)}
-                {pickButton(m, no, "No", NO_COLOR)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {(first.resolutionCriteria || first.settlementSource) && (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: isMobile ? "column" : "row",
+          gap: "var(--space-lg)",
+          alignItems: "flex-start",
+        }}
+      >
         <div
           style={{
-            background: "var(--bg-card)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-md)",
-            padding: "12px 14px",
-            fontSize: "0.8rem",
-            color: "var(--text-muted)",
-            lineHeight: 1.55,
+            flex: 1.6,
+            width: "100%",
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-lg)",
           }}
         >
-          {first.resolutionCriteria && <p style={{ margin: 0 }}>{first.resolutionCriteria}</p>}
-          {first.settlementSource && (
-            <p style={{ margin: "6px 0 0", fontSize: "0.72rem", color: "var(--text-subtle)" }}>
-              Resolves via {first.settlementSource}
-            </p>
+          <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+            {stat(null, "Total pool", formatMoney(groupPool, currency))}
+            {/* "Leader", not "Front-runner": the longer label wrapped to two
+                lines in a third of a phone's width and squeezed the name to
+                "Sonam P…". The percentage is on the row just below. */}
+            {stat(<Users size={11} />, "Leader", leader ? leader.name : "—")}
+            {stat(
+              <Clock size={11} />,
+              isOpen ? "Closes" : "Status",
+              isOpen ? countdown : first.status,
+            )}
+          </div>
+
+          {chartSeries.length > 0 && <ProbabilityChart series={chartSeries} fit />}
+
+          {candidateList}
+
+          {(first.resolutionCriteria || first.settlementSource) && (
+            <div
+              style={{
+                background: "var(--bg-card)",
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius-md)",
+                padding: "12px 14px",
+                fontSize: "0.8rem",
+                color: "var(--text-muted)",
+                lineHeight: 1.55,
+              }}
+            >
+              {first.resolutionCriteria && <p style={{ margin: 0 }}>{first.resolutionCriteria}</p>}
+              {first.settlementSource && (
+                <p style={{ margin: "6px 0 0", fontSize: "0.72rem", color: "var(--text-subtle)" }}>
+                  Resolves via {first.settlementSource}
+                </p>
+              )}
+            </div>
           )}
         </div>
+
+        {/* The staking panel, bound to the selected candidate. Phones get the
+            sheet instead — a rail beside nothing is not a layout. Only for a
+            candidate still open: a finished race was still showing a panel
+            inviting a prediction on it. */}
+        {!isMobile && selected && selected.market.status === "open" && (
+          <div
+            style={{
+              flex: 1,
+              width: "100%",
+              minWidth: 300,
+              position: "sticky",
+              top: "var(--space-lg)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "var(--space-sm)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "0 2px",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--text-subtle)",
+              }}
+            >
+              Predicting on
+              <span style={{ color: "var(--text-main)", textTransform: "none", fontSize: "0.85rem" }}>
+                {selected.name}
+              </span>
+            </div>
+            <PwaBetForm
+              // Remounts when the candidate changes, so a half-typed stake
+              // cannot carry across to a different person's market.
+              key={selected.market.id}
+              market={selected.market}
+              onBetPlaced={() => load()}
+              accent={vis.accentColor}
+              preserveOrder
+            />
+          </div>
+        )}
+      </div>
+
+      {activeBet && activeMarket && (
+        <TmaBetModal
+          isOpen={true}
+          onClose={() => setActiveBet(null)}
+          market={activeMarket}
+          outcomeId={activeBet.outcomeId}
+          onSuccess={() => {
+            setActiveBet(null);
+            load();
+          }}
+          onFailure={(e: string) => console.error(e)}
+          onGoToWallet={() => navigate("/wallet")}
+        />
       )}
     </div>
   );
-
-  /**
-   * Yes/No for one candidate. Navigates to that candidate's own market page
-   * rather than opening a bet sheet here — the page it leads to already owns
-   * the auth and staking flow, and there is no reason to build a second one
-   * next to the payment path.
-   */
-  function pickButton(m: Market, o: Outcome | undefined, label: string, color: string) {
-    const disabled = !o || o.isEliminated || m.status !== "open";
-    return (
-      <button
-        disabled={disabled}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (o) navigate(`/market/${m.id}`);
-        }}
-        style={{
-          position: "relative",
-          flexShrink: 0,
-          width: 58,
-          padding: "6px 0",
-          borderRadius: "var(--radius-md)",
-          border: "none",
-          cursor: disabled ? "default" : "pointer",
-          background: `${color}1c`,
-          boxShadow: `inset 0 0 0 1px ${color}45`,
-          color,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          lineHeight: 1.15,
-          opacity: disabled ? 0.4 : 1,
-        }}
-      >
-        <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{o?.label ?? label}</span>
-        {o && (
-          <span style={{ fontSize: "0.55rem", fontWeight: 700, opacity: 0.8 }}>
-            {formatOdds(outcomeOdds(m, o, currency))}
-          </span>
-        )}
-      </button>
-    );
-  }
 }
