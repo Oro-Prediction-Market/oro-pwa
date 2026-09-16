@@ -13,6 +13,7 @@ import {
   Circle,
   Dot,
   Heart,
+  Megaphone,
   MessageSquare,
   MoreHorizontal,
   ShieldAlert,
@@ -57,6 +58,8 @@ function typeStyle(type: string): { Icon: typeof Bell; color: string } {
       return { Icon: Heart, color: "var(--color-danger)" };
     case "comment_removed":
       return { Icon: ShieldAlert, color: "var(--color-warning)" };
+    case "announcement":
+      return { Icon: Megaphone, color: "var(--color-primary)" };
     default:
       return { Icon: Bell, color: "var(--text-muted)" };
   }
@@ -81,6 +84,12 @@ function timeAgo(iso: string): string {
 /** Best-effort deep link from a notification's metadata. */
 function linkFor(n: UserNotification): string | null {
   const m = n.metadata || {};
+  // A generic escape hatch, so a notification can point somewhere without a rule
+  // being added here for it. Same-origin paths only: metadata is server-written
+  // today, but a relative path cannot become an off-site redirect if that ever
+  // changes.
+  if (typeof m.url === "string" && m.url.startsWith("/") && !m.url.startsWith("//"))
+    return m.url;
   if (m.marketId) return `/market/${m.marketId}`;
   if (n.type === "transaction") return "/wallet";
   if (n.type === "season_prize") return "/leaderboard";
