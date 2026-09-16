@@ -12,7 +12,7 @@ import {
   Handshake,
   Swords,
 } from "lucide-react";
-import { calcProb, calcOdds } from "./WorldCupHubPage";
+import { calcProb, calcOdds, formatOdds } from "./WorldCupHubPage";
 import type {
   Market,
   Outcome,
@@ -323,8 +323,8 @@ function UclSeasonMarket({
               <div style={{ fontSize: 8.5, color: SILVER, fontWeight: 700, textTransform: "uppercase", marginTop: 2 }}>win</div>
               {(() => {
                 const od = calcOdds(market, o.id);
-                return od ? (
-                  <div style={{ fontSize: 9, fontWeight: 800, color: GOLD, marginTop: 3 }}>{od.toFixed(2)}x</div>
+                return od.kind === "quote" ? (
+                  <div style={{ fontSize: 9, fontWeight: 800, color: GOLD, marginTop: 3 }}>{od.multiple.toFixed(2)}x</div>
                 ) : null;
               })()}
             </div>
@@ -540,7 +540,7 @@ function MatchCard({
             <div style={{ marginTop: 4, fontSize: 9, fontWeight: 800, color: GOLD }}>
               {(() => {
                 const od = calcOdds(m, o.id);
-                return od ? `${od.toFixed(2)}x` : "—";
+                return od.kind === "quote" ? `${od.multiple.toFixed(2)}x` : formatOdds(od);
               })()}
             </div>
           </button>
@@ -916,7 +916,7 @@ function StatsTab({
               <span style={{ display: "inline-flex" }}>{active.icon}</span>
               <span style={{ fontSize: 16, fontWeight: 900 }}>{s.value}</span>
             </div>
-            {odds !== null && (
+            {odds !== null && odds.kind === "quote" && (
               <span
                 style={{
                   flexShrink: 0,
@@ -928,7 +928,7 @@ function StatsTab({
                   fontWeight: 900,
                 }}
               >
-                {odds.toFixed(2)}x
+                {odds.multiple.toFixed(2)}x
               </span>
             )}
           </div>

@@ -46,6 +46,7 @@ import {
   isWCMarket,
   calcProb,
   calcOdds,
+  formatOdds,
   rankedOutcomes,
 } from "./WorldCupHubPage";
 import { isEsportsMarket } from "./EsportsHubPage";
@@ -508,7 +509,9 @@ export function PwaMarketDetailPage() {
         label: h.label,
         color: palette[(idx >= 0 ? idx : 0) % palette.length],
         points: h.points,
-        odds: odds ? `${Math.min(99, odds).toFixed(2)}x` : undefined,
+        // Same formatter as every other surface, so the legend and the
+        // outcome pill below it cannot read differently for one outcome.
+        odds: odds.kind === "no_pool" ? undefined : formatOdds(odds),
       };
     });
   }, [chartData, liveMarket]);
@@ -1295,13 +1298,12 @@ export function PwaMarketDetailPage() {
                 // on a market nobody had staked on. It also skipped the 1.05x
                 // payout floor the engine guarantees, so a heavily-favoured
                 // outcome could be quoted BELOW what a winner would be paid.
-                const ownPool = Number(outcome.totalBetAmount) || 0;
-                const pool = Number(displayMarket.totalPool) || 0;
-                const edge = Number(displayMarket.houseEdgePct) || 0;
+                // One rule for every surface — see shared/payout.ts. This used
+                // to floor at 1.05, quoting a guarantee the engine does not
+                // honour: below the floor it refunds the market instead.
+                const quote = calcOdds(displayMarket, outcome.id);
                 const odds =
-                  pool > 0 && ownPool > 0
-                    ? Math.max(1.05, (pool * (1 - edge / 100)) / ownPool)
-                    : null;
+                  quote.kind === "no_pool" ? null : formatOdds(quote);
 
                 return (
                   <OutcomeRow

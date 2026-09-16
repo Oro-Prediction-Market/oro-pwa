@@ -1,6 +1,5 @@
 import { useState, useEffect, memo, type FC } from "react";
 import { useNavigate } from "react-router-dom";
-import { formatOdds } from "@/pages/WorldCupHubPage";
 import { useCurrency, type Currency } from "@shared/currency/currency";
 import {
   bookEdge,
@@ -13,6 +12,13 @@ import type { Market, Outcome } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { groupArtwork } from "@shared/helpers/marketImage";
 import { MarketThumb } from "@shared/components/MarketThumb";
+import {
+  formatQuote,
+  ODDS_PROBE_BTN,
+  ODDS_PROBE_USDT,
+  quotePayout,
+  type PayoutQuote,
+} from "@shared/payout";
 import { ROWS_LAYER, useFittedRows } from "@shared/hooks/useFittedRows";
 import {
   FEED_CARD_H,
@@ -110,23 +116,28 @@ export function chanceOf(
 
 
 /**
- * The multiple a stake in `currency` would return right now.
+ * What a stake in `currency` would return right now — or why it would not.
  *
- * `stake` is a notional probe, so it must be sized in the viewer's own
+ * Resolves the viewer's book and hands plain numbers to `quotePayout`, which is
+ * the only place the multiple is decided. The probe is sized in the viewer's own
  * currency: a Nu 100 probe against a $2 book would swamp the pool and report a
  * multiple nobody could ever get.
+ *
+ * This used to floor nothing and cap at 99×, which is how a candidate holding
+ * 99% of the pool came to advertise `~0.91x` — a losing "win" the engine refunds
+ * rather than pays.
  */
-export function outcomeOdds(
+export function outcomeQuote(
   m: Market,
   o: Outcome,
   currency: Currency,
-): number | null {
-  const total = marketPool(m, currency);
-  const own = outcomePool(o, currency);
-  const edge = bookEdge(m, currency);
-  const stake = currency === "USDT" ? 1 : 100;
-  if (total <= 0) return null;
-  return Math.min(99, ((total + stake) * (1 - edge / 100)) / (own + stake));
+): PayoutQuote {
+  return quotePayout({
+    stake: currency === "USDT" ? ODDS_PROBE_USDT : ODDS_PROBE_BTN,
+    outcomePool: outcomePool(o, currency),
+    totalPool: marketPool(m, currency),
+    houseEdgePct: bookEdge(m, currency),
+  });
 }
 
 interface GroupedMarketCardProps {
@@ -208,7 +219,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
       color: string,
     ) => {
       const disabled = !o || o.isEliminated || m.status !== "open";
-      const odds = o ? outcomeOdds(m, o, currency) : null;
+      const quote = o ? outcomeQuote(m, o, currency) : null;
       return (
         <button
           disabled={disabled}
@@ -259,7 +270,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
           </span>
           {o && (
             <span style={{ fontSize: "0.55rem", fontWeight: 700, opacity: 0.8 }}>
-              {formatOdds(odds)}
+              {quote ? formatQuote(quote) : "—"}
             </span>
           )}
         </button>

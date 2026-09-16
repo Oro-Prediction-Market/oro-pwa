@@ -6,6 +6,12 @@ import type { Market } from "@shared/api/client";
 import { getCategoryVisual } from "@shared/helpers/visuals";
 import { marketArtwork } from "@shared/helpers/marketImage";
 import { MarketThumb } from "@shared/components/MarketThumb";
+import {
+  formatQuote,
+  ODDS_PROBE_BTN,
+  ODDS_PROBE_USDT,
+  quotePayout,
+} from "@shared/payout";
 import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
 import { ROWS_LAYER, useFittedRows } from "@shared/hooks/useFittedRows";
 import {
@@ -574,13 +580,24 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                 // Quoted from the viewer's own book — a USDT
                                 // stake priced off ngultrum liquidity is a
                                 // multiple nobody could ever be paid.
-                                const own = outcomePool(s, currency);
-                                const edge = bookEdge(market, currency);
-                                const odds = viewerPool > 0 && own > 0
-                                  ? (viewerPool * (1 - edge / 100)) / own
-                                  : 100 / Math.max(s.pct, 1);
-                                return Math.min(99, odds).toFixed(2);
-                              })()}x</span>
+                                //
+                                // The old fallback was `100 / Math.max(pct, 1)`:
+                                // a multiple invented from the smoothed prior,
+                                // with no pool behind it. The same fabrication
+                                // was already found and removed on the detail
+                                // page. An unbacked outcome now says so.
+                                return formatQuote(
+                                  quotePayout({
+                                    stake:
+                                      currency === "USDT"
+                                        ? ODDS_PROBE_USDT
+                                        : ODDS_PROBE_BTN,
+                                    outcomePool: outcomePool(s, currency),
+                                    totalPool: viewerPool,
+                                    houseEdgePct: bookEdge(market, currency),
+                                  }),
+                                );
+                              })()}</span>
                               <span style={{ fontSize: "0.58rem", fontWeight: 700, opacity: 0.75 }}>{s.pct.toFixed(0)}%</span>
                             </div>
                           </div>

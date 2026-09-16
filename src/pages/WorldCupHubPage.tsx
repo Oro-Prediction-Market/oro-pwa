@@ -18,6 +18,13 @@ import {
 import { Trophy, BarChart3, Clock, CalendarDays, Network } from "lucide-react";
 import { WorldCupBracket } from "@shared/components/WorldCupBracket";
 import { looksEsports } from "@shared/helpers/esportsKeywords";
+import {
+  formatQuote,
+  ODDS_PROBE_BTN,
+  ODDS_PROBE_USDT,
+  quotePayout,
+  type PayoutQuote,
+} from "@shared/payout";
 
 const TmaBetModal = lazy(() =>
   import("../components/TmaBetModal").then((m) => ({ default: m.TmaBetModal })),
@@ -366,14 +373,8 @@ export function calcProb(
 }
 
 /**
- * Winners are guaranteed at least this multiple of their stake at settlement,
- * funded by reducing the house edge. Mirrors the payout floor in the backend's
- * parimutuel engine — keep the two in step.
- */
-export const MIN_PAYOUT_MULTIPLE = 1.05;
-
-/**
- * The multiple a stake would return, quoted from the viewer's own book.
+ * What a stake would return, quoted from the viewer's own book — or why it
+ * would return nothing.
  *
  * `stake` is a notional probe and defaults per currency: a Nu 100 probe
  * against a one-dollar book would swamp the pool and report a multiple nobody
@@ -387,28 +388,27 @@ export const MIN_PAYOUT_MULTIPLE = 1.05;
  * the viewer will receive. The exact figure comes from the amount actually
  * entered on the bet page.
  *
- * Returns null when the viewer's book is empty — there is no pool to quote
- * against, and borrowing the other currency's would be inventing a rate.
+ * This used to end in `Math.max(raw, 1.05)`. The diagnosis behind that was
+ * right — an outcome holding most of the pool quotes a sub-1.0x multiple, "bet
+ * 100, win 90", a guaranteed loss for being right. The remedy was not: the
+ * engine does not pay a 1.05x floor there, it refunds the whole market. So the
+ * floor replaced one wrong number with another. `quotePayout` returns `refund`
+ * for that case instead — see shared/payout.ts.
  */
 export function calcOdds(
   market: Market,
   outcomeId: string,
   stake?: number,
   currency: Currency = getViewerCurrency(),
-): number | null {
+): PayoutQuote {
   const o = market.outcomes?.find((x) => x.id === outcomeId);
-  if (!o) return null;
-  const probe = stake ?? (currency === "USDT" ? 1 : 100);
-  const total = marketPool(market, currency);
-  const own = outcomePool(o, currency);
-  const houseEdge = bookEdge(market, currency);
-  if (total <= 0) return null;
-  const raw = ((total + probe) * (1 - houseEdge / 100)) / (own + probe);
-  // Settlement guarantees winners 1.05x their stake, funded out of the house
-  // edge. Without this the card shows a sub-1.0x multiple ("bet 100, win 90")
-  // on any outcome holding most of the pool — a guaranteed loss for being
-  // right, which is not what would actually be paid.
-  return Math.max(raw, MIN_PAYOUT_MULTIPLE);
+  if (!o) return { kind: "no_pool" };
+  return quotePayout({
+    stake: stake ?? (currency === "USDT" ? ODDS_PROBE_USDT : ODDS_PROBE_BTN),
+    outcomePool: outcomePool(o, currency),
+    totalPool: marketPool(market, currency),
+    houseEdgePct: bookEdge(market, currency),
+  });
 }
 
 /**
@@ -420,8 +420,8 @@ export function calcOdds(
  * "~12.00x" reads as an indication, which is all a card without a stake box
  * can honestly offer.
  */
-export function formatOdds(odds: number | null | undefined): string {
-  return odds ? `~${odds.toFixed(2)}x` : "—";
+export function formatOdds(q: PayoutQuote): string {
+  return formatQuote(q);
 }
 
 

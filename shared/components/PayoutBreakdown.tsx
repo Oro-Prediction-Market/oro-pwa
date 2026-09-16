@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { quotePayout, REFUND_NOTICE } from '../payout';
 import type { Market } from '@shared/api/client';
 
 function Row({ label, value, muted, bold, green }: {
@@ -53,6 +54,17 @@ export function PayoutBreakdown({ market, outcomeId, betAmount, currency = 'BTN'
   const houseDeduction = grossPayout * (houseEdgePct / 100);
   const netPayout = grossPayout - houseDeduction;
   const profit = netPayout - betAmount;
+
+  // The same rule the bet form and the cards use. This panel had no floor and
+  // no cap at all, so it could quote an "Est. payout if win" below the stake —
+  // and lower than the figure in the modal directly above it.
+  const quote = quotePayout({
+    stake: betAmount,
+    outcomePool: curOutcomePool,
+    totalPool: curTotalPool,
+    houseEdgePct,
+  });
+  const wouldRefund = quote.kind === 'refund';
 
   // USDT is not a whole-number currency, so the ngultrum rounding that reads
   // as tidy there would drop real money off a dollar figure here.
@@ -115,8 +127,14 @@ export function PayoutBreakdown({ market, outcomeId, betAmount, currency = 'BTN'
           <Row label="Gross payout" value={nu(grossPayout)} />
           <Row label={`Platform fee (${houseEdgePct}%)`} value={`−${nu(houseDeduction)}`} muted />
           <div style={{ height: 1, background: '#e5e7eb', margin: '6px 0' }} />
-          <Row label="Est. payout if win" value={nu(netPayout)} bold green />
-          <Row label="Est. profit" value={`+${nu(profit)}`} bold green />
+          {wouldRefund ? (
+            <Row label="Settles as" value="Refund — stake back" bold />
+          ) : (
+            <>
+              <Row label="Est. payout if win" value={nu(netPayout)} bold green />
+              <Row label="Est. profit" value={`+${nu(profit)}`} bold green />
+            </>
+          )}
 
           {/* Estimate disclaimer — parimutuel payouts are not fixed */}
           <div style={{
@@ -124,9 +142,16 @@ export function PayoutBreakdown({ market, outcomeId, betAmount, currency = 'BTN'
             borderRadius: 6, border: '1px solid #bfdbfe',
           }}>
             <div style={{ fontSize: 10, color: '#6b7280', lineHeight: 1.6 }}>
-              This is an <strong>estimate</strong>, not a fixed payout. The winning
-              pool is shared among all winners, so your final amount changes as
-              more people predict and is settled from the total pool at close.
+              {wouldRefund ? (
+                <>{REFUND_NOTICE} This changes as soon as money backs the other
+                side.</>
+              ) : (
+                <>
+                  This is an <strong>estimate</strong>, not a fixed payout. The winning
+                  pool is shared among all winners, so your final amount changes as
+                  more people predict and is settled from the total pool at close.
+                </>
+              )}
             </div>
           </div>
         </div>

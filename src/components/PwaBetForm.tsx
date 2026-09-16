@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { rankedOutcomes } from "@/pages/WorldCupHubPage";
 import { Check } from "lucide-react";
+import { quotePayout, REFUND_NOTICE, type PayoutQuote } from "@shared/payout";
 
 interface PwaBetFormProps {
   market: Market;
@@ -95,27 +96,23 @@ function calcWin(
   bet: number,
   currency: "BTN" | "USDT",
   book: MarketBookView | null,
-): number {
+): PayoutQuote {
   const outcome = market.outcomes.find((o) => o.id === outcomeId);
-  if (!outcome || bet <= 0) return 0;
+  if (!outcome || bet <= 0) return { kind: "no_pool" };
 
-  const totalPool =
-    currency === "BTN"
-      ? Number(market.totalPool)
-      : (book?.totalPool ?? 0);
-  const outcomePool =
-    currency === "BTN"
-      ? Number(outcome.totalBetAmount)
-      : (outcome.poolsByCurrency?.[currency] ?? 0);
-
-  const newOutcomePool = outcomePool + bet;
-  const newTotalPool = totalPool + bet;
-
-  const houseEdge = Number(market.houseEdgePct) / 100;
-  if (newOutcomePool <= 0) return 0;
-  const parimutuel = (bet / newOutcomePool) * newTotalPool * (1 - houseEdge);
-  // Winners are guaranteed a 1.05x floor (funded by the house edge at settlement).
-  return Math.max(parimutuel, bet * 1.05);
+  return quotePayout({
+    stake: bet,
+    outcomePool:
+      currency === "BTN"
+        ? Number(outcome.totalBetAmount)
+        : (outcome.poolsByCurrency?.[currency] ?? 0),
+    totalPool:
+      currency === "BTN" ? Number(market.totalPool) : (book?.totalPool ?? 0),
+    // The book's edge, not the market's. Settlement reads `book.houseEdgePct`,
+    // and the two books may carry different rates — quoting a USDT stake at the
+    // BTN rate priced it against terms it will never settle under.
+    houseEdgePct: Number(book?.houseEdgePct ?? market.houseEdgePct),
+  });
 }
 
 /** One line of the confirmation receipt. */
@@ -368,12 +365,18 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
     const floor = nextBook?.minStake ?? (next === "USDT" ? shortcut : getMinBet(market));
     setAmount(String(Math.max(shortcut, floor)));
   }
-  const winAmount = selectedOutcomeId
+  const winQuote: PayoutQuote = selectedOutcomeId
     ? calcWin(market, selectedOutcomeId, betAmount, currency, book)
-    : 0;
+    : { kind: "no_pool" };
   // Live parimutuel multiple on this side. Falls as more money backs the same
   // outcome — the "lock it in now" hook, specific to this stake, no crowd needed.
-  const winMultiple = betAmount > 0 ? winAmount / betAmount : 0;
+  // Zero unless the quote is payable: below the engine's floor the market
+  // refunds, and there is no multiple to show.
+  const winAmount = winQuote.kind === "quote" ? winQuote.payout : 0;
+  const winMultiple = winQuote.kind === "quote" ? winQuote.multiple : 0;
+  // Staking is still allowed — the pool can rebalance long before it settles —
+  // but the estimate is replaced by what would actually happen today.
+  const wouldRefund = winQuote.kind === "refund";
   const show2Outcomes = market.outcomes.length === 2;
 
   const hasEnoughBalance = walletBalance !== null && walletBalance >= betAmount;
@@ -730,23 +733,43 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
                   letterSpacing: "0.05em",
                 }}
               >
-                Potential Payout
+                {wouldRefund ? "At the current pool" : "Potential Payout"}
               </div>
               <div
                 style={{
-                  fontSize: "2.2rem",
+                  fontSize: wouldRefund ? "1.15rem" : "2.2rem",
                   fontWeight: 900,
-                  color:
-                    winAmount > 0
+                  color: wouldRefund
+                    ? "#f59e0b"
+                    : winAmount > 0
                       ? "var(--color-success)"
                       : "var(--text-muted)",
-                  lineHeight: 0.9,
+                  lineHeight: wouldRefund ? 1.2 : 0.9,
                   fontFamily: "var(--font-display)",
                   letterSpacing: "-0.04em",
                 }}
               >
-                {winAmount > 0 ? `${unit} ${fmtPayout(winAmount)}` : "—"}
+                {/* No figure when the market would refund: quoting one would be
+                    quoting a payout the engine has no branch to pay. */}
+                {wouldRefund
+                  ? "Stake back, not a payout"
+                  : winAmount > 0
+                    ? `${unit} ${fmtPayout(winAmount)}`
+                    : "—"}
               </div>
+              {wouldRefund && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    fontSize: "0.7rem",
+                    fontWeight: 600,
+                    color: "var(--text-muted)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {REFUND_NOTICE}
+                </div>
+              )}
               {winMultiple > 0 && (
                 <div
                   style={{
