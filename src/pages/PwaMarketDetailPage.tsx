@@ -511,7 +511,12 @@ export function PwaMarketDetailPage() {
         points: h.points,
         // Same formatter as every other surface, so the legend and the
         // outcome pill below it cannot read differently for one outcome.
-        odds: odds.kind === "no_pool" ? undefined : formatOdds(odds),
+        // A refund is blank here for the same reason it is blank on the pill:
+        // the bet form on this page already explains it in full.
+        odds:
+          odds.kind === "no_pool" || odds.kind === "refund"
+            ? undefined
+            : formatOdds(odds),
       };
     });
   }, [chartData, liveMarket]);
@@ -1301,9 +1306,17 @@ export function PwaMarketDetailPage() {
                 // One rule for every surface — see shared/payout.ts. This used
                 // to floor at 1.05, quoting a guarantee the engine does not
                 // honour: below the floor it refunds the market instead.
+                //
+                // Also null on a refund. A pill is for a price and a refund is
+                // not one, and the word alone — sitting where a multiple goes —
+                // states a consequence it has no room to explain. This page has
+                // room: the bet form says "Stake back, not a payout" in full, on
+                // the same screen, at the point money is actually committed.
                 const quote = calcOdds(displayMarket, outcome.id);
                 const odds =
-                  quote.kind === "no_pool" ? null : formatOdds(quote);
+                  quote.kind === "no_pool" || quote.kind === "refund"
+                    ? null
+                    : formatOdds(quote);
 
                 return (
                   <OutcomeRow
