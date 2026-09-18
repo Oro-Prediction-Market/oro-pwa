@@ -39,7 +39,7 @@ import { useMarketSocket } from "../hooks/useMarketSocket";
 import { useAuth } from "@shared/hooks/useAuth";
 import {
   UnderdogBanner,
-  getUnderdogLabel,
+  getLopsidedFavourite,
 } from "../../shared/components/UnderdogBanner";
 import {
   getWCFlag,
@@ -1264,11 +1264,11 @@ export function PwaMarketDetailPage() {
             >
               {isOpen &&
                 (() => {
-                  const ul = getUnderdogLabel(
+                  const fav = getLopsidedFavourite(
                     displayMarket.outcomes,
                     Number(displayMarket.totalPool),
                   );
-                  return ul ? <UnderdogBanner underdogLabel={ul} /> : null;
+                  return fav ? <UnderdogBanner favouriteLabel={fav} /> : null;
                 })()}
               {rankedOutcomes(displayMarket).map((outcome) => {
                 // calcProb uses LMSR only when every outcome has a value
