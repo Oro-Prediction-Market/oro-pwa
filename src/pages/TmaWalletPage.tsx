@@ -2,6 +2,11 @@ import { FC, useState, useEffect, useRef } from "react";
 import { LoadingScreen } from "@shared/components/LoadingScreen";
 import dkBankLogo from "@shared/assets/dk-blue.png";
 import { useAuth } from "@shared/hooks/useAuth";
+import { useDkMigrationFreeze } from "@shared/hooks/useDkMigrationFreeze";
+import {
+  formatDkMigrationFreeze,
+  DkMigrationFreezeWindow,
+} from "@shared/helpers/dkMigrationWindow";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { UsdtWalletModal } from "@/components/UsdtWalletModal";
 import { KycVerificationPanel } from "@/components/KycVerificationPanel";
@@ -114,6 +119,53 @@ const TX_LABEL: Record<Transaction["type"], string> = {
   free_credit: "Welcome bonus",
   season_prize: "Season prize",
 };
+
+// ── DK Bank migration freeze ──────────────────────────────────────────────────
+// DK changes account numbers during its overnight migration, so the ngultrum
+// cash rail is closed for the window. The USDT rail is a different rail with a
+// different custodian and is deliberately left open. Balance, open predictions
+// and payouts keep working throughout.
+const DK_FREEZE_HINT =
+  "Top ups and cash outs are paused while DK Bank completes a system migration.";
+
+function DkMigrationNotice({ freeze }: { freeze: DkMigrationFreezeWindow }) {
+  return (
+    <div
+      role="status"
+      style={{
+        margin: "0 var(--space-md)",
+        borderRadius: 14,
+        padding: "12px 14px",
+        background:
+          "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.06))",
+        border: "1px solid rgba(245,158,11,0.3)",
+        display: "flex",
+        gap: 10,
+        alignItems: "flex-start",
+      }}
+    >
+      <Clock size={16} style={{ color: "#f59e0b", flexShrink: 0, marginTop: 1 }} />
+      <div style={{ minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 700,
+            color: "var(--text-main)",
+            marginBottom: 3,
+          }}
+        >
+          Top up &amp; cash out paused
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+          DK Bank is migrating its systems and account numbers are changing, so
+          money can&apos;t move between {formatDkMigrationFreeze(freeze)}. Your
+          balance and open predictions are unaffected, and you can keep
+          predicting as normal.
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── AnimatedCounter ────────────────────────────────────────────────────────────
 const AnimatedCounter = ({ value }: { value: number }) => {
@@ -668,6 +720,7 @@ function PwaCidLinkCard({ onLinked }: { onLinked: (merged: boolean) => void }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
   const { user: authUser, loading: authLoading } = useAuth();
+  const dkFreeze = useDkMigrationFreeze();
 
   const [freshUser, setFreshUser] = useState<AuthUser | null>(null);
   const [freshLoading, setFreshLoading] = useState(true);
@@ -826,6 +879,9 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
 
   // Payment modal handlers
   const openPaymentModal = (type: PaymentModalType) => {
+    // Every top up and cash out funnels through here, so this is the one place
+    // worth re-checking — the disabled buttons are only the visible half.
+    if (dkFreeze.active) return;
     setPaymentModal(type);
     setPayStep("amount");
     setPayAmountStr("200");
@@ -1252,6 +1308,10 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
           </div>
         </div>
 
+        {!isUsdt && dkFreeze.active && dkFreeze.freeze && (
+          <DkMigrationNotice freeze={dkFreeze.freeze} />
+        )}
+
         {/* ── Quick Actions — DK Bank rail only ─────────────── */}
         {!isUsdt && (
         <div
@@ -1265,6 +1325,8 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
           <Button
             fullWidth
             icon={<Plus size={16} />}
+            disabled={dkFreeze.active}
+            title={dkFreeze.active ? DK_FREEZE_HINT : undefined}
             onClick={() => openPaymentModal("deposit")}
           >
             Top Up
@@ -1273,6 +1335,8 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
             fullWidth
             variant="secondary"
             icon={<ArrowUpCircle size={16} />}
+            disabled={dkFreeze.active}
+            title={dkFreeze.active ? DK_FREEZE_HINT : undefined}
             onClick={() => openPaymentModal("withdraw")}
           >
             Cash Out
