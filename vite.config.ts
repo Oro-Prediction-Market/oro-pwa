@@ -23,7 +23,17 @@ export default defineConfig(async (): Promise<UserConfig> => {
       tsconfigPaths(),
       ...extraPlugins,
       VitePWA({
-        registerType: "autoUpdate",
+        // "prompt", not "autoUpdate". autoUpdate only makes the new worker
+        // take over — it never reloads the page, and the default injected
+        // registration does not listen for updates at all. The result was a
+        // deploy that stayed invisible until the new worker finished
+        // precaching, with a refresh during that window served by the old one:
+        // hence "changes vanish unless I hard refresh". src/components/
+        // UpdatePrompt.tsx now owns registration and asks before reloading.
+        registerType: "prompt",
+        // We call registerSW ourselves in UpdatePrompt, so nothing should be
+        // injected into index.html.
+        injectRegister: null,
         includeAssets: ["oro_favicon.ico", "icons/*.png"],
         manifest: {
           name: "Oro",

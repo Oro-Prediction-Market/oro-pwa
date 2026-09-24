@@ -19,7 +19,7 @@
     "strict": true,
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "vite-plugin-pwa/client"]
   },
   "include": ["src", "shared"],
   "references": [{ "path": "./tsconfig.node.json" }]
