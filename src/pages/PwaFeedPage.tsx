@@ -55,6 +55,7 @@ import { isEsportsMarket } from "./EsportsHubPage";
 import { EsportsBanner } from "@shared/components/EsportsBanner";
 import { UfcBanner } from "@shared/components/UfcBanner";
 import { UclBanner } from "@shared/components/UclBanner";
+import { UnlBanner } from "@shared/components/UnlBanner";
 import { EplBanner } from "@shared/components/EplBanner";
 import { isEplMarket } from "./EplHubPage";
 import { isUclMarket } from "./UclHubPage";
@@ -625,6 +626,10 @@ function UfcBannerCard({ onOpen }: { onOpen: () => void }) {
 
 function UclBannerCard({ onOpen }: { onOpen: () => void }) {
   return <UclBanner className="ucl-banner-card" onClick={onOpen} />;
+}
+
+function UnlBannerCard({ onOpen }: { onOpen: () => void }) {
+  return <UnlBanner className="unl-banner-card" onClick={onOpen} />;
 }
 
 
@@ -1297,6 +1302,16 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
+    // Spliced BEFORE the UCL and EPL banners so it ends up AFTER them: each
+    // of these inserts at index 0, so the last one spliced is the one shown
+    // first. Move this block below them to lead the feed with it instead.
+    if (banners.sports) {
+      cards.splice(
+        0,
+        0,
+        <UnlBannerCard key="unl-banner" onOpen={() => navigate("/nations-league")} />,
+      );
+    }
     if (banners.sports) {
       cards.splice(
         0,
@@ -1389,9 +1404,9 @@ export function PwaFeedPage({
         }
         @media (max-width: 767px) { .section-title { display: none; } }
         /* Mobile: 1 grid column — banner takes the full row */
-        .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
+        .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .unl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
         /* Tablet/desktop (grid is 2 or 4 cols) — banner covers two card slots */
-        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
+        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .unl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
 

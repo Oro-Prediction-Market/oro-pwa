@@ -168,6 +168,11 @@ const PwaUclPage = lazy(() =>
     default: m.UclHubPage,
   })),
 );
+const PwaNationsLeaguePage = lazy(() =>
+  import("./pages/NationsLeagueHubPage").then((m) => ({
+    default: m.NationsLeagueHubPage,
+  })),
+);
 // BPL hub retired/hidden — uncomment to re-enable (also flip BPL_HIDDEN in BplHubPage.tsx)
 // const PwaBplPage = lazy(() =>
 //   import("./pages/BplHubPage").then((m) => ({
@@ -2176,6 +2181,26 @@ function PwaLayout({
                 }
               >
                 <PwaUclPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/nations-league"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaNationsLeaguePage />
               </Suspense>
             }
           />
