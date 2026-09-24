@@ -59,6 +59,7 @@ import { UnlBanner } from "@shared/components/UnlBanner";
 import { EplBanner } from "@shared/components/EplBanner";
 import { isEplMarket } from "./EplHubPage";
 import { isUclMarket } from "./UclHubPage";
+import { isUnlMarket } from "./NationsLeagueHubPage";
 
 // ── Trending strip: small, distinct cards shown side-by-side, auto-scrolling ──
 function trendingTimeLeft(m: Market): string {
@@ -1034,6 +1035,9 @@ export function PwaFeedPage({
     if (isEplMarket(m)) return false;
     // UCL markets live in the /ucl hub — the grid banner card is their entry point
     if (isUclMarket(m)) return false;
+    // Nations League markets live in the /nations-league hub — same deal, and a
+    // matchday is 26 fixtures, which would bury everything else in the feed
+    if (isUnlMarket(m)) return false;
     // Esports/gaming markets live in the /esports hub — same deal
     if (isEsportsMarket(m)) return false;
     // TER/BTC rounds that locked with zero bets: nothing for anyone to watch,
