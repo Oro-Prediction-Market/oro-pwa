@@ -7,7 +7,7 @@ import { getCategoryVisual } from "@shared/helpers/visuals";
 import { marketArtwork } from "@shared/helpers/marketImage";
 import { MarketThumb } from "@shared/components/MarketThumb";
 import {
-  formatQuote,
+  formatQuoteOnCard,
   ODDS_PROBE_BTN,
   ODDS_PROBE_USDT,
   quotePayout,
@@ -586,7 +586,7 @@ export const PwaMarketCard: FC<PwaMarketCardProps> = memo(
                                 // with no pool behind it. The same fabrication
                                 // was already found and removed on the detail
                                 // page. An unbacked outcome now says so.
-                                return formatQuote(
+                                return formatQuoteOnCard(
                                   quotePayout({
                                     stake:
                                       currency === "USDT"

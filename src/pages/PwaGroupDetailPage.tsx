@@ -21,7 +21,7 @@ import { marketPool } from "@shared/currency/pools";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { PwaBetForm } from "../components/PwaBetForm";
 import { TmaBetModal } from "../components/TmaBetModal";
-import { formatQuote } from "@shared/payout";
+import { formatQuoteOnCard } from "@shared/payout";
 import {
   candidateName,
   chanceOf,
@@ -375,7 +375,7 @@ export default function PwaGroupDetailPage() {
         <span style={{ fontSize: "0.72rem", fontWeight: 900 }}>{o?.label ?? label}</span>
         {o && (
           <span style={{ fontSize: "0.55rem", fontWeight: 700, opacity: 0.8 }}>
-            {formatQuote(outcomeQuote(m, o, currency))}
+            {formatQuoteOnCard(outcomeQuote(m, o, currency))}
           </span>
         )}
       </button>

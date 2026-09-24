@@ -13,7 +13,7 @@ import { getCategoryVisual } from "@shared/helpers/visuals";
 import { groupArtwork } from "@shared/helpers/marketImage";
 import { MarketThumb } from "@shared/components/MarketThumb";
 import {
-  formatQuote,
+  formatQuoteOnCard,
   ODDS_PROBE_BTN,
   ODDS_PROBE_USDT,
   quotePayout,
@@ -270,7 +270,7 @@ export const GroupedMarketCard: FC<GroupedMarketCardProps> = memo(
           </span>
           {o && (
             <span style={{ fontSize: "0.55rem", fontWeight: 700, opacity: 0.8 }}>
-              {quote ? formatQuote(quote) : "—"}
+              {quote ? formatQuoteOnCard(quote) : "—"}
             </span>
           )}
         </button>

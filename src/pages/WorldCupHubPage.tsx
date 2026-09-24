@@ -19,7 +19,7 @@ import { Trophy, BarChart3, Clock, CalendarDays, Network } from "lucide-react";
 import { WorldCupBracket } from "@shared/components/WorldCupBracket";
 import { looksEsports } from "@shared/helpers/esportsKeywords";
 import {
-  formatQuote,
+  formatQuoteOnCard,
   ODDS_PROBE_BTN,
   ODDS_PROBE_USDT,
   quotePayout,
@@ -421,7 +421,7 @@ export function calcOdds(
  * can honestly offer.
  */
 export function formatOdds(q: PayoutQuote): string {
-  return formatQuote(q);
+  return formatQuoteOnCard(q);
 }
 
 
