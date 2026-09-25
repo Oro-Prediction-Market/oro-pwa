@@ -885,7 +885,7 @@ export function PwaFeedPage({
 
   useEffect(() => {
     const loadMarkets = () => {
-      getMarkets()
+      getMarkets(undefined, { scope: "live" })
         .then((d) => {
           const now = Date.now();
           const cutoff48h = 48 * 60 * 60 * 1000;
@@ -936,7 +936,7 @@ export function PwaFeedPage({
 
   const handleBetSuccess = () => {
     setActiveBet(null);
-    getMarkets()
+    getMarkets(undefined, { scope: "live" })
       .then((d) => {
         const now = Date.now();
         const cutoff48h = 48 * 60 * 60 * 1000;
