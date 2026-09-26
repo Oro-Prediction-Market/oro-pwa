@@ -26,6 +26,24 @@ import { RefreshCw, X } from "lucide-react";
 /** How often a running tab asks whether a newer worker exists. */
 const UPDATE_POLL_MS = 60_000;
 
+/**
+ * How long to let the worker hand over before reloading anyway.
+ *
+ * `updateSW(true)` does not reload. It posts SKIP_WAITING and returns; the
+ * reload rides on a later `controlling` event. But workbox sends that message
+ * only `if (registration.waiting)` — with no waiting worker it is a silent
+ * no-op that resolves successfully, so no `controlling` event ever arrives,
+ * the promise never rejects, and the button sits on "Reloading…" for good.
+ *
+ * `waiting` is empty exactly when the new worker has already taken over on its
+ * own, which is common: it happens as soon as the last tab running the old
+ * build goes away. So the case where the message does nothing is also the case
+ * where a plain reload is all that was needed.
+ *
+ * Long enough that the clean handover wins the race and reloads first.
+ */
+const HANDOVER_GRACE_MS = 2_000;
+
 export function UpdatePrompt() {
   const [needRefresh, setNeedRefresh] = useState(false);
   const [reloading, setReloading] = useState(false);
@@ -64,11 +82,17 @@ export function UpdatePrompt() {
 
   const reload = () => {
     setReloading(true);
-    // `true` activates the waiting worker and reloads once it has control.
-    // If anything goes wrong, fall back to a plain reload rather than leaving
-    // the button spinning — the worst case is the viewer sees the old build
-    // again and the prompt returns.
-    updateRef.current?.(true).catch(() => window.location.reload());
+    // Ask the waiting worker to take over; that path reloads us via
+    // `controlling`. Then reload regardless — a rejected promise is not the
+    // failure mode to guard against here, a successful no-op is.
+    const fallback = setTimeout(
+      () => window.location.reload(),
+      HANDOVER_GRACE_MS,
+    );
+    updateRef.current?.(true).catch(() => {
+      clearTimeout(fallback);
+      window.location.reload();
+    });
   };
 
   return (
