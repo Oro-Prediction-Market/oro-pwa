@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { getToken } from "@shared/api/client";
+import { bustCache, getToken } from "@shared/api/client";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
@@ -24,6 +24,10 @@ export function useSSE() {
       es = new EventSource(`${API_URL}/sse/stream?token=${encodeURIComponent(token)}`);
 
       es.addEventListener("balance:updated", () => {
+        // Drop the cached profile and ledger first. The GET cache serves a
+        // stale copy while it revalidates, so every listener refetching on
+        // this event would otherwise be handed the pre-change balance.
+        bustCache("/users/me");
         window.dispatchEvent(new CustomEvent("oro:balance-changed"));
       });
 

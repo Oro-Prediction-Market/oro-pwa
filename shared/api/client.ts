@@ -2010,6 +2010,51 @@ export function topUpUsdtDeposit(
   });
 }
 
+// ── Single HD wallet: one permanent address per account ─────────────────────
+
+/** The account's own deposit address. Never expires; any amount, any time. */
+export interface UsdtDepositAddress {
+  network: string;
+  depositAddress: string;
+  createdAt: string;
+}
+
+/** A deposit that arrived on the permanent address. */
+export interface UsdtHdDeposit {
+  id: string;
+  network: string;
+  amountUsdt: string;
+  txHash: string | null;
+  explorerUrl: string | null;
+  /** `in_review`: received but held for a manual check before crediting. */
+  status: "credited" | "in_review";
+  createdAt: string;
+}
+
+/**
+ * The permanent address, issued on first call and the same on every call
+ * after. Refused with the identity-check message for an unverified account.
+ */
+export function getUsdtDepositAddress(
+  network = "tron",
+): Promise<UsdtDepositAddress> {
+  return request(
+    `/payments/usdt/deposit-address?network=${encodeURIComponent(network)}`,
+  );
+}
+
+/**
+ * Deposits received on the permanent address, newest first.
+ *
+ * Always fetched fresh. The deposit screen polls this to notice money
+ * arriving, and the GET cache serves a stale copy while it revalidates — a
+ * poll through it would keep reporting "nothing yet" after the credit landed.
+ */
+export function listUsdtHdDeposits(): Promise<UsdtHdDeposit[]> {
+  bustCache("/payments/usdt/hd-deposits");
+  return request("/payments/usdt/hd-deposits");
+}
+
 export function listUsdtDestinations(): Promise<UsdtDestination[]> {
   return request("/payments/usdt/destinations");
 }

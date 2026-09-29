@@ -16,6 +16,7 @@ import {
   linkDKBank,
   verifyPhoneTma,
   verifyDKAccount,
+  bustCache,
   getMe,
   getMyTransactions,
   AuthUser,
@@ -888,6 +889,10 @@ export const TmaWalletPage: FC<{ isPwa?: boolean }> = ({ isPwa = false }) => {
   }, []);
 
   const refreshWallet = () => {
+    // An explicit refresh must not be answered from the 5 s GET cache: after a
+    // deposit it serves the pre-deposit balance and the screen never updates.
+    // The prefix covers /users/me and /users/me/transactions.
+    bustCache("/users/me");
     setBalanceLoading(true);
     getMe()
       .then((updated) => {
