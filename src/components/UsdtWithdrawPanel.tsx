@@ -36,6 +36,9 @@ function statusLabel(w: UsdtWithdrawal): string {
       return "Sent";
     case "failed":
       return "Failed";
+    // 21 Pay's own review declined it; the amount is back in the balance.
+    case "rejected":
+      return "Declined";
     case "cancelled":
       return "Cancelled";
     case "broadcasting":
@@ -71,7 +74,10 @@ export function UsdtWithdrawPanel({ balance }: { balance: number }) {
 
   useEffect(() => {
     getUsdtNetworks()
-      .then(({ networks }) => {
+      .then(({ networks: all }) => {
+        // Payouts go through 21 Pay's customer payouts, which cover Tron only.
+        // Offering another chain here would only fail when the address is saved.
+        const networks = all.filter((n) => n.id === "tron");
         setNetworks(networks);
         if (networks.length === 1) setNewNetwork(networks[0].id);
       })

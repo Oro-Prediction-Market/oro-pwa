@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { UsdtDepositPanel } from "./UsdtDepositPanel";
+import { UsdtHdDepositPanel } from "./UsdtHdDepositPanel";
 import { UsdtWithdrawPanel } from "./UsdtWithdrawPanel";
 
 interface Props {
@@ -109,7 +109,10 @@ export function UsdtWalletModal({ mode, balance, onClose, onCredited }: Props) {
         </button>
 
         {mode === "deposit" ? (
-          <UsdtDepositPanel onCredited={onCredited} />
+          // The permanent address (21 Pay Single HD wallet). The invoice
+          // screen, UsdtDepositPanel, is kept for one release as the rollback
+          // path; in-flight invoices still settle server-side without it.
+          <UsdtHdDepositPanel onCredited={onCredited} onDone={onClose} />
         ) : (
           <UsdtWithdrawPanel balance={balance} />
         )}
