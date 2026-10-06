@@ -55,6 +55,7 @@ const TX_ICON: Record<Transaction["type"], React.ReactNode> = {
   duel_payout: <Swords size={18} />,
   free_credit: <Gift size={18} />,
   season_prize: <Medal size={18} />,
+  adjustment: <Wallet size={18} />,
 };
 
 const TX_LABEL: Record<Transaction["type"], string> = {
@@ -75,6 +76,7 @@ const TX_LABEL: Record<Transaction["type"], string> = {
   duel_payout: "Duel payout",
   free_credit: "Welcome bonus",
   season_prize: "Season prize",
+  adjustment: "Wallet adjustment",
 };
 
 function TxRow({ tx }: { tx: Transaction }) {
@@ -118,7 +120,10 @@ function TxRow({ tx }: { tx: Transaction }) {
             color: "var(--text-main)",
           }}
         >
-          {TX_LABEL[tx.type]}
+          {/* This view shows no notes, so an adjustment's own wording ("Wallet
+              credit") is its label — "Wallet adjustment" alone reads oddly
+              beside a credit. */}
+          {tx.type === "adjustment" && tx.note ? tx.note : TX_LABEL[tx.type]}
         </div>
         <div
           style={{

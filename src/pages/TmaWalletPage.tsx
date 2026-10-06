@@ -98,6 +98,7 @@ const TX_ICON: Record<Transaction["type"], React.ReactNode> = {
   duel_payout: <Swords size={18} />,
   free_credit: <Gift size={18} />,
   season_prize: <Medal size={18} />,
+  adjustment: <Wallet size={18} />,
 };
 
 const TX_LABEL: Record<Transaction["type"], string> = {
@@ -118,6 +119,7 @@ const TX_LABEL: Record<Transaction["type"], string> = {
   duel_payout: "Duel payout",
   free_credit: "Welcome bonus",
   season_prize: "Season prize",
+  adjustment: "Wallet adjustment",
 };
 
 // ── DK Bank migration freeze ──────────────────────────────────────────────────
@@ -328,7 +330,7 @@ function TxRow({
             fontWeight: 700,
             fontSize: 13,
             color: "var(--text-main)",
-            marginBottom: tx.note ? 2 : 0,
+            marginBottom: tx.note && tx.note !== TX_LABEL[tx.type] ? 2 : 0,
           }}
         >
           {tx.isPending
@@ -339,7 +341,7 @@ function TxRow({
                 ? "Payout received"
                 : TX_LABEL[tx.type]}
         </div>
-        {tx.note && (
+        {tx.note && tx.note !== TX_LABEL[tx.type] && (
           <div
             style={{
               fontSize: 11,
