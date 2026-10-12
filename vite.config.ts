@@ -71,7 +71,12 @@ export default defineConfig(async (): Promise<UserConfig> => {
           ],
         },
         workbox: {
-          globPatterns: ["**/*.{js,css,html,woff2}", "oro_favicon.ico", "icons/*.png"],
+          // The favicon and icons come in through includeAssets above; listing
+          // them here as well put each in the precache twice.
+          globPatterns: ["**/*.{js,css,html,woff2}"],
+          // The /payment-test page is for staff, not worth every install
+          // downloading; it still loads normally when visited.
+          globIgnores: ["**/PwaPaymentTestPage-*.js"],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           runtimeCaching: [
             {
