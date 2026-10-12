@@ -47,11 +47,11 @@ import {
  * `TmaBetModal` it opens on a phone take the selected candidate directly.
  * Nothing new was written next to the payment path.
  *
- * Assembled from `GET /markets`, which already returns every market in every
- * status but `cancelled` and which the feed already groups by `groupId` this
- * same way, so the page needs no backend change. A dedicated
- * `GET /markets/group/:groupId` would be leaner — `findGroup()` exists,
- * exposed only to admins — and is the follow-up if this page earns traffic.
+ * Loaded with `GET /markets?groupId=`: just this event's candidates, in every
+ * status but `cancelled`, so one settled ahead of the rest is still listed. It
+ * used to take the whole unfiltered list (megabytes) to keep a handful of
+ * rows. The rows are still filtered here, because a server without the
+ * parameter ignores it and sends that whole list.
  */
 
 /** Candidates drawn on the chart. Beyond a handful the lines stop being
@@ -102,20 +102,20 @@ export default function PwaGroupDetailPage() {
   const [histories, setHistories] = useState<Record<string, OutcomeHistory[]>>({});
 
   const load = useCallback(() => {
-    return getMarkets()
+    return getMarkets(undefined, { groupId })
       .then(setAll)
       .catch(() => setFailed(true));
-  }, []);
+  }, [groupId]);
 
   useEffect(() => {
     let live = true;
-    getMarkets()
+    getMarkets(undefined, { groupId })
       .then((m) => live && setAll(m))
       .catch(() => live && setFailed(true));
     return () => {
       live = false;
     };
-  }, []);
+  }, [groupId]);
 
   const markets = useMemo(
     () => (all ?? []).filter((m) => m.groupId === groupId),
