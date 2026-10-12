@@ -43,8 +43,16 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     (subcategory: string) => setSelectedSubcategory(subcategory),
     [],
   );
+  // The feed sets this on every 10s refresh with a freshly built array. Keeping
+  // the old one when the contents match stops the context value changing, and
+  // with it a re-render of everything under the provider (the whole app).
   const handleSetAvailableCategories = useCallback(
-    (categories: string[]) => setAvailableCategories(categories),
+    (categories: string[]) =>
+      setAvailableCategories((prev) =>
+        prev.length === categories.length && prev.every((c, i) => c === categories[i])
+          ? prev
+          : categories,
+      ),
     [],
   );
   const handleSetHasTrendingMarkets = useCallback(

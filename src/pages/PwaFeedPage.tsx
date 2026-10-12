@@ -2,6 +2,10 @@ import {
   useState,
   useEffect,
   useRef,
+  useCallback,
+  useMemo,
+  useLayoutEffect,
+  useDeferredValue,
   lazy,
   Suspense,
   useTransition,
@@ -289,12 +293,27 @@ function TrendingCarousel({
   };
 
   // Measure the real rendered card width so scroll math works at any breakpoint.
+  // Cached, and re-measured only when the strip resizes: reading offsetWidth
+  // right after the animation writes scrollLeft forced a layout every frame.
+  const stepRef = useRef(0);
   const getStep = () => {
+    if (stepRef.current > 0) return stepRef.current;
     const first = scrollRef.current?.firstElementChild as HTMLElement | null;
-    return first
+    const step = first
       ? first.offsetWidth + TRENDING_GAP
       : TRENDING_CARD_W + TRENDING_GAP;
+    if (first) stepRef.current = step;
+    return step;
   };
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => {
+      stepRef.current = 0;
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const scrollToCard = (i: number) => {
     scrollRef.current?.scrollTo({ left: i * getStep(), behavior: "smooth" });
@@ -338,8 +357,30 @@ function TrendingCarousel({
       }
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    // Only animate while the strip is on screen; scrolled past, it stops.
+    const start = () => {
+      if (raf) return;
+      last = performance.now();
+      raf = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    };
+    const el = scrollRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      start();
+      return stop;
+    }
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) start();
+      else stop();
+    });
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      stop();
+    };
   }, [looping, perView, markets.length]);
 
   const onScroll = () => {
@@ -846,6 +887,36 @@ export function PwaFeedPage({
     }
   };
 
+  // The cards are memoised, but each got a fresh onBet arrow every render, so
+  // all of them re-rendered anyway. These stay the same function for the life
+  // of the page and always call the current handleBetClick (it reads authed).
+  const betClickRef = useRef(handleBetClick);
+  useLayoutEffect(() => {
+    betClickRef.current = handleBetClick;
+  });
+  const onBetStable = useCallback(
+    (marketId: string, outcomeId: string) => betClickRef.current(marketId, outcomeId),
+    [],
+  );
+  const betHandlers = useRef(new Map<string, (outcomeId: string) => void>());
+  const betHandlerFor = (marketId: string) => {
+    let h = betHandlers.current.get(marketId);
+    if (!h) {
+      h = (outcomeId: string) => betClickRef.current(marketId, outcomeId);
+      betHandlers.current.set(marketId, h);
+    }
+    return h;
+  };
+  // "Your pick" per market: the first bet on it, as .find() gave.
+  const pickByMarket = useMemo(() => {
+    const out = new Map<string, string>();
+    for (const b of myBets) if (!out.has(b.marketId)) out.set(b.marketId, b.outcomeId);
+    return out;
+  }, [myBets]);
+  // Each group's sibling list, reused while its members are the same objects,
+  // so the memoised group card is not handed a new array every render.
+  const groupCache = useRef(new Map<string, Market[]>());
+
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
     if (pendingBet) {
@@ -872,13 +943,16 @@ export function PwaFeedPage({
     }
   }, [authed]);
   const {
-    searchQuery,
+    searchQuery: typedSearch,
     selectedCategory,
     selectedSubcategory,
     setSelectedSubcategory,
     setAvailableCategories,
     setHasTrendingMarkets,
   } = useFilter();
+  // The search box answers each keystroke at once; the feed re-filters behind
+  // it, so typing never waits on the card grid.
+  const searchQuery = useDeferredValue(typedSearch);
   const [orbitOpen, setOrbitOpen] = useState(false);
   // Mounted from its first opening on, never before: it renders nothing while
   // closed, and staying mounted keeps its orbs where they were placed.
@@ -1240,17 +1314,30 @@ export function PwaFeedPage({
     // Grouped multi-binary events (shared groupId): the first sibling in the
     // list renders one GroupedMarketCard for the whole group; the rest skip.
     const seenGroups = new Set<string>();
+    const siblingsByGroup = new Map<string, Market[]>();
+    for (const m of items) {
+      if (!m.groupId) continue;
+      const list = siblingsByGroup.get(m.groupId);
+      if (list) list.push(m);
+      else siblingsByGroup.set(m.groupId, [m]);
+    }
+    for (const [gid, list] of siblingsByGroup) {
+      const prev = groupCache.current.get(gid);
+      if (prev && prev.length === list.length && prev.every((m, i) => m === list[i])) {
+        siblingsByGroup.set(gid, prev);
+      } else groupCache.current.set(gid, list);
+    }
     const cards = items
       .map((market) => {
         if (market.groupId) {
           if (seenGroups.has(market.groupId)) return null;
           seenGroups.add(market.groupId);
-          const siblings = items.filter((m) => m.groupId === market.groupId);
+          const siblings = siblingsByGroup.get(market.groupId)!;
           return (
             <GroupedMarketCard
               key={`group-${market.groupId}`}
               markets={siblings}
-              onBet={handleBetClick}
+              onBet={onBetStable}
               referralId={String(me?.telegramId ?? me?.id ?? "")}
             />
           );
@@ -1260,9 +1347,7 @@ export function PwaFeedPage({
             <TerMarketCard
               key={market.id}
               market={market}
-              onBet={async (marketId, outcomeId) => {
-                handleBetClick(marketId, outcomeId);
-              }}
+              onBet={onBetStable}
             />
           );
         }
@@ -1271,9 +1356,7 @@ export function PwaFeedPage({
             <BtcMarketCard
               key={market.id}
               market={market}
-              onBet={async (marketId, outcomeId) => {
-                handleBetClick(marketId, outcomeId);
-              }}
+              onBet={onBetStable}
             />
           );
         }
@@ -1282,10 +1365,8 @@ export function PwaFeedPage({
           <PwaMarketCard
             key={market.id}
             market={market}
-            userPickedOutcomeId={
-              myBets.find((b) => b.marketId === market.id)?.outcomeId
-            }
-            onBet={(outcomeId) => handleBetClick(market.id, outcomeId)}
+            userPickedOutcomeId={pickByMarket.get(market.id)}
+            onBet={betHandlerFor(market.id)}
           />
         );
       })
