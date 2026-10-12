@@ -60,6 +60,7 @@ import { UclMarketDetail } from "../components/UclMarketDetail";
 import { PriceMarketDetail } from "../components/PriceMarketDetail";
 import { STICKY_TOP, STICKY_MAX_HEIGHT } from "../components/MarketDetailColumns";
 import { useGoBack } from "../hooks/useGoBack";
+import { pollWhileVisible } from "@shared/helpers/poll";
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -78,8 +79,7 @@ function TerPricePanel({ market }: { market: Market }) {
         .then(setLive)
         .catch(() => {});
     fetch_();
-    const id = setInterval(fetch_, 10_000);
-    return () => clearInterval(id);
+    return pollWhileVisible(fetch_, 10_000);
   }, [isSettled, isClosed]);
 
   const displayPrice = isSettled
@@ -357,17 +357,8 @@ export function PwaMarketDetailPage() {
         .catch(() => {});
     };
 
-    const onVisibility = () => {
-      if (!document.hidden) refetch();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    const interval = setInterval(refetch, 15_000);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      clearInterval(interval);
-    };
+    // Refetches on return to the tab too, and not while it is hidden.
+    return pollWhileVisible(refetch, 15_000);
   }, [id]);
 
   useEffect(() => {

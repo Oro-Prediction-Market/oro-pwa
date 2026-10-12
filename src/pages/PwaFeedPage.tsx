@@ -60,6 +60,7 @@ import { EplBanner } from "@shared/components/EplBanner";
 import { isEplMarket } from "./EplHubPage";
 import { isUclMarket } from "./UclHubPage";
 import { isUnlMarket } from "./NationsLeagueHubPage";
+import { coalesce, pollWhileVisible } from "@shared/helpers/poll";
 
 // ── Trending strip: small, distinct cards shown side-by-side, auto-scrolling ──
 function trendingTimeLeft(m: Market): string {
@@ -923,14 +924,16 @@ export function PwaFeedPage({
 
     loadMarkets();
 
-    // Re-fetch when a market changes (SSE push) or every 10s for fast TER transitions
-    const onMarketChanged = () => loadMarkets();
+    // Re-fetch when a market changes (SSE push) or every 10s for fast TER
+    // transitions. Not while the tab is hidden; a burst of pushes is one reload.
+    const onMarketChanged = coalesce(loadMarkets, 500);
     window.addEventListener("oro:market-changed", onMarketChanged);
-    const poll = setInterval(loadMarkets, 10_000);
+    const stopPoll = pollWhileVisible(loadMarkets, 10_000);
 
     return () => {
       window.removeEventListener("oro:market-changed", onMarketChanged);
-      clearInterval(poll);
+      onMarketChanged.cancel();
+      stopPoll();
     };
   }, []);
 
