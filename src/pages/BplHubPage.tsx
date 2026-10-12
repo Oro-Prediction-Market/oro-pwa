@@ -354,7 +354,9 @@ export function BplHubPage() {
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    getMarkets()
+    // Exactly the statuses kept below, so finished markets (nearly the
+    // whole table) are not downloaded only to be discarded.
+    getMarkets(undefined, { scope: "live" })
       .then((d) =>
         setMarkets(
           d.filter(
