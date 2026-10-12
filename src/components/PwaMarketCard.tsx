@@ -12,7 +12,7 @@ import {
   ODDS_PROBE_USDT,
   quotePayout,
 } from "@shared/payout";
-import { isWCMarket, getWCFlag, calcProb } from "../pages/WorldCupHubPage";
+import { isWCMarket, getWCFlag, calcProb } from "@/lib/hubs/worldCup";
 import { ROWS_LAYER, useFittedRows } from "@shared/hooks/useFittedRows";
 import {
   FEED_CARD_H,

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { MarketDetailColumns } from "./MarketDetailColumns";
 import { ThemedBetPanel } from "./ThemedBetPanel";
-import { formatOdds } from "@/pages/WorldCupHubPage";
+import { formatOdds } from "@/lib/hubs/worldCup";
 import { PoolAmount } from "@shared/currency/PoolAmount";
 import { useNavigate } from "react-router-dom";
 import { useGoBack } from "../hooks/useGoBack";
@@ -14,16 +14,12 @@ import {
   DisputeContestFields,
   type DisputeContestControls,
 } from "./DisputeContestFields";
-import { calcProb, calcOdds } from "../pages/WorldCupHubPage";
-import { isDrawOutcome } from "../pages/BplHubPage";
+import { calcProb, calcOdds } from "@/lib/hubs/worldCup";
+import { isDrawOutcome } from "@/lib/hubs/bpl";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { marketOutcomeChances } from "@/components/MarketShareCard";
-import {
-  getUfcAvatar,
-  shortFighterName,
-  FighterAvatar,
-} from "../pages/UfcHubPage";
+import { getUfcAvatar, shortFighterName, FighterAvatar } from "@/lib/hubs/ufc";
 import {
   ProbabilityChart,
   type ChartOutcome,

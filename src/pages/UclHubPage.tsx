@@ -12,7 +12,7 @@ import {
   Handshake,
   Swords,
 } from "lucide-react";
-import { calcProb, calcOdds, formatOdds } from "./WorldCupHubPage";
+import { calcProb, calcOdds, formatOdds } from "@/lib/hubs/worldCup";
 import type {
   Market,
   Outcome,
@@ -24,6 +24,9 @@ import type {
   UclBracketTeam,
 } from "@shared/api/client";
 import { getMarkets, getUclStandings, getUclStats, getUclBracket } from "@shared/api/client";
+import { isUclMarket } from "@/lib/hubs/ucl";
+// Moved to @/lib/hubs/ucl; re-exported so existing imports keep working.
+export { isUclMarket } from "@/lib/hubs/ucl";
 
 const TmaBetModal = lazy(() =>
   import("../components/TmaBetModal").then((m) => ({ default: m.TmaBetModal })),
@@ -108,18 +111,6 @@ const TABS: { id: UclTab; label: string; icon: React.ReactNode }[] = [
   { id: "standings", label: "Table", icon: <ListOrdered size={14} /> },
   { id: "stats", label: "Stats", icon: <BarChart3 size={14} /> },
 ];
-
-// Detection: a market belongs to the Champions League hub if it's tagged ucl /
-// champions-league, or its title names the competition. Excludes gaming/politics.
-export function isUclMarket(m: Market): boolean {
-  if (m.category === "gaming" || m.category === "political") return false;
-  const sub = (m.subcategory ?? "").toLowerCase();
-  const cat = (m.category ?? "").toLowerCase();
-  const title = m.title.toLowerCase();
-  if (sub.includes("ucl") || sub.includes("champions")) return true;
-  if (cat.includes("champions league")) return true;
-  return /champions league/.test(title) || /\bucl\b/.test(title);
-}
 
 // ── Crest with initial fallback ───────────────────────────────────────────────
 function Crest({ src, label, size }: { src: string; label: string; size: number }) {

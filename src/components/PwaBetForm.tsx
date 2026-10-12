@@ -14,7 +14,7 @@ import {
 } from "@shared/api/client";
 import { useNavigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { rankedOutcomes } from "@/pages/WorldCupHubPage";
+import { rankedOutcomes } from "@/lib/hubs/worldCup";
 import { Check } from "lucide-react";
 import { quotePayout, REFUND_NOTICE, type PayoutQuote } from "@shared/payout";
 

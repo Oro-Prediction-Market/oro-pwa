@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Page } from "@shared/components/Page";
 import { SavedMarketsPanel } from "@shared/components/SavedMarkets";
 import { useCurrency } from "@shared/currency/currency";
-import { calcProb } from "@/pages/WorldCupHubPage";
+import { calcProb } from "@/lib/hubs/worldCup";
 import { getPublicProfile, type Market } from "@shared/api/client";
 import { useEffect, useState } from "react";
 
