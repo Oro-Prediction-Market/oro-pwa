@@ -37,30 +37,27 @@ import { BtcMarketCard } from "../components/BtcMarketCard";
 import { PwaMarketGrid } from "../components/PwaMarketGrid";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { Flame, TrendingUp, UsersRound, Vote } from "lucide-react";
-import { OracleOrbit } from "../components/OracleOrbit";
 import { useFilter } from "@shared/contexts/FilterContext";
 import { formatMoney, type Currency } from "@shared/currency/currency";
-import { isWCMarket, getWCFlag, calcProb } from "./WorldCupHubPage";
+import { isWCMarket, getWCFlag, calcProb } from "@/lib/hubs/worldCup";
 import { getCategoryVisual } from "@shared/helpers/visuals";
-import {
-  isBplMarket,
-  getBplCrest,
-  isDrawOutcome,
-  shortClubName,
-  BPL_CLUBS,
-  Crest,
-} from "./BplHubPage";
-import { isUfcMarket } from "./UfcHubPage";
-import { isEsportsMarket } from "./EsportsHubPage";
+import { isBplMarket, getBplCrest, isDrawOutcome, shortClubName, BPL_CLUBS, Crest } from "@/lib/hubs/bpl";
+import { isUfcMarket } from "@/lib/hubs/ufc";
+import { isEsportsMarket } from "@/lib/hubs/esports";
 import { EsportsBanner } from "@shared/components/EsportsBanner";
 import { UfcBanner } from "@shared/components/UfcBanner";
 import { UclBanner } from "@shared/components/UclBanner";
 import { UnlBanner } from "@shared/components/UnlBanner";
 import { EplBanner } from "@shared/components/EplBanner";
-import { isEplMarket } from "./EplHubPage";
-import { isUclMarket } from "./UclHubPage";
-import { isUnlMarket } from "./NationsLeagueHubPage";
+import { isEplMarket } from "@/lib/hubs/epl";
+import { isUclMarket } from "@/lib/hubs/ucl";
+import { isUnlMarket } from "@/lib/hubs/nationsLeague";
 import { coalesce, pollWhileVisible } from "@shared/helpers/poll";
+
+// "Ask the Crowd" is opened by few people; its chunk loads on first open.
+const OracleOrbit = lazy(() =>
+  import("../components/OracleOrbit").then((m) => ({ default: m.OracleOrbit })),
+);
 
 // ── Trending strip: small, distinct cards shown side-by-side, auto-scrolling ──
 function trendingTimeLeft(m: Market): string {
@@ -883,6 +880,10 @@ export function PwaFeedPage({
     setHasTrendingMarkets,
   } = useFilter();
   const [orbitOpen, setOrbitOpen] = useState(false);
+  // Mounted from its first opening on, never before: it renders nothing while
+  // closed, and staying mounted keeps its orbs where they were placed.
+  const [orbitMounted, setOrbitMounted] = useState(false);
+  if (orbitOpen && !orbitMounted) setOrbitMounted(true);
 
   useEffect(() => {
     const loadMarkets = () => {
@@ -1626,7 +1627,11 @@ export function PwaFeedPage({
         </span>
       </button>
 
-      <OracleOrbit isOpen={orbitOpen} onClose={() => setOrbitOpen(false)} />
+      {orbitMounted && (
+        <Suspense fallback={null}>
+          <OracleOrbit isOpen={orbitOpen} onClose={() => setOrbitOpen(false)} />
+        </Suspense>
+      )}
 
       {(openMarkets.length > 0 || showEsportsBanner || showSportsBanners) && (
         <section style={{ marginBottom: "var(--space-xl)" }}>

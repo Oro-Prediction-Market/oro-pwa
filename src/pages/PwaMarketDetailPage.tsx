@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { Suspense, lazy, useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import MarketComments from "@shared/components/MarketComments";
@@ -41,26 +41,34 @@ import {
   UnderdogBanner,
   getLopsidedFavourite,
 } from "../../shared/components/UnderdogBanner";
-import {
-  getWCFlag,
-  isWCMarket,
-  calcProb,
-  calcOdds,
-  formatOdds,
-  rankedOutcomes,
-} from "./WorldCupHubPage";
-import { isEsportsMarket } from "./EsportsHubPage";
-import { EsportsMarketDetail } from "../components/EsportsMarketDetail";
-import { isUfcMarket } from "./UfcHubPage";
-import { UfcMarketDetail } from "../components/UfcMarketDetail";
-import { isEplMarket } from "./EplHubPage";
-import { EplMarketDetail } from "../components/EplMarketDetail";
-import { isUclMarket } from "./UclHubPage";
-import { UclMarketDetail } from "../components/UclMarketDetail";
-import { PriceMarketDetail } from "../components/PriceMarketDetail";
+import { getWCFlag, isWCMarket, calcProb, calcOdds, formatOdds, rankedOutcomes } from "@/lib/hubs/worldCup";
+import { isEsportsMarket } from "@/lib/hubs/esports";
+import { isUfcMarket } from "@/lib/hubs/ufc";
+import { isEplMarket } from "@/lib/hubs/epl";
+import { isUclMarket } from "@/lib/hubs/ucl";
 import { STICKY_TOP, STICKY_MAX_HEIGHT } from "../components/MarketDetailColumns";
 import { useGoBack } from "../hooks/useGoBack";
 import { pollWhileVisible } from "@shared/helpers/poll";
+
+// Each competition's detail view is its own chunk: a market only ever needs
+// one of them, and the plain view needs none.
+const EsportsMarketDetail = lazy(() =>
+  import("../components/EsportsMarketDetail").then((m) => ({ default: m.EsportsMarketDetail })),
+);
+const UfcMarketDetail = lazy(() =>
+  import("../components/UfcMarketDetail").then((m) => ({ default: m.UfcMarketDetail })),
+);
+const EplMarketDetail = lazy(() =>
+  import("../components/EplMarketDetail").then((m) => ({ default: m.EplMarketDetail })),
+);
+const UclMarketDetail = lazy(() =>
+  import("../components/UclMarketDetail").then((m) => ({ default: m.UclMarketDetail })),
+);
+const PriceMarketDetail = lazy(() =>
+  import("../components/PriceMarketDetail").then((m) => ({ default: m.PriceMarketDetail })),
+);
+/** The page's own loading screen, reused while a detail view's chunk loads. */
+const detailFallback = <LoadingScreen message="Syncing market..." />;
 
 // ── TER Price Panel (for market detail) ──────────────────────────────────────
 function TerPricePanel({ market }: { market: Market }) {
@@ -640,7 +648,7 @@ export function PwaMarketDetailPage() {
     displayMarket.externalSource === "btc"
   ) {
     return (
-    <>
+    <Suspense fallback={detailFallback}>
       <PriceMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -658,14 +666,14 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         commentsSlot={embeddedComments}
       />
-    </>
+    </Suspense>
     );
   }
 
   // UFC markets get the dedicated /ufc-styled detail view
   if (isUfcMarket(displayMarket)) {
     return (
-    <>
+    <Suspense fallback={detailFallback}>
       <UfcMarketDetail
         chartData={chartData}
         market={displayMarket}
@@ -684,14 +692,14 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         commentsSlot={embeddedComments}
       />
-    </>
+    </Suspense>
     );
   }
 
   // Esports markets get the dedicated /esports-styled detail view
   if (isEsportsMarket(displayMarket)) {
     return (
-    <>
+    <Suspense fallback={detailFallback}>
       <EsportsMarketDetail
         market={displayMarket}
         referralId={referralId}
@@ -709,14 +717,14 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         commentsSlot={embeddedComments}
       />
-    </>
+    </Suspense>
     );
   }
 
   // Champions League markets get the dedicated /ucl-styled detail view
   if (isUclMarket(displayMarket)) {
     return (
-    <>
+    <Suspense fallback={detailFallback}>
       <UclMarketDetail
         chartData={chartData}
         market={displayMarket}
@@ -735,14 +743,14 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         commentsSlot={embeddedComments}
       />
-    </>
+    </Suspense>
     );
   }
 
   // EPL markets get the dedicated /epl-styled detail view
   if (isEplMarket(displayMarket)) {
     return (
-    <>
+    <Suspense fallback={detailFallback}>
       <EplMarketDetail
         chartData={chartData}
         market={displayMarket}
@@ -761,7 +769,7 @@ export function PwaMarketDetailPage() {
         myDispute={myDispute}
         commentsSlot={embeddedComments}
       />
-    </>
+    </Suspense>
     );
   }
 

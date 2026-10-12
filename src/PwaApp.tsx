@@ -16,11 +16,14 @@ import { PwaBottomNav } from "./components/PwaBottomNav";
 import { useSSE } from "@shared/hooks/useSSE";
 
 // All pages are lazy — only the active route's chunk is downloaded
+// Named so the bootstrap can start the download early (see PwaApp).
+const loadFeedPage = () => import("./pages/PwaFeedPage");
+const loadMarketDetailPage = () => import("./pages/PwaMarketDetailPage");
 const PwaFeedPage = lazy(() =>
-  import("./pages/PwaFeedPage").then((m) => ({ default: m.PwaFeedPage })),
+  loadFeedPage().then((m) => ({ default: m.PwaFeedPage })),
 );
 const PwaMarketDetailPage = lazy(() =>
-  import("./pages/PwaMarketDetailPage").then((m) => ({
+  loadMarketDetailPage().then((m) => ({
     default: m.PwaMarketDetailPage,
   })),
 );
@@ -210,7 +213,13 @@ import {
   History,
   Target,
 } from "lucide-react";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+// The sign-in sheet (with the Bhutan App QR library) is only for signed-out
+// visitors, so it is not in the bundle every signed-in launch downloads.
+// PwaApp fetches it in the background once it knows the visitor is signed out.
+const loadSignIn = () => import("./components/ProtectedRoute");
+const ProtectedRoute = lazy(() =>
+  loadSignIn().then((m) => ({ default: m.ProtectedRoute })),
+);
 import { ContactSupport } from "./components/ContactSupport";
 import { NotificationBell } from "./components/NotificationCenter";
 import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
@@ -956,7 +965,9 @@ function AuthGate({
             Open Oro in Telegram
           </a>
         </div>
-        <ProtectedRoute onLogin={onAuthSuccess} />
+        <Suspense fallback={null}>
+          <ProtectedRoute onLogin={onAuthSuccess} />
+        </Suspense>
       </div>
     );
   }
@@ -1098,7 +1109,9 @@ function PwaLayout({
           <div className="oro-auth-sheet">
             {/* Grab handle — bottom sheet only, hidden by CSS on desktop. */}
             <div className="oro-auth-handle" />
-            <ProtectedRoute onLogin={handleAuthSuccess} />
+            <Suspense fallback={null}>
+              <ProtectedRoute onLogin={handleAuthSuccess} />
+            </Suspense>
           </div>
         </div>,
         document.body,
@@ -2591,11 +2604,23 @@ export function PwaApp() {
       setBootstrapping(false);
       return;
     }
+    // Nothing renders until the session refresh returns, and only then would
+    // the page's own code be requested. Start that download now, alongside.
+    const path = window.location.pathname;
+    // A failure here is harmless: the page's own lazy load tries again.
+    if (path === "/") loadFeedPage().catch(() => {});
+    else if (path.startsWith("/market/")) loadMarketDetailPage().catch(() => {});
     refreshAuth().then((data) => {
       if (data?.token) setAuthed(true);
       setBootstrapping(false);
     });
   }, []);
+
+  // Signed out: fetch the sign-in sheet in the background, so tapping Sign in
+  // or a stake opens it without waiting on its code.
+  useEffect(() => {
+    if (!bootstrapping && !authed) loadSignIn().catch(() => {});
+  }, [bootstrapping, authed]);
 
   // Connect to SSE for real-time server push (balance updates, market changes)
   useSSE();
