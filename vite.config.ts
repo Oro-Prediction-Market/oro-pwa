@@ -23,16 +23,20 @@ export default defineConfig(async (): Promise<UserConfig> => {
       tsconfigPaths(),
       ...extraPlugins,
       VitePWA({
-        // "prompt", not "autoUpdate". autoUpdate only makes the new worker
-        // take over — it never reloads the page, and the default injected
-        // registration does not listen for updates at all. The result was a
-        // deploy that stayed invisible until the new worker finished
-        // precaching, with a refresh during that window served by the old one:
-        // hence "changes vanish unless I hard refresh". src/components/
-        // UpdatePrompt.tsx now owns registration and asks before reloading.
-        registerType: "prompt",
-        // We call registerSW ourselves in UpdatePrompt, so nothing should be
-        // injected into index.html.
+        // The worker never serves the app itself. index.html comes from the
+        // network on every load, and the hashed JS/CSS from the browser's HTTP
+        // cache (nginx marks /assets/ immutable). So a deploy shows up on the
+        // next load with nothing to accept, and a new worker can take over at
+        // once — the version on screen never depends on which worker is live.
+        //
+        // What it still does: offline fallback for navigations, and caching
+        // images and fonts. It used to precache index.html and every chunk,
+        // which pinned the old build until a "new version" toast was tapped.
+        //
+        // Registration is in src/registerServiceWorker.ts, not the plugin's
+        // autoUpdate client — that one reloads the page when a new worker
+        // activates, which would wipe a half-typed stake.
+        registerType: "autoUpdate",
         injectRegister: null,
         includeAssets: ["oro_favicon.ico", "icons/*.png"],
         manifest: {
@@ -71,14 +75,27 @@ export default defineConfig(async (): Promise<UserConfig> => {
           ],
         },
         workbox: {
-          // The favicon and icons come in through includeAssets above; listing
-          // them here as well put each in the precache twice.
-          globPatterns: ["**/*.{js,css,html,woff2}"],
-          // The /payment-test page is for staff, not worth every install
-          // downloading; it still loads normally when visited.
-          globIgnores: ["**/PwaPaymentTestPage-*.js"],
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          // Only the favicon and icons from includeAssets are precached; the
+          // app shell and chunks are deliberately left out (see above).
+          globPatterns: [],
+          // The default falls back to a precached index.html, which no longer
+          // exists — and a precached shell is exactly what pinned old builds.
+          navigateFallback: null,
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
           runtimeCaching: [
+            {
+              // Network first, with no timeout: a slow connection still gets
+              // the current build. The cached copy is only for being offline.
+              urlPattern: ({ request }) => request.mode === "navigate",
+              handler: "NetworkFirst",
+              options: {
+                cacheName: "pages",
+                expiration: { maxEntries: 5 },
+                cacheableResponse: { statuses: [200] },
+              },
+            },
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
               handler: "CacheFirst",
