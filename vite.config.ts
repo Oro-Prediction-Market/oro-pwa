@@ -26,17 +26,20 @@ export default defineConfig(async (): Promise<UserConfig> => {
         // The worker never serves the app itself. index.html comes from the
         // network on every load, and the hashed JS/CSS from the browser's HTTP
         // cache (nginx marks /assets/ immutable). So a deploy shows up on the
-        // next load with nothing to accept, and a new worker can take over at
-        // once — the version on screen never depends on which worker is live.
+        // next load with nothing to accept — the version on screen no longer
+        // depends on which worker is live.
         //
         // What it still does: offline fallback for navigations, and caching
         // images and fonts. It used to precache index.html and every chunk,
         // which pinned the old build until a "new version" toast was tapped.
         //
         // Registration is in src/registerServiceWorker.ts, not the plugin's
-        // autoUpdate client — that one reloads the page when a new worker
-        // activates, which would wipe a half-typed stake.
-        registerType: "autoUpdate",
+        // client, which reloads the page when a new worker activates and so
+        // could wipe a half-typed stake.
+        //
+        // "prompt" only because "autoUpdate" forces skipWaiting/clientsClaim on
+        // (see below); nothing prompts.
+        registerType: "prompt",
         injectRegister: null,
         includeAssets: ["oro_favicon.ico", "icons/*.png"],
         manifest: {
@@ -81,8 +84,13 @@ export default defineConfig(async (): Promise<UserConfig> => {
           // The default falls back to a precached index.html, which no longer
           // exists — and a precached shell is exactly what pinned old builds.
           navigateFallback: null,
-          skipWaiting: true,
-          clientsClaim: true,
+          // A new worker waits for the tabs of the old one to close. Taking
+          // over at once deletes the old precache from under a page still
+          // running that build — from builds that precached their chunks,
+          // its next lazy page then 404s into a blank screen. Waiting costs
+          // nothing now: the worker no longer decides which build loads.
+          skipWaiting: false,
+          clientsClaim: false,
           cleanupOutdatedCaches: true,
           runtimeCaching: [
             {
