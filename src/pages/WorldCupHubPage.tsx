@@ -553,9 +553,14 @@ export function WorldCupHubPage() {
   const [pickedOutcomeIds, setPickedOutcomeIds] = useState<Set<string>>(new Set());
   const [, startTransition] = useTransition();
 
-  const loadMarkets = useCallback(() => {
-    return getMarkets()
-      .then((d) =>
+  // Whether the full list (finished matches included) has ever arrived. Until
+  // it has, polls load it rather than merging live markets into nothing.
+  const fullLoadedRef = useRef(false);
+
+  const loadMarkets = useCallback((fresh = false) => {
+    return getMarkets(undefined, { fresh })
+      .then((d) => {
+        fullLoadedRef.current = true;
         setMarkets(
           d.filter(
             (m) =>
@@ -566,8 +571,8 @@ export function WorldCupHubPage() {
               m.status === "resolved" ||
               m.status === "settled",
           ),
-        ),
-      )
+        );
+      })
       .catch(console.error);
   }, []);
 
@@ -584,11 +589,12 @@ export function WorldCupHubPage() {
    * missing from that list, and then the full one is loaded once instead.
    */
   const pollLive = useCallback(() => {
+    if (!fullLoadedRef.current) return loadMarkets(true);
     return getMarkets(undefined, { scope: "live" })
       .then((live) => {
         const merged = mergeLivePoll(marketsRef.current, live);
         if (merged) setMarkets(merged);
-        else return loadMarkets();
+        else return loadMarkets(true);
       })
       .catch(console.error);
   }, [loadMarkets]);
