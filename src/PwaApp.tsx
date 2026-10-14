@@ -224,6 +224,7 @@ import { ContactSupport } from "./components/ContactSupport";
 import { NotificationBell } from "./components/NotificationCenter";
 import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
 import { ConsentGate } from "@shared/components/ConsentGate";
+import { ScrollManager } from "@shared/components/ScrollManager";
 import { useConsentRequired } from "@shared/hooks/useConsentRequired";
 // Lazy-load HowItWorksModal — only needed on click
 const HowItWorksModal = lazy(() =>
@@ -1816,6 +1817,7 @@ function PwaLayout({
           onOpenTerms={() => navigate("/terms")}
           onOpenPrivacy={() => navigate("/privacy")}
         />
+        <ScrollManager />
         <Routes>
           <Route
             path="/"
