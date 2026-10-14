@@ -845,6 +845,14 @@ interface ActiveBet {
   outcomeId: string;
 }
 
+/**
+ * Pinned by an admin to the top of the feed. Only markets with no hub: a hub
+ * match uses the same flag for its hub's featured slot instead.
+ */
+function isFeedPinned(m: Market): boolean {
+  return !!m.isFeatured && !(m.subcategory ?? "").trim();
+}
+
 export function PwaFeedPage({
   authed = false,
   onAuthRequired,
@@ -1162,8 +1170,17 @@ export function PwaFeedPage({
           ).sort(),
         ];
 
+  // Pinned by an admin (a no-hub market such as the Ballon d'Or): first in the
+  // top grid whatever its pool or status — including closed and about to
+  // settle — and not repeated in the sections below. Each card carries its own
+  // status banner, so a closed one reads as closed.
+  const pinnedMarkets = filteredMarkets.filter(
+    (m) =>
+      isFeedPinned(m) &&
+      ["open", "closed", "resolving", "upcoming"].includes(m.status),
+  );
   const openMarkets = filteredMarkets
-    .filter((m) => m.status === "open")
+    .filter((m) => m.status === "open" && !isFeedPinned(m))
     .sort((a, b) => {
       const autoA = ["ter", "btc"].includes(a.externalSource ?? "");
       const autoB = ["ter", "btc"].includes(b.externalSource ?? "");
@@ -1188,6 +1205,7 @@ export function PwaFeedPage({
       }
       return 0;
     });
+  openMarkets.unshift(...pinnedMarkets);
   // Featured = TER/BTC (always, regardless of pool) plus any market whose pool
   // has crossed TRENDING_MIN_POOL. When more than TRENDING_MAX qualify, priority
   // is: TER/BTC first, then markets with no subcategory (e.g. Ballon d'Or), then
@@ -1200,7 +1218,13 @@ export function PwaFeedPage({
   const isPriceMarket = (m: Market) =>
     m.externalSource === "ter" || m.externalSource === "btc";
   const trendingRank = (m: Market) =>
-    isPriceMarket(m) ? 0 : m.subcategory && m.subcategory.trim() ? 2 : 1;
+    isFeedPinned(m)
+      ? -1
+      : isPriceMarket(m)
+        ? 0
+        : m.subcategory && m.subcategory.trim()
+          ? 2
+          : 1;
   const trendingMarkets = markets
     .filter(
       (m) =>
@@ -1223,10 +1247,11 @@ export function PwaFeedPage({
     )
     .slice(0, TRENDING_MAX);
   const resolvingMarkets = filteredMarkets.filter(
-    (m) => m.status === "resolving" || m.status === "closed",
+    (m) =>
+      (m.status === "resolving" || m.status === "closed") && !isFeedPinned(m),
   );
   const upcomingMarkets = filteredMarkets.filter(
-    (m) => m.status === "upcoming",
+    (m) => m.status === "upcoming" && !isFeedPinned(m),
   );
   const activeMarket = activeBet
     ? markets.find((m) => m.id === activeBet.marketId)
