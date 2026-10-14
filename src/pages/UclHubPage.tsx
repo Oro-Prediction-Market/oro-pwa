@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo, useLayoutEffect, useEffect, lazy, Suspense } from "react";
 import { groupByMatchday } from "../lib/matchday";
 import { useNavigate } from "react-router-dom";
+import { leadTabs } from "@/lib/hubs/tabOrder";
 import {
   Trophy,
   CalendarDays,
@@ -103,8 +104,7 @@ const GOLD = "#e8c766";
 type UclTab = "season" | "matches" | "bracket" | "standings" | "stats";
 
 const TABS: { id: UclTab; label: string; icon: React.ReactNode }[] = [
-  // Season leads, as it does on the Premier League hub — the outright is the
-  // competition, the fixtures are this week's slice of it.
+  // Matches or Season is moved to the front at render — see `leadTabs`.
   { id: "season", label: "Season", icon: <Trophy size={14} /> },
   { id: "matches", label: "Matches", icon: <CalendarDays size={14} /> },
   { id: "bracket", label: "Bracket", icon: <Swords size={14} /> },
@@ -1410,10 +1410,9 @@ function BracketTab({ bracket }: { bracket: UclBracket | null }) {
 
 export function UclHubPage() {
   const navigate = useNavigate();
-  // Season, not Matches: it is the first tab in TABS, so landing anywhere else
-  // opened the hub with the second tab selected and the first one sitting
-  // unread to its left.
-  const [tab, setTab] = useState<UclTab>("season");
+  /** The tab the viewer tapped. Null until then — see `tab` below. */
+  const [pickedTab, setTab] = useState<UclTab | null>(null);
+  const [loading, setLoading] = useState(true);
   const [markets, setMarkets] = useState<Market[]>([]);
   /** Finished matches — null until someone opens Previous. */
   const [finished, setFinished] = useState<Market[] | null>(null);
@@ -1434,7 +1433,8 @@ export function UclHubPage() {
     // so they are fetched on demand below rather than on every hub open.
     return getMarkets(undefined, { scope: "live" })
       .then((d) => setMarkets(d.filter((m) => m.status !== "cancelled")))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   /** Finished matches, fetched once, the first time Previous is opened. */
@@ -1508,6 +1508,12 @@ export function UclHubPage() {
       const kb = new Date(b.bettingClosesAt ?? b.closesAt ?? 0).getTime();
       return ka - kb;
     });
+
+  // Matches leads while there is a match to bet on, Season otherwise, and the
+  // hub opens on whichever leads until the viewer taps a tab. Matches is
+  // assumed while the first load is in flight, as it is the usual case.
+  const tabs = leadTabs(TABS, loading || matchMarkets.some((m) => !isMatchFinal(m)));
+  const tab: UclTab = pickedTab ?? tabs[0].id;
 
   // Admin-created outright/season markets: UCL markets that aren't a match, a
   // stat board, or a bracket tie. Only show ones still open for betting.
@@ -1642,7 +1648,7 @@ export function UclHubPage() {
               marginBottom: 18,
             }}
           >
-            {TABS.map((t) => {
+            {tabs.map((t) => {
               const active = tab === t.id;
               return (
                 <button
