@@ -225,6 +225,7 @@ import { NotificationBell } from "./components/NotificationCenter";
 import { SystemNotificationModal } from "@shared/components/SystemNotificationModal";
 import { ConsentGate } from "@shared/components/ConsentGate";
 import { ScrollManager } from "@shared/components/ScrollManager";
+import { PresenceHeartbeat } from "@shared/components/PresenceHeartbeat";
 import { useConsentRequired } from "@shared/hooks/useConsentRequired";
 // Lazy-load HowItWorksModal — only needed on click
 const HowItWorksModal = lazy(() =>
@@ -1818,6 +1819,7 @@ function PwaLayout({
           onOpenPrivacy={() => navigate("/privacy")}
         />
         <ScrollManager />
+        <PresenceHeartbeat />
         <Routes>
           <Route
             path="/"

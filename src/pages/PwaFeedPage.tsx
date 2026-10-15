@@ -11,6 +11,7 @@ import {
   useTransition,
   type ReactElement,
 } from "react";
+import { useOnlineCount } from "@shared/components/PresenceHeartbeat";
 import { createPortal } from "react-dom";
 import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +21,6 @@ import {
   getMyBets,
   getRecentActivity,
   isTokenValid,
-  feedHeartbeat,
   type Market,
   type ActivityEvent,
   type AuthUser,
@@ -876,22 +876,7 @@ export function PwaFeedPage({
   const [, startTransition] = useTransition();
   const [me, setMe] = useState<AuthUser | null>(null);
   const [myBets, setMyBets] = useState<Bet[]>([]);
-  const [onlineCount, setOnlineCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let sid = sessionStorage.getItem("oro_feed_sid");
-    if (!sid) {
-      sid = crypto.randomUUID();
-      sessionStorage.setItem("oro_feed_sid", sid);
-    }
-    const ping = () =>
-      feedHeartbeat(sid!)
-        .then(({ count }) => setOnlineCount(count))
-        .catch(() => {});
-    ping();
-    const id = setInterval(ping, 30_000);
-    return () => clearInterval(id);
-  }, []);
+  const onlineCount = useOnlineCount();
 
   const handleBetClick = (marketId: string, outcomeId: string) => {
     if (!authed) {
