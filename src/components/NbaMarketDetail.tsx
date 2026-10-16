@@ -7,10 +7,9 @@ import { PoolAmount } from "@shared/currency/PoolAmount";
 import { MarketShareSheet } from "@/components/MarketShareSheet";
 import { SaveMarketButton } from "@shared/components/SaveMarketButton";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Share2, Clock, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Coins, Share2, Clock, ShieldAlert, Zap } from "lucide-react";
 import type { Market, Outcome, MyDispute } from "@shared/api/client";
 import { DisputeResultBanner } from "../../shared/components/DisputeResultBanner";
-import { NbaCourt } from "@shared/components/NbaBanner";
 import { TmaBetModal } from "./TmaBetModal";
 import {
   DisputeContestFields,
@@ -18,6 +17,10 @@ import {
 } from "./DisputeContestFields";
 import { calcProb, calcOdds, formatOdds } from "@/lib/hubs/worldCup";
 import { NBA_THEME, NbaLogo } from "@/lib/hubs/nba";
+// The hub's buttons and chips, shared so a market reads as part of the hub.
+import "../pages/NbaHubPage.css";
+import "./NbaMarketDetail.css";
+import { SegmentDisplay } from "@shared/components/SegmentDisplay";
 import {
   ProbabilityChart,
   type ChartOutcome,
@@ -38,7 +41,8 @@ import {
 // ── Theme ─────────────────────────────────────────────────────────────────────
 const T = NBA_THEME;
 const HOME = T.amber;
-const AWAY = T.teal;
+/** The away side, purple as on the hub's Featured Game buttons. */
+const AWAY = "#8b7cf0";
 const DISPLAY: React.CSSProperties = {
   fontFamily: T.display,
   fontStyle: "italic",
@@ -183,6 +187,13 @@ export function NbaMarketDetail({
   const usdtPool =
     market.books?.find((b) => b.currency === "USDT")?.totalPool ?? 0;
 
+  // Both books when both hold money; never added, since no rate between them
+  // exists.
+  const poolText =
+    usdtPool > 0
+      ? `Nu ${totalPool.toLocaleString()} | $${usdtPool.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+      : `Nu ${totalPool.toLocaleString()}`;
+
   const sides = sidesOf(market);
   // A field market (champion, MVP) keeps one column: the ranked list IS the
   // market, and a pinned rail would show it twice.
@@ -229,9 +240,9 @@ export function NbaMarketDetail({
     display: "inline-flex",
     alignItems: "center",
     gap: 7,
-    background: "rgba(8,15,26,0.66)",
-    border: "1px solid rgba(255,255,255,0.25)",
-    borderRadius: 10,
+    background: "#0e141d",
+    border: "1px solid rgba(255,182,109,0.22)",
+    borderRadius: 12,
     padding: "8px 12px",
     color: "#fff",
     fontSize: 11,
@@ -289,118 +300,60 @@ export function NbaMarketDetail({
           />
         </div>
 
-        {/* ── Masthead: the banner's court ── */}
-        <div className="nbab nbab--detail">
-          <NbaCourt />
-          <div className="nbab__shade" aria-hidden="true" />
-          <div style={{ position: "relative", padding: "16px 18px 18px" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 10,
-                marginBottom: 18,
-              }}
+        {/* ── Masthead: the hub's arena, as on its Featured Game card ── */}
+        <div className="nbad-hero">
+          <div className="nbad-hero__top">
+            <span className="nbad-pill">
+              <span />
+              {typeof stage === "string" && stage
+                ? `NBA · ${stage}`
+                : "NBA · 2026/27 Season"}
+            </span>
+            <span
+              className={`nbah-chip${locked ? "" : " nbah-chip--open"}`}
             >
-              <span className="nbab__season">
-                <span />
-                {typeof stage === "string" && stage
-                  ? `NBA · ${stage.toUpperCase()}`
-                  : "NBA · 2026/27 SEASON"}
-              </span>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                  background: "rgba(8,15,26,0.72)",
-                  border: `1px solid ${locked ? "rgba(255,255,255,0.25)" : "rgba(255,182,109,0.45)"}`,
-                  borderRadius: 5,
-                  padding: "5px 9px",
-                  color: locked ? T.muted : T.amberSoft,
-                  fontSize: 9,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {!locked && <Clock size={11} />}
-                {statusText}
-              </span>
-            </div>
+              {locked ? <ShieldAlert size={14} /> : <Clock size={14} />}
+              <span>{statusText}</span>
+            </span>
+          </div>
 
-            <div className="nbab__eyebrow">
-              {tipoff
-                ? `TIP-OFF · ${tipoffLabel(tipoff).toUpperCase()}`
-                : "THE GAME IS YOURS"}
+          {tipoff && (
+            <div className="nbad-hero__eyebrow">
+              Tip-off · {tipoffLabel(tipoff)}
             </div>
-            <h1
-              style={{
-                ...DISPLAY,
-                margin: 0,
-                fontSize: "clamp(28px, 8vw, 44px)",
-                fontWeight: 900,
-                lineHeight: 0.98,
-                color: "#fff",
-                textShadow: "0 4px 20px rgba(0,0,0,0.35)",
-                maxWidth: 560,
-              }}
-            >
-              {sides ? (
-                <>
-                  {sides.away.label}{" "}
-                  <span style={{ color: T.amberHot }}>@</span>{" "}
-                  {sides.home.label}
-                </>
-              ) : (
-                market.title
-              )}
-            </h1>
+          )}
+          {/* A game's teams are on the matchup card right below, so the
+              heading stays for screen readers only. Field markets (champion,
+              MVP) have no card and keep it on screen. */}
+          <h1 className={sides ? "nbad-sr" : "nbad-hero__title"}>
+            {sides
+              ? `${sides.away.label} at ${sides.home.label}`
+              : market.title}
+          </h1>
+          {market.description && (
+            <p className="nbad-hero__desc">{market.description}</p>
+          )}
 
-            {market.description && (
-              <p
-                style={{
-                  margin: "10px 0 0",
-                  fontSize: 12.5,
-                  lineHeight: 1.5,
-                  color: "#d7dce2",
-                  maxWidth: 560,
-                }}
-              >
-                {market.description}
-              </p>
-            )}
-
-            <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
-              <StatTile
-                label="Total pool"
-                // Both books when both hold money; never added, since no rate
-                // between them exists.
-                value={
-                  usdtPool > 0
-                    ? `Nu ${totalPool.toLocaleString()} | $${usdtPool.toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-                    : `Nu ${totalPool.toLocaleString()}`
-                }
-              />
-              <StatTile
-                label={locked ? "Status" : "Tip-off in"}
-                value={
-                  locked
-                    ? resolved
-                      ? "Final"
-                      : isResolving
-                        ? "Proposed"
-                        : "Locked"
-                    : closes || "—"
-                }
-              />
-              <StatTile
-                label="Predictions"
-                value={locked ? "Closed" : "Open"}
-              />
-            </div>
+          <div className="nbad-stats">
+            <StatTile icon={<Coins />} label="Total pool" value={poolText} />
+            <StatTile
+              icon={<Clock />}
+              label={locked ? "Status" : "Tip-off in"}
+              value={
+                locked
+                  ? resolved
+                    ? "Final"
+                    : isResolving
+                      ? "Proposed"
+                      : "Locked"
+                  : closes || "—"
+              }
+            />
+            <StatTile
+              icon={<Zap />}
+              label="Predictions"
+              value={locked ? "Closed" : "Open"}
+            />
           </div>
         </div>
 
@@ -460,12 +413,17 @@ export function NbaMarketDetail({
                     market={{ ...market, outcomes: [sides.away, sides.home] }}
                     onBetPlaced={onBetPlaced}
                     accent={T.amber}
-                    border={T.line}
-                    background={T.card}
+                    // The hub's solid orange button, with its dark text.
+                    ctaAccent="#ea7424"
+                    ctaGradient="linear-gradient(180deg, #ffad5c 0%, #ea7424 100%)"
+                    ctaText="#1a0f05"
+                    border="rgba(255,182,109,0.25)"
+                    background="linear-gradient(180deg, #121a26 0%, #0b111b 100%)"
                   />
                 ) : (
                   <MatchBlock
                     market={market}
+                    tipoff={tipoff}
                     away={sides.away}
                     home={sides.home}
                     locked={locked}
@@ -484,12 +442,14 @@ export function NbaMarketDetail({
                 <div style={{ marginBottom: 14 }}>
                   <MatchBlock
                     market={market}
+                    tipoff={tipoff}
                     away={sides.away}
                     home={sides.home}
                     locked
                     winnerId={locked ? winnerId : null}
                     onBet={() => {}}
-                    part={locked ? "header" : undefined}
+                    // The rail beside it holds the picks.
+                    part="header"
                   />
                 </div>
               )}
@@ -659,49 +619,45 @@ function MutedLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatTile({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <div
-      style={{
-        flex: 1,
-        minWidth: 0,
-        background: "rgba(8,15,26,0.72)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: 10,
-        padding: "9px 11px",
-      }}
-    >
-      <div
-        style={{
-          fontSize: 8,
-          fontWeight: 800,
-          color: T.muted,
-          textTransform: "uppercase",
-          letterSpacing: "0.14em",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          ...DISPLAY,
-          marginTop: 5,
-          fontSize: 18,
-          lineHeight: 1,
-          color: "#fff",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {value}
-      </div>
+    <div className="nbad-stat">
+      <span className="nbad-stat__icon" aria-hidden>
+        {icon}
+      </span>
+      <span className="nbad-stat__text">
+        <span className="nbad-stat__label">{label}</span>
+        <span className="nbad-stat__value">{value}</span>
+      </span>
     </div>
   );
 }
 
 // ── Match layout: away @ home ─────────────────────────────────────────────────
 
+const timeOnly = (iso: string) =>
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(iso));
+const dayOnly = (iso: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(iso));
+
+/** The hub's Featured Game card, for one market: crests, VS, and the two picks. */
 function MatchBlock({
   market,
   away,
@@ -709,6 +665,7 @@ function MatchBlock({
   locked,
   winnerId,
   onBet,
+  tipoff,
   part,
 }: {
   market: Market;
@@ -717,155 +674,103 @@ function MatchBlock({
   locked: boolean;
   winnerId: string | null;
   onBet: (outcomeId: string) => void;
-  /** Which half to draw; omitted draws the whole card (phones). */
+  tipoff?: string | null;
+  /** Which half to draw; omitted draws the whole card. */
   part?: "header" | "actions";
 }) {
   const sides = [
-    { o: away, color: AWAY, tag: "Away" },
-    { o: home, color: HOME, tag: "Home" },
+    { o: away, tone: "away" as const, tag: "Away" },
+    { o: home, tone: "home" as const, tag: "Home" },
   ];
   const pct = (o: Outcome) => Math.round(calcProb(market, o.id) * 100);
+  const odds = (o: Outcome) => {
+    const text = formatOdds(calcOdds(market, o.id));
+    return text === "—" ? null : text;
+  };
 
   return (
-    <div
-      style={{
-        border: `1px solid ${T.line}`,
-        borderRadius: 16,
-        overflow: "hidden",
-        background: T.card,
-      }}
-    >
+    <div className={`nbad-match${part === "actions" ? " nbad-match--actions" : ""}`}>
       {part !== "actions" && (
         <>
-          {/* Logos */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-around",
-              gap: 10,
-              padding: "22px 16px 16px",
-              background: `radial-gradient(ellipse at 100% 0%, ${T.amberHot}30 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, ${T.tealDeep} 0%, transparent 60%)`,
-            }}
-          >
+          <div className="nbad-match__teams">
             {sides.map(({ o, tag }, i) => (
               <React.Fragment key={o.id}>
                 {i === 1 && (
-                  <div
-                    style={{
-                      ...DISPLAY,
-                      fontSize: 26,
-                      color: T.amberHot,
-                      flexShrink: 0,
-                    }}
-                  >
-                    @
+                  <div className="nbad-match__center">
+                    <div className="nbah-feat__vs">VS</div>
+                    {tipoff && market.status === "open" && (
+                      <>
+                        <div className="nbah-feat__time">
+                          <SegmentDisplay value={timeOnly(tipoff).split(/\s/)[0]} />
+                          <span className="nbah-feat__ampm">
+                            {timeOnly(tipoff).split(/\s/).slice(1).join(" ")}
+                          </span>
+                        </div>
+                        <div className="nbah-feat__when">{dayOnly(tipoff)}</div>
+                      </>
+                    )}
                   </div>
                 )}
-                <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <NbaLogo
-                      src={o.imageUrl}
-                      abbr={o.label.split(" ").pop() ?? o.label}
-                      size={60}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 8,
-                      fontSize: 14,
-                      fontWeight: 800,
-                      color: "#fff",
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {o.label}
-                  </div>
-                  <div
-                    style={{
-                      marginTop: 3,
-                      fontSize: 8.5,
-                      fontWeight: 800,
-                      color: T.muted,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.16em",
-                    }}
-                  >
-                    {tag}
-                  </div>
+                <div
+                  className={`nbad-match__team${winnerId && winnerId !== o.id ? " nbad-match__team--lost" : ""}`}
+                >
+                  <NbaLogo
+                    src={o.imageUrl}
+                    abbr={o.label.split(" ").pop() ?? o.label}
+                    size={64}
+                  />
+                  <div className="nbad-match__name">{o.label}</div>
+                  <div className="nbad-match__tag">{tag}</div>
                 </div>
               </React.Fragment>
             ))}
           </div>
-
-          {/* Probability bar */}
-          <div style={{ display: "flex", height: 5 }}>
-            {sides.map(({ o, color }) => (
+          <div className="nbad-match__bar" aria-hidden>
+            {sides.map(({ o, tone }) => (
               <div
                 key={o.id}
-                style={{ width: `${pct(o)}%`, background: color }}
+                className={`nbad-match__bar--${tone}`}
+                style={{ width: `${pct(o)}%` }}
               />
             ))}
           </div>
         </>
       )}
 
-      {/* Prediction buttons */}
       {part !== "header" && (
-        <div style={{ display: "flex", gap: 8, padding: "14px 14px 16px" }}>
-          {sides.map(({ o, color }) => {
+        <div className="nbad-match__bets">
+          {sides.map(({ o, tone }) => {
             const won = winnerId === o.id;
             return (
               <button
                 key={o.id}
+                type="button"
                 disabled={locked}
                 onClick={() => !locked && onBet(o.id)}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  padding: "12px 6px",
-                  background: won ? `${T.amber}24` : `${color}1f`,
-                  border: `1px solid ${won ? T.amber : `${color}88`}`,
-                  borderRadius: 12,
-                  cursor: locked ? "default" : "pointer",
-                  textAlign: "center",
-                  opacity: locked && winnerId && !won ? 0.5 : 1,
-                  font: "inherit",
-                }}
+                className={[
+                  "nbah-bet",
+                  `nbah-bet--${tone}`,
+                  "nbah-bet--filled",
+                  "nbah-bet--stacked",
+                  "nbad-bet",
+                  won && "nbad-bet--won",
+                  locked && winnerId && !won && "nbad-bet--lost",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
-                <div
-                  style={{
-                    ...DISPLAY,
-                    fontSize: 28,
-                    color: "#fff",
-                    lineHeight: 1,
-                  }}
-                >
-                  {pct(o)}%
-                </div>
-                <div
-                  style={{
-                    marginTop: 6,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: "#fff",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {o.label}
-                </div>
-                <div
-                  style={{
-                    marginTop: 3,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: won ? T.amber : T.amberSoft,
-                  }}
-                >
-                  {won ? "WON" : formatOdds(calcOdds(market, o.id))}
-                </div>
+                <span className="nbah-bet__name">{o.label}</span>
+                <span className="nbah-bet__meta">
+                  {won ? (
+                    "Won"
+                  ) : (
+                    <>
+                      <span>{pct(o)}%</span>
+                      <i aria-hidden />
+                      <span>{odds(o) ?? "—"}</span>
+                    </>
+                  )}
+                </span>
               </button>
             );
           })}

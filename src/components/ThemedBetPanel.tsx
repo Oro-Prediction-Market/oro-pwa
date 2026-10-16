@@ -19,6 +19,8 @@ export function ThemedBetPanel({
   onBetPlaced,
   accent,
   ctaAccent,
+  ctaGradient,
+  ctaText,
   border,
   background,
 }: {
@@ -33,6 +35,10 @@ export function ThemedBetPanel({
    * Defaults to `accent`.
    */
   ctaAccent?: string;
+  /** The Predict button's full fill, when it is a gradient rather than one colour. */
+  ctaGradient?: string;
+  /** Text on the Predict button; white unless the fill is light. */
+  ctaText?: string;
   border: string;
   background: string;
 }) {
@@ -61,7 +67,9 @@ export function ThemedBetPanel({
           // colour still reaches the heading and the selected outcome, which
           // are text and a hairline — it is passed as a prop below.
           "--color-primary": cta,
-          "--grad-primary": `linear-gradient(160deg, ${cta} 0%, ${cta}d9 100%)`,
+          "--grad-primary":
+            ctaGradient ?? `linear-gradient(160deg, ${cta} 0%, ${cta}d9 100%)`,
+          ...(ctaText ? { "--on-primary": ctaText } : {}),
         } as React.CSSProperties
       }
     >

@@ -226,7 +226,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
             fontWeight: 700,
             background:
               "var(--grad-primary, linear-gradient(135deg, #2775d0, #1a5bb5))",
-            color: "#fff",
+            color: "var(--on-primary, #fff)",
             border: "none",
             borderRadius: 12,
             cursor: "pointer",
@@ -1015,7 +1015,7 @@ export const PwaBetForm: FC<PwaBetFormProps> = ({
           borderRadius: "var(--radius-md)",
           border: "none",
           background: isReady ? "var(--grad-primary)" : "var(--bg-secondary)",
-          color: isReady ? "#fff" : "var(--text-subtle)",
+          color: isReady ? "var(--on-primary, #fff)" : "var(--text-subtle)",
           fontSize: "1.05rem",
           fontWeight: 900,
           cursor: isReady ? "pointer" : "not-allowed",
