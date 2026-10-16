@@ -52,10 +52,12 @@ import { EsportsBanner } from "@shared/components/EsportsBanner";
 import { UfcBanner } from "@shared/components/UfcBanner";
 import { UclBanner } from "@shared/components/UclBanner";
 import { UnlBanner } from "@shared/components/UnlBanner";
+import { NbaBanner } from "@shared/components/NbaBanner";
 import { EplBanner } from "@shared/components/EplBanner";
 import { isEplMarket } from "@/lib/hubs/epl";
 import { isUclMarket } from "@/lib/hubs/ucl";
 import { isUnlMarket } from "@/lib/hubs/nationsLeague";
+import { isNbaMarket } from "@/lib/hubs/nba";
 import { coalesce, pollWhileVisible } from "@shared/helpers/poll";
 
 // "Ask the Crowd" is opened by few people; its chunk loads on first open.
@@ -672,6 +674,10 @@ function UnlBannerCard({ onOpen }: { onOpen: () => void }) {
   return <UnlBanner className="unl-banner-card" onClick={onOpen} />;
 }
 
+function NbaBannerCard({ onOpen }: { onOpen: () => void }) {
+  return <NbaBanner className="nba-banner-card" onClick={onOpen} />;
+}
+
 
 
 interface FormattedEvent {
@@ -847,7 +853,7 @@ interface ActiveBet {
 
 /**
  * Pinned by an admin to the top of the feed. Any market except a hub match:
- * an EPL, UCL or Nations League match uses the same flag for its hub's
+ * an EPL, UCL, Nations League or NBA match uses the same flag for its hub's
  * featured slot instead. Must match `pinTarget` in the admin's
  * MarketManagement.tsx.
  */
@@ -855,7 +861,7 @@ function isFeedPinned(m: Market): boolean {
   if (!m.isFeatured) return false;
   const sub = (m.subcategory ?? "").toLowerCase();
   const hubMatch =
-    ["epl-", "ucl-", "unl-"].some((p) => sub.startsWith(p)) &&
+    ["epl-", "ucl-", "unl-", "nba-"].some((p) => sub.startsWith(p)) &&
     m.title.toLowerCase().includes(" vs ");
   return !hubMatch;
 }
@@ -1116,6 +1122,8 @@ export function PwaFeedPage({
     // Nations League markets live in the /nations-league hub — same deal, and a
     // matchday is 26 fixtures, which would bury everything else in the feed
     if (isUnlMarket(m)) return false;
+    // NBA games live in the /nba hub — up to 15 a night
+    if (isNbaMarket(m)) return false;
     // Esports/gaming markets live in the /esports hub — same deal
     if (isEsportsMarket(m)) return false;
     // TER/BTC rounds that locked with zero bets: nothing for anyone to watch,
@@ -1408,6 +1416,15 @@ export function PwaFeedPage({
         <UfcBannerCard key="ufc-banner" onOpen={() => navigate("/ufc")} />,
       );
     }
+    // Spliced first of the sports banners, so it shows last of them (after
+    // EPL, UCL and the Nations League) — see the note below.
+    if (banners.sports) {
+      cards.splice(
+        0,
+        0,
+        <NbaBannerCard key="nba-banner" onOpen={() => navigate("/nba")} />,
+      );
+    }
     // Spliced BEFORE the UCL and EPL banners so it ends up AFTER them: each
     // of these inserts at index 0, so the last one spliced is the one shown
     // first. Move this block below them to lead the feed with it instead.
@@ -1510,9 +1527,9 @@ export function PwaFeedPage({
         }
         @media (max-width: 767px) { .section-title { display: none; } }
         /* Mobile: 1 grid column — banner takes the full row */
-        .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .unl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
+        .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .unl-banner-card, .nba-banner-card, .epl-banner-card, .esports-banner-card { grid-column: auto; }
         /* Tablet/desktop (grid is 2 or 4 cols) — banner covers two card slots */
-        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .unl-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
+        @media (min-width: 640px) { .bpl-banner-card, .ufc-banner-card, .ucl-banner-card, .unl-banner-card, .nba-banner-card, .epl-banner-card, .esports-banner-card { grid-column: span 2; } }
       `}</style>
       <div className="mesh-bg" />
 

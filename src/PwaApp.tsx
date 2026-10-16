@@ -171,6 +171,9 @@ const PwaUclPage = lazy(() =>
     default: m.UclHubPage,
   })),
 );
+const PwaNbaPage = lazy(() =>
+  import("./pages/NbaHubPage").then((m) => ({ default: m.NbaHubPage })),
+);
 const PwaNationsLeaguePage = lazy(() =>
   import("./pages/NationsLeagueHubPage").then((m) => ({
     default: m.NationsLeagueHubPage,
@@ -2218,6 +2221,26 @@ function PwaLayout({
                 }
               >
                 <PwaNationsLeaguePage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/nba"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                    }}
+                  >
+                    Loading…
+                  </div>
+                }
+              >
+                <PwaNbaPage />
               </Suspense>
             }
           />
