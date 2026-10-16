@@ -47,6 +47,7 @@ import { isUfcMarket } from "@/lib/hubs/ufc";
 import { isEplMarket } from "@/lib/hubs/epl";
 import { isUclMarket } from "@/lib/hubs/ucl";
 import { isNbaMarket, NBA_THEME } from "@/lib/hubs/nba";
+import { isUnlMarket } from "@/lib/hubs/nationsLeague";
 import { STICKY_TOP, STICKY_MAX_HEIGHT } from "../components/MarketDetailColumns";
 import { useGoBack } from "../hooks/useGoBack";
 import { pollWhileVisible } from "@shared/helpers/poll";
@@ -64,6 +65,9 @@ const EplMarketDetail = lazy(() =>
 );
 const UclMarketDetail = lazy(() =>
   import("../components/UclMarketDetail").then((m) => ({ default: m.UclMarketDetail })),
+);
+const UnlMarketDetail = lazy(() =>
+  import("../components/UnlMarketDetail").then((m) => ({ default: m.UnlMarketDetail })),
 );
 const NbaMarketDetail = lazy(() =>
   import("../components/NbaMarketDetail").then((m) => ({ default: m.NbaMarketDetail })),
@@ -623,6 +627,7 @@ export function PwaMarketDetailPage() {
     if (displayMarket.externalSource === "ter") return "#F4AF39";
     if (isUfcMarket(displayMarket)) return "#d20a0a";
     if (isEsportsMarket(displayMarket)) return "#be9e59";
+    if (isUnlMarket(displayMarket)) return "#19c4a6";
     if (isUclMarket(displayMarket)) return "#2b6bff";
     if (isNbaMarket(displayMarket)) return NBA_THEME.amber;
     if (isEplMarket(displayMarket)) return "#00ff85";
@@ -732,6 +737,32 @@ export function PwaMarketDetailPage() {
     return (
     <Suspense fallback={detailFallback}>
       <NbaMarketDetail
+        chartData={chartData}
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        commentsSlot={embeddedComments}
+      />
+    </Suspense>
+    );
+  }
+
+  // Nations League markets get the hub-styled detail view
+  if (isUnlMarket(displayMarket)) {
+    return (
+    <Suspense fallback={detailFallback}>
+      <UnlMarketDetail
         chartData={chartData}
         market={displayMarket}
         referralId={referralId}
