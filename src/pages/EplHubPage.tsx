@@ -21,7 +21,7 @@ import {
   type EplStats,
   type EplSeason,
 } from "@shared/api/client";
-import { Clock, Trophy, CalendarDays, ListOrdered, BarChart3, Goal, Handshake } from "lucide-react";
+import { Clock, Trophy, CalendarDays, ListOrdered, BarChart3, Goal, Handshake, ArrowLeft } from "lucide-react";
 import { calcProb, calcOdds, formatOdds } from "@/lib/hubs/worldCup";
 import { isDrawOutcome } from "@/lib/hubs/bpl";
 import { isEplMarket, getEplCrest, shortEplName, EplCrest } from "@/lib/hubs/epl";
@@ -768,6 +768,7 @@ export function EplHubPage() {
       >
         {/* Back button — light on the banner artwork */}
         <button
+          aria-label="Go back"
           onClick={() => navigate(-1)}
           style={{
             position: "absolute",
@@ -778,19 +779,19 @@ export function EplHubPage() {
             backdropFilter: "blur(4px)",
             border: "1px solid rgba(255,255,255,0.15)",
             borderRadius: "50%",
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
+            padding: 0,
             color: "#fff",
-            fontSize: 18,
             boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
             flexShrink: 0,
           }}
         >
-          ←
+          <ArrowLeft size={20} strokeWidth={2.25} />
         </button>
 
         {/* Live vector logo overlay — the banner artwork's own baked-in logo

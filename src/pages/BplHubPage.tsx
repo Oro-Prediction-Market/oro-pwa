@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMarkets, type Market } from "@shared/api/client";
-import { Clock, CalendarDays } from "lucide-react";
+import { Clock, CalendarDays, ArrowLeft } from "lucide-react";
 import { calcProb, calcOdds, formatOdds } from "@/lib/hubs/worldCup";
 import { isBplMarket, getBplCrest, shortClubName, Crest } from "@/lib/hubs/bpl";
 // Moved to @/lib/hubs/bpl; re-exported so existing imports keep working.
@@ -311,23 +311,24 @@ export function BplHubPage() {
         />
         <div style={{ display: "flex", alignItems: "center", gap: 14, position: "relative", maxWidth: 860, margin: "0 auto", textShadow: "0 2px 10px rgba(0,0,0,0.7)" }}>
           <button
+            aria-label="Go back"
             onClick={() => navigate(-1)}
             style={{
               background: "rgba(255,255,255,0.1)",
               border: "none",
               borderRadius: "50%",
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
+              padding: 0,
               color: "#fff",
-              fontSize: 18,
               flexShrink: 0,
             }}
           >
-            ←
+            <ArrowLeft size={20} strokeWidth={2.25} />
           </button>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: ACCENT, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 2 }}>

@@ -292,8 +292,8 @@ function PageTitleBar() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: 36,
-          height: 36,
+          width: 40,
+          height: 40,
           borderRadius: 10,
           background: "var(--bg-secondary)",
           border: "1px solid var(--glass-border)",
@@ -303,7 +303,7 @@ function PageTitleBar() {
         }}
         aria-label="Go back"
       >
-        <ArrowLeft size={18} />
+        <ArrowLeft size={20} />
       </button>
       <h1
         style={{
