@@ -46,6 +46,7 @@ import { isEsportsMarket } from "@/lib/hubs/esports";
 import { isUfcMarket } from "@/lib/hubs/ufc";
 import { isEplMarket } from "@/lib/hubs/epl";
 import { isUclMarket } from "@/lib/hubs/ucl";
+import { isNbaMarket, NBA_THEME } from "@/lib/hubs/nba";
 import { STICKY_TOP, STICKY_MAX_HEIGHT } from "../components/MarketDetailColumns";
 import { useGoBack } from "../hooks/useGoBack";
 import { pollWhileVisible } from "@shared/helpers/poll";
@@ -63,6 +64,9 @@ const EplMarketDetail = lazy(() =>
 );
 const UclMarketDetail = lazy(() =>
   import("../components/UclMarketDetail").then((m) => ({ default: m.UclMarketDetail })),
+);
+const NbaMarketDetail = lazy(() =>
+  import("../components/NbaMarketDetail").then((m) => ({ default: m.NbaMarketDetail })),
 );
 const PriceMarketDetail = lazy(() =>
   import("../components/PriceMarketDetail").then((m) => ({ default: m.PriceMarketDetail })),
@@ -620,6 +624,7 @@ export function PwaMarketDetailPage() {
     if (isUfcMarket(displayMarket)) return "#d20a0a";
     if (isEsportsMarket(displayMarket)) return "#be9e59";
     if (isUclMarket(displayMarket)) return "#2b6bff";
+    if (isNbaMarket(displayMarket)) return NBA_THEME.amber;
     if (isEplMarket(displayMarket)) return "#00ff85";
     // The generic view keeps the app's own primary.
     return undefined;
@@ -722,6 +727,32 @@ export function PwaMarketDetailPage() {
   }
 
   // Champions League markets get the dedicated /ucl-styled detail view
+  // NBA markets get the court-banner detail view
+  if (isNbaMarket(displayMarket)) {
+    return (
+    <Suspense fallback={detailFallback}>
+      <NbaMarketDetail
+        chartData={chartData}
+        market={displayMarket}
+        referralId={referralId}
+        onBetPlaced={refreshMarket}
+        isResolving={isResolving}
+        proposedOutcome={proposedOutcome}
+        disputeTimeLeft={disputeTimeLeft}
+        disputeReason={disputeReason}
+        setDisputeReason={setDisputeReason}
+        handleSubmitDispute={handleSubmitDispute}
+        disputeSubmitting={disputeSubmitting}
+        disputeError={disputeError}
+        disputeSuccess={disputeSuccess}
+        disputeContest={disputeContest}
+        myDispute={myDispute}
+        commentsSlot={embeddedComments}
+      />
+    </Suspense>
+    );
+  }
+
   if (isUclMarket(displayMarket)) {
     return (
     <Suspense fallback={detailFallback}>
